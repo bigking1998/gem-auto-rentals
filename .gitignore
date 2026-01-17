@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Turbo
+.turbo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage
+.nyc_output
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Misc
+*.tsbuildinfo
+.eslintcache
+.cache
+tmp
+temp
+
+# Ralph agent files
+.call_count
+.circuit_breaker_history
+.circuit_breaker_state
+.exit_signals
+.last_reset
+.ralph_session
+progress.json
+status.json

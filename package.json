@@ -1,0 +1,50 @@
+{
+  "name": "gem-auto-rentals",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Full-stack car rental platform with customer website and admin dashboard",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "build:prod": "turbo run build --env-mode=loose",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "test:e2e": "turbo run test:e2e",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter server db:generate",
+    "db:migrate": "pnpm --filter server db:migrate",
+    "db:push": "pnpm --filter server db:push",
+    "db:reset": "pnpm --filter server db:reset",
+    "db:studio": "pnpm --filter server db:studio",
+    "db:seed": "pnpm --filter server db:seed",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.55.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.0",
+    "prettier-plugin-tailwindcss": "^0.5.9",
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  }
+}
