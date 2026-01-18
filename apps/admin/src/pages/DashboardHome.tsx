@@ -1,4 +1,21 @@
-import { Car, DollarSign, CalendarCheck, Clock, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Car,
+  DollarSign,
+  CalendarCheck,
+  Clock,
+  ArrowUpRight,
+  ArrowDownRight,
+  Plus,
+  Users,
+  FileText,
+  Wrench,
+  ChevronRight,
+  AlertCircle,
+  CheckCircle2,
+  TrendingUp,
+} from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import {
   BarChart,
@@ -8,6 +25,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
 } from 'recharts';
 
 // Mock data
@@ -104,21 +123,181 @@ const statusColors: Record<string, string> = {
   CANCELLED: 'bg-red-100 text-red-800',
 };
 
+// Quick action items configuration
+const quickActions = [
+  {
+    id: 'add-vehicle',
+    label: 'Add Vehicle',
+    description: 'Add a new vehicle to fleet',
+    icon: Car,
+    color: 'bg-blue-500',
+    hoverBorder: 'hover:border-blue-500',
+    hoverBg: 'hover:bg-blue-50',
+    route: '/fleet',
+    action: 'modal', // Will open modal on fleet page
+  },
+  {
+    id: 'new-booking',
+    label: 'New Booking',
+    description: 'Create a new reservation',
+    icon: CalendarCheck,
+    color: 'bg-green-500',
+    hoverBorder: 'hover:border-green-500',
+    hoverBg: 'hover:bg-green-50',
+    route: '/bookings',
+    action: 'navigate',
+  },
+  {
+    id: 'add-customer',
+    label: 'Add Customer',
+    description: 'Register a new customer',
+    icon: Users,
+    color: 'bg-purple-500',
+    hoverBorder: 'hover:border-purple-500',
+    hoverBg: 'hover:bg-purple-50',
+    route: '/customers',
+    action: 'navigate',
+  },
+  {
+    id: 'record-payment',
+    label: 'Record Payment',
+    description: 'Log a payment transaction',
+    icon: DollarSign,
+    color: 'bg-emerald-500',
+    hoverBorder: 'hover:border-emerald-500',
+    hoverBg: 'hover:bg-emerald-50',
+    route: '/bookings',
+    action: 'navigate',
+  },
+  {
+    id: 'schedule-maintenance',
+    label: 'Maintenance',
+    description: 'Schedule vehicle service',
+    icon: Wrench,
+    color: 'bg-orange-500',
+    hoverBorder: 'hover:border-orange-500',
+    hoverBg: 'hover:bg-orange-50',
+    route: '/fleet',
+    action: 'navigate',
+  },
+  {
+    id: 'view-reports',
+    label: 'View Reports',
+    description: 'Analytics & insights',
+    icon: TrendingUp,
+    color: 'bg-indigo-500',
+    hoverBorder: 'hover:border-indigo-500',
+    hoverBg: 'hover:bg-indigo-50',
+    route: '/analytics',
+    action: 'navigate',
+  },
+];
+
+// Alerts/notifications mock data
+const alerts = [
+  {
+    id: 1,
+    type: 'warning',
+    message: '3 vehicles due for maintenance this week',
+    action: 'View Schedule',
+    route: '/fleet',
+  },
+  {
+    id: 2,
+    type: 'info',
+    message: '5 pending document verifications',
+    action: 'Review',
+    route: '/customers',
+  },
+  {
+    id: 3,
+    type: 'success',
+    message: 'Revenue target achieved for this month',
+    action: 'View Details',
+    route: '/analytics',
+  },
+];
+
 export default function DashboardHome() {
+  const navigate = useNavigate();
+
+  const handleQuickAction = (action: typeof quickActions[0]) => {
+    if (action.route) {
+      // Navigate with state to potentially trigger actions
+      navigate(action.route, { state: { action: action.id } });
+    }
+  };
+
+  const handleAlertAction = (alert: typeof alerts[0]) => {
+    navigate(alert.route);
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500">Welcome back! Here's what's happening today.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500">Welcome back! Here's what's happening today.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/fleet', { state: { action: 'add-vehicle' } })}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Quick Add
+          </button>
+        </div>
       </div>
+
+      {/* Alerts Section */}
+      {alerts.length > 0 && (
+        <div className="space-y-2">
+          {alerts.map((alert) => (
+            <div
+              key={alert.id}
+              className={cn(
+                'flex items-center justify-between p-3 rounded-lg border',
+                alert.type === 'warning' && 'bg-amber-50 border-amber-200',
+                alert.type === 'info' && 'bg-blue-50 border-blue-200',
+                alert.type === 'success' && 'bg-green-50 border-green-200'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                {alert.type === 'warning' && <AlertCircle className="w-5 h-5 text-amber-500" />}
+                {alert.type === 'info' && <AlertCircle className="w-5 h-5 text-blue-500" />}
+                {alert.type === 'success' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                <span className="text-sm text-gray-700">{alert.message}</span>
+              </div>
+              <button
+                onClick={() => handleAlertAction(alert)}
+                className={cn(
+                  'text-sm font-medium flex items-center gap-1',
+                  alert.type === 'warning' && 'text-amber-600 hover:text-amber-700',
+                  alert.type === 'info' && 'text-blue-600 hover:text-blue-700',
+                  alert.type === 'success' && 'text-green-600 hover:text-green-700'
+                )}
+              >
+                {alert.action}
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => {
+              if (stat.label === 'Active Rentals') navigate('/bookings');
+              if (stat.label === 'Pending Bookings') navigate('/bookings');
+              if (stat.label === 'Available Vehicles') navigate('/fleet');
+            }}
           >
             <div className="flex items-start justify-between">
               <div>
@@ -149,6 +328,41 @@ export default function DashboardHome() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Quick Actions Panel */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+          <span className="text-sm text-gray-500">Common tasks</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {quickActions.map((action) => (
+            <button
+              key={action.id}
+              onClick={() => handleQuickAction(action)}
+              className={cn(
+                'group flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-200 transition-all duration-200',
+                action.hoverBorder,
+                action.hoverBg,
+                'hover:shadow-md'
+              )}
+            >
+              <div
+                className={cn(
+                  'w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110',
+                  action.color
+                )}
+              >
+                <action.icon className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium text-gray-900">{action.label}</p>
+                <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{action.description}</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Charts & Tables Row */}
@@ -194,15 +408,20 @@ export default function DashboardHome() {
               <h2 className="text-lg font-semibold text-gray-900">Recent Bookings</h2>
               <p className="text-sm text-gray-500">Latest rental reservations</p>
             </div>
-            <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+            <button
+              onClick={() => navigate('/bookings')}
+              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+            >
               View All
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
           <div className="space-y-4">
             {recentBookings.map((booking) => (
               <div
                 key={booking.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                onClick={() => navigate('/bookings')}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
@@ -232,26 +451,44 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Activity Timeline */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <button className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
-            <Car className="w-6 h-6 text-indigo-600" />
-            <span className="text-sm font-medium text-gray-700">Add Vehicle</span>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+          <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+            View All
+            <ChevronRight className="w-4 h-4" />
           </button>
-          <button className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
-            <CalendarCheck className="w-6 h-6 text-indigo-600" />
-            <span className="text-sm font-medium text-gray-700">New Booking</span>
-          </button>
-          <button className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
-            <DollarSign className="w-6 h-6 text-indigo-600" />
-            <span className="text-sm font-medium text-gray-700">Record Payment</span>
-          </button>
-          <button className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
-            <Clock className="w-6 h-6 text-indigo-600" />
-            <span className="text-sm font-medium text-gray-700">Schedule Maintenance</span>
-          </button>
+        </div>
+        <div className="relative">
+          <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
+          <div className="space-y-6">
+            {[
+              { time: '10 min ago', event: 'New booking created', detail: 'Sarah Johnson - Toyota Camry', type: 'booking' },
+              { time: '25 min ago', event: 'Payment received', detail: '$360.00 - Michael Chen', type: 'payment' },
+              { time: '1 hour ago', event: 'Vehicle returned', detail: '2024 BMW 5 Series - Emily Rodriguez', type: 'return' },
+              { time: '2 hours ago', event: 'Customer registered', detail: 'New customer: James Wilson', type: 'customer' },
+              { time: '3 hours ago', event: 'Maintenance completed', detail: '2024 Ford Explorer - Oil change', type: 'maintenance' },
+            ].map((activity, index) => (
+              <div key={index} className="relative pl-10">
+                <div
+                  className={cn(
+                    'absolute left-2 w-4 h-4 rounded-full border-2 border-white',
+                    activity.type === 'booking' && 'bg-blue-500',
+                    activity.type === 'payment' && 'bg-green-500',
+                    activity.type === 'return' && 'bg-purple-500',
+                    activity.type === 'customer' && 'bg-orange-500',
+                    activity.type === 'maintenance' && 'bg-gray-500'
+                  )}
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{activity.event}</p>
+                  <p className="text-sm text-gray-500">{activity.detail}</p>
+                  <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -1,0 +1,224 @@
+// Prisma Schema for Gem Auto Rentals
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - customers and staff
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  role          Role       @default(CUSTOMER)
+  emailVerified Boolean    @default(false)
+  avatarUrl     String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  bookings      Booking[]
+  documents     Document[]
+  reviews       Review[]
+}
+
+enum Role {
+  CUSTOMER
+  SUPPORT
+  MANAGER
+  ADMIN
+}
+
+// Vehicle model - fleet inventory
+model Vehicle {
+  id           String          @id @default(cuid())
+  make         String
+  model        String
+  year         Int
+  category     VehicleCategory
+  dailyRate    Decimal         @db.Decimal(10, 2)
+  status       VehicleStatus   @default(AVAILABLE)
+  images       String[]
+  features     String[]
+  description  String?
+  seats        Int
+  doors        Int             @default(4)
+  transmission Transmission
+  fuelType     FuelType
+  mileage      Int
+  color        String?
+  licensePlate String          @unique
+  vin          String          @unique
+  location     String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  bookings     Booking[]
+  reviews      Review[]
+  maintenance  MaintenanceRecord[]
+}
+
+enum VehicleCategory {
+  ECONOMY
+  STANDARD
+  PREMIUM
+  LUXURY
+  SUV
+  VAN
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+  RETIRED
+}
+
+enum Transmission {
+  AUTOMATIC
+  MANUAL
+}
+
+enum FuelType {
+  GASOLINE
+  DIESEL
+  ELECTRIC
+  HYBRID
+}
+
+// Booking model - rental reservations
+model Booking {
+  id              String        @id @default(cuid())
+  userId          String
+  vehicleId       String
+  startDate       DateTime
+  endDate         DateTime
+  status          BookingStatus @default(PENDING)
+  totalAmount     Decimal       @db.Decimal(10, 2)
+  dailyRate       Decimal       @db.Decimal(10, 2)
+  extras          Json?         // insurance, gps, child seat, etc.
+  pickupLocation  String
+  dropoffLocation String
+  notes           String?
+  contractSigned  Boolean       @default(false)
+  contractUrl     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+  vehicle         Vehicle       @relation(fields: [vehicleId], references: [id])
+  payment         Payment?
+
+  @@index([userId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+// Payment model - transaction records
+model Payment {
+  id                    String        @id @default(cuid())
+  bookingId             String        @unique
+  amount                Decimal       @db.Decimal(10, 2)
+  status                PaymentStatus @default(PENDING)
+  stripePaymentIntentId String?
+  stripeChargeId        String?
+  method                PaymentMethod?
+  refundAmount          Decimal?      @db.Decimal(10, 2)
+  refundReason          String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  booking               Booking       @relation(fields: [bookingId], references: [id])
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+}
+
+// Document model - customer documents
+model Document {
+  id          String       @id @default(cuid())
+  userId      String
+  type        DocumentType
+  url         String
+  filename    String
+  verified    Boolean      @default(false)
+  verifiedAt  DateTime?
+  verifiedBy  String?
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+}
+
+enum DocumentType {
+  DRIVERS_LICENSE
+  ID_CARD
+  PASSPORT
+  PROOF_OF_ADDRESS
+  INSURANCE
+}
+
+// Review model - vehicle reviews
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  vehicleId String
+  rating    Int      @db.SmallInt // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+
+  @@unique([userId, vehicleId])
+  @@index([vehicleId])
+}
+
+// Maintenance records for vehicles
+model MaintenanceRecord {
+  id          String   @id @default(cuid())
+  vehicleId   String
+  type        String   // Oil change, tire rotation, inspection, etc.
+  description String?
+  cost        Decimal? @db.Decimal(10, 2)
+  performedAt DateTime
+  nextDueAt   DateTime?
+  mileageAt   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+
+  @@index([vehicleId])
+}

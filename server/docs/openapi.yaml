@@ -1,0 +1,1910 @@
+openapi: 3.1.0
+info:
+  title: Gem Auto Rentals API
+  description: |
+    RESTful API for Gem Auto Rentals - a car rental management platform.
+
+    ## Authentication
+    Most endpoints require JWT authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    ## Roles
+    - **CUSTOMER**: Regular users who can book vehicles
+    - **SUPPORT**: Staff who can view and manage bookings
+    - **MANAGER**: Staff with additional fleet management access
+    - **ADMIN**: Full system access
+
+    ## Rate Limiting
+    API requests are rate limited to 100 requests per 15 minutes per IP address.
+  version: 1.0.0
+  contact:
+    name: Gem Auto Rentals Support
+    email: support@gemautorentals.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.gemautorentals.com/api
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User registration, login, and session management
+  - name: Vehicles
+    description: Vehicle listing, details, and management
+  - name: Bookings
+    description: Booking creation, management, and cancellation
+  - name: Customers
+    description: Customer profile and management
+  - name: Payments
+    description: Payment processing with Stripe
+
+paths:
+  # ==================== Authentication ====================
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: Create a new customer account
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: john.doe@example.com
+              password: SecurePass123!
+              firstName: John
+              lastName: Doe
+              phone: "+1 (555) 123-4567"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate with email and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: john.doe@example.com
+              password: SecurePass123!
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: User logout
+      description: Log out the current user (client-side token removal)
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Logged out successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      description: Retrieve the authenticated user's profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/forgot-password:
+    post:
+      tags: [Authentication]
+      summary: Request password reset
+      description: Send a password reset email (always returns success to prevent email enumeration)
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+            example:
+              email: john.doe@example.com
+      responses:
+        '200':
+          description: Request processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: If an account exists with this email, a password reset link will be sent.
+
+  /auth/reset-password:
+    post:
+      tags: [Authentication]
+      summary: Reset password
+      description: Reset password using token from email
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Password reset successful
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ==================== Vehicles ====================
+  /vehicles:
+    get:
+      tags: [Vehicles]
+      summary: List vehicles
+      description: Get a paginated list of vehicles with optional filters
+      operationId: listVehicles
+      parameters:
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/VehicleCategory'
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+          description: Minimum daily rate
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+          description: Maximum daily rate
+        - name: transmission
+          in: query
+          schema:
+            $ref: '#/components/schemas/Transmission'
+        - name: fuelType
+          in: query
+          schema:
+            $ref: '#/components/schemas/FuelType'
+        - name: seats
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Minimum number of seats
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/VehicleStatus'
+          description: Filter by status (staff only, defaults to AVAILABLE for public)
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by make or model
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 12
+            minimum: 1
+            maximum: 100
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [dailyRate, year, createdAt, make]
+            default: createdAt
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Vehicles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleListResponse'
+
+    post:
+      tags: [Vehicles]
+      summary: Create vehicle
+      description: Add a new vehicle to the fleet (staff only)
+      operationId: createVehicle
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVehicleRequest'
+      responses:
+        '201':
+          description: Vehicle created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Vehicle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /vehicles/{id}:
+    get:
+      tags: [Vehicles]
+      summary: Get vehicle details
+      description: Retrieve detailed information about a specific vehicle
+      operationId: getVehicle
+      parameters:
+        - $ref: '#/components/parameters/VehicleId'
+      responses:
+        '200':
+          description: Vehicle details retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/VehicleDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Vehicles]
+      summary: Update vehicle
+      description: Update vehicle information (staff only)
+      operationId: updateVehicle
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VehicleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVehicleRequest'
+      responses:
+        '200':
+          description: Vehicle updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Vehicle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Vehicles]
+      summary: Delete vehicle
+      description: Remove a vehicle from the fleet (staff only, cannot delete with active bookings)
+      operationId: deleteVehicle
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VehicleId'
+      responses:
+        '200':
+          description: Vehicle deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          description: Cannot delete vehicle with active bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /vehicles/{id}/status:
+    patch:
+      tags: [Vehicles]
+      summary: Update vehicle status
+      description: Change vehicle availability status (staff only)
+      operationId: updateVehicleStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VehicleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: '#/components/schemas/VehicleStatus'
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Vehicle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /vehicles/{id}/availability:
+    get:
+      tags: [Vehicles]
+      summary: Check availability
+      description: Check if a vehicle is available for specific dates
+      operationId: checkAvailability
+      parameters:
+        - $ref: '#/components/parameters/VehicleId'
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Rental start date (ISO 8601)
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Rental end date (ISO 8601)
+      responses:
+        '200':
+          description: Availability status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      available:
+                        type: boolean
+                      conflictingBookings:
+                        type: integer
+                      vehicleStatus:
+                        $ref: '#/components/schemas/VehicleStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== Bookings ====================
+  /bookings:
+    get:
+      tags: [Bookings]
+      summary: List bookings
+      description: Get user's bookings (or all bookings for staff)
+      operationId: listBookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BookingStatus'
+        - name: userId
+          in: query
+          schema:
+            type: string
+          description: Filter by user ID (staff only)
+        - name: vehicleId
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Bookings retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Bookings]
+      summary: Create booking
+      description: Create a new vehicle booking
+      operationId: createBooking
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+            example:
+              vehicleId: clm1234567890
+              startDate: "2024-03-15"
+              endDate: "2024-03-18"
+              pickupLocation: Main Office
+              dropoffLocation: Airport
+              extras:
+                insurance: true
+                gps: true
+                childSeat: false
+                additionalDriver: false
+              notes: Please have the car ready by 9 AM
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Booking'
+        '400':
+          description: Invalid dates or vehicle unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bookings/{id}:
+    get:
+      tags: [Bookings]
+      summary: Get booking details
+      description: Retrieve detailed booking information
+      operationId: getBooking
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/BookingDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Bookings]
+      summary: Update booking
+      description: Update booking details (customers can only modify pending bookings)
+      operationId: updateBooking
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookingRequest'
+      responses:
+        '200':
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags: [Bookings]
+      summary: Delete booking
+      description: Permanently delete a booking (staff only, cannot delete active bookings)
+      operationId: deleteBooking
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      responses:
+        '200':
+          description: Booking deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          description: Cannot delete active booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /bookings/{id}/cancel:
+    post:
+      tags: [Bookings]
+      summary: Cancel booking
+      description: Cancel a booking (cannot cancel completed bookings)
+      operationId: cancelBooking
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Booking'
+        '400':
+          description: Cannot cancel completed or already cancelled booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ==================== Customers ====================
+  /customers:
+    get:
+      tags: [Customers]
+      summary: List customers
+      description: Get paginated customer list (staff only)
+      operationId: listCustomers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by email, first name, or last name
+        - name: role
+          in: query
+          schema:
+            $ref: '#/components/schemas/UserRole'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Customers retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /customers/{id}:
+    get:
+      tags: [Customers]
+      summary: Get customer details
+      description: Get customer profile (staff or own profile)
+      operationId: getCustomer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/CustomerDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Customers]
+      summary: Update customer
+      description: Update customer information (staff or own profile)
+      operationId: updateCustomer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerRequest'
+      responses:
+        '200':
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags: [Customers]
+      summary: Delete customer
+      description: Delete a customer account (admin only, cannot delete with active bookings)
+      operationId: deleteCustomer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: Customer deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          description: Cannot delete customer with active bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /customers/{id}/profile:
+    put:
+      tags: [Customers]
+      summary: Update own profile
+      description: Update your own profile including password
+      operationId: updateProfile
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Customer'
+                  message:
+                    type: string
+        '400':
+          description: Invalid current password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /customers/{id}/bookings:
+    get:
+      tags: [Customers]
+      summary: Get customer bookings
+      description: Get all bookings for a customer
+      operationId: getCustomerBookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Customer bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ==================== Payments ====================
+  /payments/create-intent:
+    post:
+      tags: [Payments]
+      summary: Create payment intent
+      description: Create a Stripe payment intent for a booking
+      operationId: createPaymentIntent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId]
+              properties:
+                bookingId:
+                  type: string
+                  description: CUID of the booking to pay for
+            example:
+              bookingId: clm1234567890
+      responses:
+        '200':
+          description: Payment intent created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      clientSecret:
+                        type: string
+                        description: Stripe client secret for frontend
+                      amount:
+                        type: number
+                        description: Payment amount in dollars
+        '400':
+          description: Payment processing not configured or booking already paid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /payments/confirm:
+    post:
+      tags: [Payments]
+      summary: Confirm payment
+      description: Confirm payment after Stripe processing
+      operationId: confirmPayment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paymentIntentId]
+              properties:
+                paymentIntentId:
+                  type: string
+            example:
+              paymentIntentId: pi_1234567890
+      responses:
+        '200':
+          description: Payment confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      payment:
+                        $ref: '#/components/schemas/Payment'
+                      bookingStatus:
+                        $ref: '#/components/schemas/BookingStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /payments/{bookingId}:
+    get:
+      tags: [Payments]
+      summary: Get payment details
+      description: Get payment information for a booking
+      operationId: getPayment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Payment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /payments/{bookingId}/refund:
+    post:
+      tags: [Payments]
+      summary: Process refund
+      description: Process a full or partial refund (staff only)
+      operationId: refundPayment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  description: Refund amount (defaults to full refund)
+                reason:
+                  type: string
+                  description: Reason for refund
+      responses:
+        '200':
+          description: Refund processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      payment:
+                        $ref: '#/components/schemas/Payment'
+                      refund:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          amount:
+                            type: number
+                          status:
+                            type: string
+        '400':
+          description: Cannot refund - payment not successful or no Stripe payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login
+
+  parameters:
+    VehicleId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Vehicle ID (CUID)
+    BookingId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Booking ID (CUID)
+    CustomerId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Customer/User ID (CUID)
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Unauthorized
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Forbidden
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Not found
+
+  schemas:
+    # ===== Enums =====
+    VehicleCategory:
+      type: string
+      enum: [ECONOMY, STANDARD, PREMIUM, LUXURY, SUV, VAN]
+
+    VehicleStatus:
+      type: string
+      enum: [AVAILABLE, RENTED, MAINTENANCE, RETIRED]
+
+    Transmission:
+      type: string
+      enum: [AUTOMATIC, MANUAL]
+
+    FuelType:
+      type: string
+      enum: [GASOLINE, DIESEL, ELECTRIC, HYBRID]
+
+    BookingStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, ACTIVE, COMPLETED, CANCELLED]
+
+    PaymentStatus:
+      type: string
+      enum: [PENDING, PROCESSING, SUCCEEDED, FAILED, REFUNDED, PARTIALLY_REFUNDED]
+
+    UserRole:
+      type: string
+      enum: [CUSTOMER, SUPPORT, MANAGER, ADMIN]
+
+    # ===== Common Schemas =====
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+    SuccessMessage:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+
+    # ===== Auth Schemas =====
+    RegisterRequest:
+      type: object
+      required: [email, password, firstName, lastName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+              description: JWT access token
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          $ref: '#/components/schemas/UserRole'
+        createdAt:
+          type: string
+          format: date-time
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            emailVerified:
+              type: boolean
+            avatarUrl:
+              type: string
+              nullable: true
+            _count:
+              type: object
+              properties:
+                bookings:
+                  type: integer
+                documents:
+                  type: integer
+
+    # ===== Vehicle Schemas =====
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: string
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        category:
+          $ref: '#/components/schemas/VehicleCategory'
+        dailyRate:
+          type: number
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        features:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          nullable: true
+        seats:
+          type: integer
+        doors:
+          type: integer
+          nullable: true
+        transmission:
+          $ref: '#/components/schemas/Transmission'
+        fuelType:
+          $ref: '#/components/schemas/FuelType'
+        mileage:
+          type: integer
+        color:
+          type: string
+          nullable: true
+        licensePlate:
+          type: string
+        vin:
+          type: string
+        location:
+          type: string
+          nullable: true
+        averageRating:
+          type: number
+          nullable: true
+        reviewCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    VehicleDetail:
+      allOf:
+        - $ref: '#/components/schemas/Vehicle'
+        - type: object
+          properties:
+            reviews:
+              type: array
+              items:
+                $ref: '#/components/schemas/Review'
+            _count:
+              type: object
+              properties:
+                reviews:
+                  type: integer
+                bookings:
+                  type: integer
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            firstName:
+              type: string
+            lastName:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateVehicleRequest:
+      type: object
+      required: [make, model, year, category, dailyRate, seats, transmission, fuelType, mileage, licensePlate, vin]
+      properties:
+        make:
+          type: string
+          minLength: 1
+        model:
+          type: string
+          minLength: 1
+        year:
+          type: integer
+          minimum: 1990
+        category:
+          $ref: '#/components/schemas/VehicleCategory'
+        dailyRate:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        features:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        seats:
+          type: integer
+          minimum: 1
+          maximum: 15
+        doors:
+          type: integer
+          minimum: 2
+          maximum: 6
+        transmission:
+          $ref: '#/components/schemas/Transmission'
+        fuelType:
+          $ref: '#/components/schemas/FuelType'
+        mileage:
+          type: integer
+          minimum: 0
+        color:
+          type: string
+        licensePlate:
+          type: string
+          minLength: 1
+        vin:
+          type: string
+          minLength: 17
+          maxLength: 17
+        location:
+          type: string
+
+    UpdateVehicleRequest:
+      type: object
+      properties:
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        category:
+          $ref: '#/components/schemas/VehicleCategory'
+        dailyRate:
+          type: number
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+        images:
+          type: array
+          items:
+            type: string
+        features:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        seats:
+          type: integer
+        doors:
+          type: integer
+        transmission:
+          $ref: '#/components/schemas/Transmission'
+        fuelType:
+          $ref: '#/components/schemas/FuelType'
+        mileage:
+          type: integer
+        color:
+          type: string
+        licensePlate:
+          type: string
+        vin:
+          type: string
+        location:
+          type: string
+
+    VehicleListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Vehicle'
+            total:
+              type: integer
+            page:
+              type: integer
+            pageSize:
+              type: integer
+            totalPages:
+              type: integer
+
+    # ===== Booking Schemas =====
+    BookingExtras:
+      type: object
+      properties:
+        insurance:
+          type: boolean
+        gps:
+          type: boolean
+        childSeat:
+          type: boolean
+        additionalDriver:
+          type: boolean
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        vehicleId:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        pickupLocation:
+          type: string
+        dropoffLocation:
+          type: string
+        dailyRate:
+          type: number
+        totalAmount:
+          type: number
+        extras:
+          $ref: '#/components/schemas/BookingExtras'
+        notes:
+          type: string
+          nullable: true
+        vehicle:
+          type: object
+          properties:
+            id:
+              type: string
+            make:
+              type: string
+            model:
+              type: string
+            year:
+              type: integer
+            images:
+              type: array
+              items:
+                type: string
+            category:
+              $ref: '#/components/schemas/VehicleCategory'
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+        payment:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            status:
+              $ref: '#/components/schemas/PaymentStatus'
+            amount:
+              type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BookingDetail:
+      allOf:
+        - $ref: '#/components/schemas/Booking'
+        - type: object
+          properties:
+            vehicle:
+              $ref: '#/components/schemas/Vehicle'
+            user:
+              type: object
+              properties:
+                id:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                  nullable: true
+            payment:
+              $ref: '#/components/schemas/Payment'
+
+    CreateBookingRequest:
+      type: object
+      required: [vehicleId, startDate, endDate, pickupLocation, dropoffLocation]
+      properties:
+        vehicleId:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        pickupLocation:
+          type: string
+          minLength: 1
+        dropoffLocation:
+          type: string
+          minLength: 1
+        extras:
+          $ref: '#/components/schemas/BookingExtras'
+        notes:
+          type: string
+
+    UpdateBookingRequest:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        pickupLocation:
+          type: string
+        dropoffLocation:
+          type: string
+        extras:
+          $ref: '#/components/schemas/BookingExtras'
+        notes:
+          type: string
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+          description: Staff only
+
+    BookingListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Booking'
+            total:
+              type: integer
+            page:
+              type: integer
+            pageSize:
+              type: integer
+            totalPages:
+              type: integer
+
+    # ===== Customer Schemas =====
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          $ref: '#/components/schemas/UserRole'
+        emailVerified:
+          type: boolean
+        avatarUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        _count:
+          type: object
+          properties:
+            bookings:
+              type: integer
+            documents:
+              type: integer
+
+    CustomerDetail:
+      allOf:
+        - $ref: '#/components/schemas/Customer'
+        - type: object
+          properties:
+            bookings:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    $ref: '#/components/schemas/BookingStatus'
+                  startDate:
+                    type: string
+                    format: date-time
+                  endDate:
+                    type: string
+                    format: date-time
+                  totalAmount:
+                    type: number
+                  vehicle:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      make:
+                        type: string
+                      model:
+                        type: string
+                      year:
+                        type: integer
+            documents:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                  verified:
+                    type: boolean
+                  createdAt:
+                    type: string
+                    format: date-time
+            _count:
+              type: object
+              properties:
+                bookings:
+                  type: integer
+                documents:
+                  type: integer
+                reviews:
+                  type: integer
+
+    UpdateCustomerRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/UserRole'
+          description: Admin only
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+        currentPassword:
+          type: string
+          description: Required when changing password
+        newPassword:
+          type: string
+          minLength: 8
+
+    CustomerListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Customer'
+            total:
+              type: integer
+            page:
+              type: integer
+            pageSize:
+              type: integer
+            totalPages:
+              type: integer
+
+    # ===== Payment Schemas =====
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        bookingId:
+          type: string
+        amount:
+          type: number
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        method:
+          type: string
+          enum: [CARD, CASH, BANK_TRANSFER]
+          nullable: true
+        stripePaymentIntentId:
+          type: string
+          nullable: true
+        stripeChargeId:
+          type: string
+          nullable: true
+        refundAmount:
+          type: number
+          nullable: true
+        refundReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

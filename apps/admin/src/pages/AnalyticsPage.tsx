@@ -1,5 +1,7 @@
-import { TrendingUp, TrendingDown, DollarSign, Car, Users, Calendar } from 'lucide-react';
+import { useState } from 'react';
+import { TrendingUp, TrendingDown, DollarSign, Car, Users, Calendar, Download, FileText, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { exportToCSV, exportToPDF, formatCurrencyForExport } from '@/lib/export';
 import {
   BarChart,
   Bar,
@@ -49,7 +51,7 @@ const stats = [
     label: 'Total Revenue',
     value: 400000,
     change: 12.5,
-    trend: 'up',
+    trend: 'up' as const,
     icon: DollarSign,
     isCurrency: true,
   },
@@ -57,27 +59,144 @@ const stats = [
     label: 'Total Bookings',
     value: 1107,
     change: 8.2,
-    trend: 'up',
+    trend: 'up' as const,
     icon: Calendar,
   },
   {
     label: 'Active Customers',
     value: 856,
     change: 15.3,
-    trend: 'up',
+    trend: 'up' as const,
     icon: Users,
   },
   {
     label: 'Fleet Utilization',
     value: 72,
     change: -2.1,
-    trend: 'down',
+    trend: 'down' as const,
     icon: Car,
     suffix: '%',
   },
 ];
 
 export default function AnalyticsPage() {
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [timePeriod, setTimePeriod] = useState('Last 6 months');
+
+  // Export to CSV function
+  const handleExportCSV = () => {
+    setShowExportMenu(false);
+
+    // Export Revenue Data
+    exportToCSV(
+      monthlyRevenue.map(item => ({
+        ...item,
+        revenueFormatted: formatCurrencyForExport(item.revenue)
+      })),
+      `gem-auto-rentals-revenue-${new Date().toISOString().split('T')[0]}`,
+      [
+        { key: 'month', label: 'Month' },
+        { key: 'revenueFormatted', label: 'Revenue' },
+      ]
+    );
+  };
+
+  // Export to PDF function
+  const handleExportPDF = () => {
+    setShowExportMenu(false);
+
+    exportToPDF(
+      'Analytics Report',
+      [
+        {
+          title: 'Key Metrics Summary',
+          type: 'stats',
+          data: stats.map(stat => ({
+            label: stat.label,
+            value: stat.isCurrency
+              ? formatCurrencyForExport(stat.value)
+              : `${stat.value.toLocaleString()}${stat.suffix || ''}`,
+          })),
+        },
+        {
+          title: 'Monthly Revenue',
+          type: 'table',
+          headers: [
+            { key: 'month', label: 'Month' },
+            { key: 'revenueFormatted', label: 'Revenue' },
+          ],
+          data: monthlyRevenue.map(item => ({
+            ...item,
+            revenueFormatted: formatCurrencyForExport(item.revenue),
+          })),
+        },
+        {
+          title: 'Booking Trends',
+          type: 'table',
+          headers: [
+            { key: 'month', label: 'Month' },
+            { key: 'bookings', label: 'Bookings' },
+          ],
+          data: bookingTrends,
+        },
+        {
+          title: 'Fleet Utilization by Category',
+          type: 'table',
+          headers: [
+            { key: 'name', label: 'Category' },
+            { key: 'utilization', label: 'Utilization' },
+          ],
+          data: fleetUtilization.map(item => ({
+            name: item.name,
+            utilization: `${item.value}%`,
+          })),
+        },
+      ]
+    );
+  };
+
+  // Export All Data as CSV
+  const handleExportAllCSV = () => {
+    setShowExportMenu(false);
+
+    // Create comprehensive data export
+    const allData = [
+      { category: 'Summary', metric: 'Total Revenue', value: formatCurrencyForExport(stats[0].value), change: `${stats[0].change}%` },
+      { category: 'Summary', metric: 'Total Bookings', value: stats[1].value.toString(), change: `${stats[1].change}%` },
+      { category: 'Summary', metric: 'Active Customers', value: stats[2].value.toString(), change: `${stats[2].change}%` },
+      { category: 'Summary', metric: 'Fleet Utilization', value: `${stats[3].value}%`, change: `${stats[3].change}%` },
+      ...monthlyRevenue.map(item => ({
+        category: 'Monthly Revenue',
+        metric: item.month,
+        value: formatCurrencyForExport(item.revenue),
+        change: '-',
+      })),
+      ...bookingTrends.map(item => ({
+        category: 'Booking Trends',
+        metric: item.month,
+        value: item.bookings.toString(),
+        change: '-',
+      })),
+      ...fleetUtilization.map(item => ({
+        category: 'Fleet Utilization',
+        metric: item.name,
+        value: `${item.value}%`,
+        change: '-',
+      })),
+    ];
+
+    exportToCSV(
+      allData,
+      `gem-auto-rentals-full-analytics-${new Date().toISOString().split('T')[0]}`,
+      [
+        { key: 'category', label: 'Category' },
+        { key: 'metric', label: 'Metric' },
+        { key: 'value', label: 'Value' },
+        { key: 'change', label: 'Change' },
+      ]
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -86,12 +205,72 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
           <p className="text-gray-500">Track your business performance</p>
         </div>
-        <select className="border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option>Last 6 months</option>
-          <option>Last 12 months</option>
-          <option>This year</option>
-          <option>All time</option>
-        </select>
+        <div className="flex items-center gap-3">
+          {/* Time Period Selector */}
+          <select
+            value={timePeriod}
+            onChange={(e) => setTimePeriod(e.target.value)}
+            className="border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option>Last 6 months</option>
+            <option>Last 12 months</option>
+            <option>This year</option>
+            <option>All time</option>
+          </select>
+
+          {/* Export Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Export
+              <ChevronDown className={cn("w-4 h-4 transition-transform", showExportMenu && "rotate-180")} />
+            </button>
+
+            {showExportMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowExportMenu(false)}
+                />
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-2">
+                  <button
+                    onClick={handleExportPDF}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-red-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Export as PDF</p>
+                      <p className="text-xs text-gray-500">Full report with charts</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={handleExportCSV}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-green-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Export Revenue CSV</p>
+                      <p className="text-xs text-gray-500">Monthly revenue data</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={handleExportAllCSV}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-blue-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Export All Data CSV</p>
+                      <p className="text-xs text-gray-500">Complete analytics export</p>
+                    </div>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -131,7 +310,28 @@ export default function AnalyticsPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Monthly Revenue</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">Monthly Revenue</h2>
+            <button
+              onClick={() => {
+                exportToCSV(
+                  monthlyRevenue.map(item => ({
+                    ...item,
+                    revenueFormatted: formatCurrencyForExport(item.revenue)
+                  })),
+                  `revenue-data-${new Date().toISOString().split('T')[0]}`,
+                  [
+                    { key: 'month', label: 'Month' },
+                    { key: 'revenueFormatted', label: 'Revenue' },
+                  ]
+                );
+              }}
+              className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+            >
+              <Download className="w-3 h-3" />
+              CSV
+            </button>
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyRevenue}>
@@ -154,7 +354,25 @@ export default function AnalyticsPage() {
 
         {/* Booking Trends */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Booking Trends</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">Booking Trends</h2>
+            <button
+              onClick={() => {
+                exportToCSV(
+                  bookingTrends,
+                  `booking-trends-${new Date().toISOString().split('T')[0]}`,
+                  [
+                    { key: 'month', label: 'Month' },
+                    { key: 'bookings', label: 'Bookings' },
+                  ]
+                );
+              }}
+              className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+            >
+              <Download className="w-3 h-3" />
+              CSV
+            </button>
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={bookingTrends}>
@@ -183,7 +401,28 @@ export default function AnalyticsPage() {
 
       {/* Fleet Utilization */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Fleet Utilization by Category</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">Fleet Utilization by Category</h2>
+          <button
+            onClick={() => {
+              exportToCSV(
+                fleetUtilization.map(item => ({
+                  category: item.name,
+                  utilization: `${item.value}%`,
+                })),
+                `fleet-utilization-${new Date().toISOString().split('T')[0]}`,
+                [
+                  { key: 'category', label: 'Category' },
+                  { key: 'utilization', label: 'Utilization' },
+                ]
+              );
+            }}
+            className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+          >
+            <Download className="w-3 h-3" />
+            CSV
+          </button>
+        </div>
         <div className="grid lg:grid-cols-2 gap-8">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
