@@ -176,8 +176,8 @@ export function VehicleModal({
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <Car className="w-5 h-5 text-indigo-600" />
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Car className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
@@ -231,7 +231,7 @@ export function VehicleModal({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-indigo-500 transition-colors flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-indigo-500"
+                      className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-primary transition-colors flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-primary"
                     >
                       <Upload className="w-6 h-6" />
                       <span className="text-xs">Upload</span>
@@ -261,7 +261,7 @@ export function VehicleModal({
                     {...register('make')}
                     placeholder="e.g. Toyota"
                     className={cn(
-                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary',
                       errors.make ? 'border-red-500' : 'border-gray-200'
                     )}
                   />
@@ -278,7 +278,7 @@ export function VehicleModal({
                     {...register('model')}
                     placeholder="e.g. Camry"
                     className={cn(
-                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary',
                       errors.model ? 'border-red-500' : 'border-gray-200'
                     )}
                   />
@@ -295,7 +295,7 @@ export function VehicleModal({
                     type="number"
                     {...register('year', { valueAsNumber: true })}
                     className={cn(
-                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary',
                       errors.year ? 'border-red-500' : 'border-gray-200'
                     )}
                   />
@@ -313,7 +313,7 @@ export function VehicleModal({
                   </label>
                   <select
                     {...register('category')}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     {categories.map((cat) => (
                       <option key={cat.value} value={cat.value}>
@@ -329,7 +329,7 @@ export function VehicleModal({
                   </label>
                   <select
                     {...register('status')}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     {statuses.map((status) => (
                       <option key={status.value} value={status.value}>
@@ -350,7 +350,7 @@ export function VehicleModal({
                     type="number"
                     {...register('dailyRate', { valueAsNumber: true })}
                     className={cn(
-                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary',
                       errors.dailyRate ? 'border-red-500' : 'border-gray-200'
                     )}
                   />
@@ -367,7 +367,7 @@ export function VehicleModal({
                     type="number"
                     {...register('seats', { valueAsNumber: true })}
                     className={cn(
-                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary',
                       errors.seats ? 'border-red-500' : 'border-gray-200'
                     )}
                   />
@@ -382,7 +382,7 @@ export function VehicleModal({
                   </label>
                   <select
                     {...register('transmission')}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     {transmissions.map((t) => (
                       <option key={t.value} value={t.value}>
@@ -398,7 +398,7 @@ export function VehicleModal({
                   </label>
                   <select
                     {...register('fuelType')}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     {fuelTypes.map((f) => (
                       <option key={f.value} value={f.value}>
@@ -420,7 +420,7 @@ export function VehicleModal({
                     {...register('mileage', { valueAsNumber: true })}
                     placeholder="e.g. 15000"
                     className={cn(
-                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary',
                       errors.mileage ? 'border-red-500' : 'border-gray-200'
                     )}
                   />
@@ -437,7 +437,7 @@ export function VehicleModal({
                     {...register('licensePlate')}
                     placeholder="e.g. ABC-1234"
                     className={cn(
-                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono uppercase',
+                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary font-mono uppercase',
                       errors.licensePlate ? 'border-red-500' : 'border-gray-200'
                     )}
                   />
@@ -455,7 +455,7 @@ export function VehicleModal({
                     placeholder="17-character VIN"
                     maxLength={17}
                     className={cn(
-                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono uppercase',
+                      'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary font-mono uppercase',
                       errors.vin ? 'border-red-500' : 'border-gray-200'
                     )}
                   />
@@ -479,8 +479,8 @@ export function VehicleModal({
                       className={cn(
                         'px-3 py-1.5 text-sm rounded-full border transition-colors',
                         selectedFeatures.includes(feature)
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'border-gray-200 text-gray-600 hover:border-indigo-500 hover:text-indigo-600'
+                          ? 'bg-primary text-white border-primary'
+                          : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
                       )}
                     >
                       {feature}
@@ -518,7 +518,7 @@ export function VehicleModal({
                     value={customFeature}
                     onChange={(e) => setCustomFeature(e.target.value)}
                     placeholder="Add custom feature..."
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -549,7 +549,7 @@ export function VehicleModal({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Saving...' : isEditing ? 'Update Vehicle' : 'Add Vehicle'}
               </button>

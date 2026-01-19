@@ -6,25 +6,25 @@ const steps = [
     icon: Search,
     title: 'Browse & Select',
     description: 'Explore our diverse fleet and find the perfect vehicle for your needs. Filter by category, price, or features.',
-    color: 'from-blue-500 to-blue-600',
+    color: 'from-orange-400 to-orange-600',
   },
   {
     icon: CalendarCheck,
     title: 'Book & Verify',
     description: 'Choose your dates, add optional extras, and complete a quick verification process.',
-    color: 'from-purple-500 to-purple-600',
+    color: 'from-orange-400 to-orange-600',
   },
   {
     icon: FileSignature,
     title: 'Sign & Pay',
     description: 'Review and sign the rental agreement digitally. Secure payment with multiple options.',
-    color: 'from-pink-500 to-pink-600',
+    color: 'from-orange-400 to-orange-600',
   },
   {
     icon: Car,
     title: 'Pick Up & Go',
     description: 'Collect your vehicle at the designated location. Our team will walk you through everything.',
-    color: 'from-indigo-500 to-indigo-600',
+    color: 'from-orange-400 to-orange-600',
   },
 ];
 
@@ -40,7 +40,7 @@ export default function HowItWorks() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12 lg:mb-16"
         >
-          <span className="inline-block px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-4">
+          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
             Simple Process
           </span>
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -54,7 +54,7 @@ export default function HowItWorks() {
         {/* Steps Grid */}
         <div className="relative">
           {/* Connector Line (Desktop) */}
-          <div className="hidden lg:block absolute top-24 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200" />
+          <div className="hidden lg:block absolute top-24 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-gray-200 via-orange-200 to-gray-200" />
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
             {steps.map((step, index) => (
@@ -78,7 +78,7 @@ export default function HowItWorks() {
                   </div>
 
                   {/* Content */}
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
                     {step.title}
                   </h3>
                   <p className="text-gray-600 leading-relaxed">

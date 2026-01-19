@@ -38,10 +38,12 @@ function App() {
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
 
           {/* Auth Routes */}
-          <Route path="/auth/login" element={<LoginPage />} />
-          <Route path="/auth/register" element={<RegisterPage />} />
-          <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          {/* Support legacy routes or redirects if needed, but clean slate is better */}
+          <Route path="/auth/*" element={<Navigate to="/login" replace />} />
 
           {/* Customer Dashboard Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>

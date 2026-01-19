@@ -6,43 +6,43 @@ const benefits = [
     icon: Car,
     title: 'Quality Fleet',
     description: 'All vehicles are regularly maintained and inspected to ensure your safety and comfort.',
-    color: 'bg-blue-100 text-blue-600',
+    color: 'bg-orange-50 text-primary',
   },
   {
     icon: Calendar,
     title: 'Flexible Rentals',
     description: 'Daily, weekly, or monthly rentals available. Extend or modify your booking anytime.',
-    color: 'bg-purple-100 text-purple-600',
+    color: 'bg-orange-50 text-primary',
   },
   {
     icon: DollarSign,
     title: 'Transparent Pricing',
     description: 'No hidden fees or surprises. What you see is what you pay, with all taxes included.',
-    color: 'bg-green-100 text-green-600',
+    color: 'bg-orange-50 text-primary',
   },
   {
     icon: Headphones,
     title: '24/7 Support',
     description: 'Our dedicated support team is available around the clock to assist you.',
-    color: 'bg-orange-100 text-orange-600',
+    color: 'bg-orange-50 text-primary',
   },
   {
     icon: ShieldCheck,
     title: 'Fully Insured',
     description: 'Comprehensive insurance coverage included with every rental for peace of mind.',
-    color: 'bg-red-100 text-red-600',
+    color: 'bg-orange-50 text-primary',
   },
   {
     icon: Zap,
     title: 'Easy Booking',
     description: 'Book in minutes with our streamlined online process. No paperwork hassle.',
-    color: 'bg-yellow-100 text-yellow-600',
+    color: 'bg-orange-50 text-primary',
   },
 ];
 
 export default function WhyChooseUs() {
   return (
-    <section className="py-20 lg:py-28 bg-white">
+    <section id="why-us" className="py-16 lg:py-24 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -50,9 +50,9 @@ export default function WhyChooseUs() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12 lg:mb-16"
+          className="text-center mb-12"
         >
-          <span className="inline-block px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-4">
+          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
             Why Us
           </span>
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -65,7 +65,7 @@ export default function WhyChooseUs() {
         </motion.div>
 
         {/* Benefits Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {benefits.map((benefit, index) => (
             <motion.div
               key={benefit.title}
@@ -73,15 +73,15 @@ export default function WhyChooseUs() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group p-6 lg:p-8 bg-white rounded-2xl border border-gray-100 hover:border-indigo-100 hover:shadow-xl transition-all duration-300"
+              className="group p-5 bg-white rounded-xl border border-gray-100 hover:border-primary/20 hover:shadow-xl transition-all duration-300"
             >
-              <div className={`w-14 h-14 rounded-xl ${benefit.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
-                <benefit.icon className="w-7 h-7" />
+              <div className={`w-12 h-12 rounded-xl ${benefit.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                <benefit.icon className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-primary transition-colors">
                 {benefit.title}
               </h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 {benefit.description}
               </p>
             </motion.div>

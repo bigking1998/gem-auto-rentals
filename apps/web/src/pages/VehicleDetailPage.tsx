@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -20,8 +20,10 @@ import {
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@gem/ui';
+import AvailabilityCalendar from '@/components/vehicles/AvailabilityCalendar';
 
-// Mock vehicle data
+// Mock vehicle data (same as before for now)
 const mockVehicle = {
   id: '1',
   make: 'Toyota',
@@ -90,13 +92,17 @@ const extras = [
 ];
 
 export default function VehicleDetailPage() {
-  const { id } = useParams();
+  useParams(); // Keep hook execution if needed, or remove if not. Let's just remove the variable destructuring to fix lint.
+  // Actually, better to just remove the line if unused. 
+  // const { id } = useParams(); -> remove
+
+  const navigate = useNavigate();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const vehicle = mockVehicle; // Would fetch from API using id
+  const vehicle = mockVehicle; // Would fetch from API
 
   const toggleExtra = (extraId: string) => {
     setSelectedExtras((prev) =>
@@ -128,309 +134,411 @@ export default function VehicleDetailPage() {
     setActiveImageIndex((prev) => (prev - 1 + vehicle.images.length) % vehicle.images.length);
   };
 
+  // Helper to parse "YYYY-MM-DD" as local date (00:00:00)
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  // Helper to format date as "YYYY-MM-DD" using local components
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50 pt-24">
       <Header />
 
       <main className="flex-1">
-        {/* Breadcrumb */}
-        <div className="bg-gray-50 border-b border-gray-200">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <Link
-              to="/vehicles"
-              className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to all vehicles
-            </Link>
-          </div>
-        </div>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Left Column - Images */}
-            <div>
-              {/* Main Image */}
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 mb-4">
-                <motion.img
-                  key={activeImageIndex}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  src={vehicle.images[activeImageIndex]}
-                  alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                  className="w-full h-full object-cover"
-                />
-
-                {/* Navigation Arrows */}
-                <button
-                  onClick={prevImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-
-                {/* Image Counter */}
-                <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 text-white text-sm rounded-full">
-                  {activeImageIndex + 1} / {vehicle.images.length}
-                </div>
-              </div>
-
-              {/* Thumbnail Grid */}
-              <div className="grid grid-cols-4 gap-3">
-                {vehicle.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveImageIndex(index)}
-                    className={cn(
-                      'aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all',
-                      index === activeImageIndex
-                        ? 'border-indigo-600 ring-2 ring-indigo-600/20'
-                        : 'border-transparent hover:border-gray-300'
-                    )}
-                  >
-                    <img
-                      src={image}
-                      alt={`View ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Column - Details */}
-            <div>
-              {/* Category Badge */}
-              <span className="inline-block px-3 py-1 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-full mb-4">
-                {vehicle.category}
-              </span>
-
-              {/* Title */}
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                {vehicle.year} {vehicle.make} {vehicle.model}
-              </h1>
-
-              {/* Rating */}
-              <div className="flex items-center gap-2 mb-6">
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={cn(
-                        'w-5 h-5',
-                        i < Math.floor(vehicle.averageRating)
-                          ? 'text-yellow-400 fill-yellow-400'
-                          : 'text-gray-200 fill-gray-200'
-                      )}
-                    />
-                  ))}
-                </div>
-                <span className="font-semibold">{vehicle.averageRating}</span>
-                <span className="text-gray-500">({vehicle.reviewCount} reviews)</span>
-              </div>
-
-              {/* Price */}
-              <div className="flex items-baseline gap-2 mb-6">
-                <span className="text-4xl font-bold text-gray-900">${vehicle.dailyRate}</span>
-                <span className="text-gray-500">/day</span>
-              </div>
-
-              {/* Description */}
-              <p className="text-gray-600 mb-6 leading-relaxed">{vehicle.description}</p>
-
-              {/* Specs Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-xl mb-6">
-                <div className="text-center">
-                  <Users className="w-6 h-6 mx-auto text-gray-400 mb-1" />
-                  <p className="font-semibold text-gray-900">{vehicle.seats}</p>
-                  <p className="text-sm text-gray-500">Seats</p>
-                </div>
-                <div className="text-center">
-                  <Gauge className="w-6 h-6 mx-auto text-gray-400 mb-1" />
-                  <p className="font-semibold text-gray-900">{vehicle.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</p>
-                  <p className="text-sm text-gray-500">Transmission</p>
-                </div>
-                <div className="text-center">
-                  <Fuel className="w-6 h-6 mx-auto text-gray-400 mb-1" />
-                  <p className="font-semibold text-gray-900 capitalize">{vehicle.fuelType.toLowerCase()}</p>
-                  <p className="text-sm text-gray-500">Fuel Type</p>
-                </div>
-                <div className="text-center">
-                  <MapPin className="w-6 h-6 mx-auto text-gray-400 mb-1" />
-                  <p className="font-semibold text-gray-900">{vehicle.doors}</p>
-                  <p className="text-sm text-gray-500">Doors</p>
-                </div>
-              </div>
-
-              {/* Features */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Features</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {vehicle.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-green-500" />
-                      <span className="text-gray-700">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Location */}
-              <div className="flex items-center gap-2 text-gray-600 mb-8">
-                <MapPin className="w-5 h-5" />
-                <span>Pickup Location: {vehicle.location}</span>
-              </div>
-
-              {/* Booking Card */}
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <h3 className="font-semibold text-lg text-gray-900 mb-4">Book This Vehicle</h3>
-
-                {/* Date Selection */}
-                <div className="grid sm:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      <Calendar className="w-4 h-4 inline mr-1" />
-                      Pick-up Date
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      <Calendar className="w-4 h-4 inline mr-1" />
-                      Return Date
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      min={startDate || new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Extras */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Optional Extras
-                  </label>
-                  <div className="space-y-2">
-                    {extras.map((extra) => (
-                      <label
-                        key={extra.id}
-                        className={cn(
-                          'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all',
-                          selectedExtras.includes(extra.id)
-                            ? 'border-indigo-600 bg-indigo-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedExtras.includes(extra.id)}
-                          onChange={() => toggleExtra(extra.id)}
-                          className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                        />
-                        <extra.icon className="w-5 h-5 text-gray-500" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{extra.name}</p>
-                          <p className="text-xs text-gray-500">{extra.description}</p>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          +${extra.price}/day
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Breakdown */}
-                {days > 0 && (
-                  <div className="border-t border-gray-200 pt-4 mb-4">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-600">
-                        ${vehicle.dailyRate} x {days} days
-                      </span>
-                      <span className="font-medium">${basePrice}</span>
-                    </div>
-                    {extrasPrice > 0 && (
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-600">Extras</span>
-                        <span className="font-medium">${extrasPrice}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-2 mt-2">
-                      <span>Total</span>
-                      <span>${totalPrice}</span>
-                    </div>
-                  </div>
-                )}
-
-                <Link
-                  to={days > 0 ? `/booking/${vehicle.id}?start=${startDate}&end=${endDate}&extras=${selectedExtras.join(',')}` : '#'}
-                  className={cn(
-                    'block w-full py-3 text-center font-semibold rounded-xl transition-all',
-                    days > 0
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  )}
-                  onClick={(e) => !days && e.preventDefault()}
-                >
-                  {days > 0 ? 'Book Now' : 'Select Dates to Book'}
-                </Link>
-              </div>
-            </div>
+          {/* Back Navigation */}
+          <div className="mb-6">
+            <button
+              onClick={() => {
+                if (window.history.state && window.history.state.idx > 0) {
+                  navigate(-1);
+                } else {
+                  navigate('/vehicles');
+                }
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary hover:border-primary/30 transition-all shadow-sm group"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              Back to vehicles
+            </button>
           </div>
 
-          {/* Reviews Section */}
-          <div className="mt-12 pt-12 border-t border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
+            {/* Left Column - Images & Details (8 cols) */}
+            <div className="lg:col-span-8 space-y-8">
+              {/* Image Gallery */}
+              <div className="space-y-4">
+                <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 shadow-md group">
+                  <motion.img
+                    key={activeImageIndex}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    src={vehicle.images[activeImageIndex]}
+                    alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                    className="w-full h-full object-cover"
+                  />
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {vehicle.reviews.map((review) => (
-                <div key={review.id} className="bg-white p-6 rounded-xl border border-gray-200">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {review.user.firstName[0]}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {review.user.firstName} {review.user.lastName}
-                      </p>
-                      <p className="text-sm text-gray-500">{review.createdAt}</p>
+                  {/* Navigation Arrows */}
+                  <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={prevImage}
+                      className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white text-gray-900 transition-colors transform hover:scale-105"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white text-gray-900 transition-colors transform hover:scale-105"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  {/* Image Counter */}
+                  <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/70 backdrop-blur-md text-white text-xs font-bold rounded-full">
+                    {activeImageIndex + 1} / {vehicle.images.length}
+                  </div>
+                </div>
+
+                {/* Thumbnails */}
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {vehicle.images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setActiveImageIndex(index)}
+                      className={cn(
+                        'shrink-0 w-24 aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all',
+                        index === activeImageIndex
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-transparent hover:border-gray-300'
+                      )}
+                    >
+                      <img
+                        src={image}
+                        alt={`View ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Title & Specs */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+                  <div>
+                    <span className="inline-block px-3 py-1 text-xs font-bold text-white bg-primary shadow-lg shadow-orange-200 rounded-full mb-3">
+                      {vehicle.category}
+                    </span>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+                      {vehicle.year} {vehicle.make} {vehicle.model}
+                    </h1>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={cn(
+                              'w-4 h-4',
+                              i < Math.floor(vehicle.averageRating)
+                                ? 'text-primary fill-primary'
+                                : 'text-gray-200 fill-gray-200'
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <span className="font-bold text-gray-900">{vehicle.averageRating}</span>
+                      <span className="text-gray-500 text-sm">({vehicle.reviewCount} reviews)</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={cn(
-                          'w-4 h-4',
-                          i < review.rating
-                            ? 'text-yellow-400 fill-yellow-400'
-                            : 'text-gray-200 fill-gray-200'
-                        )}
-                      />
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-bold text-gray-900">${vehicle.dailyRate}</span>
+                      <span className="text-gray-500 font-medium">/day</span>
+                    </div>
+                    <p className="text-green-600 text-sm font-medium flex items-center gap-1 mt-1">
+                      <Check className="w-3 h-3" /> Best Price Guarantee
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-gray-100">
+                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl">
+                    <Users className="w-6 h-6 text-gray-400 mb-2" />
+                    <span className="font-bold text-gray-900">{vehicle.seats} Seats</span>
+                    <span className="text-xs text-gray-500">Capacity</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl">
+                    <Gauge className="w-6 h-6 text-gray-400 mb-2" />
+                    <span className="font-bold text-gray-900">{vehicle.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</span>
+                    <span className="text-xs text-gray-500">Transmission</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl">
+                    <Fuel className="w-6 h-6 text-gray-400 mb-2" />
+                    <span className="font-bold text-gray-900 capitalize">{vehicle.fuelType.toLowerCase()}</span>
+                    <span className="text-xs text-gray-500">Fuel Type</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl">
+                    <MapPin className="w-6 h-6 text-gray-400 mb-2" />
+                    <span className="font-bold text-gray-900">{vehicle.doors} Doors</span>
+                    <span className="text-xs text-gray-500">Access</span>
+                  </div>
+                </div>
+
+                <div className="mt-8">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Description</h3>
+                  <p className="text-gray-600 leading-relaxed text-lg">{vehicle.description}</p>
+                </div>
+
+                <div className="mt-8">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Key Features</h3>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6">
+                    {vehicle.features.map((feature) => (
+                      <div key={feature} className="flex items-center gap-2.5">
+                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-green-600" />
+                        </div>
+                        <span className="text-gray-700 font-medium">{feature}</span>
+                      </div>
                     ))}
                   </div>
-
-                  <p className="text-gray-600">{review.comment}</p>
                 </div>
-              ))}
+              </div>
+
+              {/* Reviews */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
+                <div className="grid gap-6">
+                  {vehicle.reviews.map((review) => (
+                    <div key={review.id} className="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-primary to-orange-600 rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-orange-100">
+                            {review.user.firstName[0]}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">
+                              {review.user.firstName} {review.user.lastName}
+                            </p>
+                            <p className="text-sm text-gray-500">{review.createdAt}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={cn(
+                                'w-4 h-4',
+                                i < review.rating
+                                  ? 'text-primary fill-primary'
+                                  : 'text-gray-100 fill-gray-100'
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-gray-600 leading-relaxed pl-[52px]">{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Booking Card (4 cols) */}
+            <div className="lg:col-span-4">
+              <div className="space-y-4">
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                  <div className="p-6 bg-gray-900 text-white">
+                    <h3 className="font-bold text-lg mb-1">Book This Vehicle</h3>
+                    <p className="text-gray-400 text-sm">Complete your reservation securely</p>
+                  </div>
+
+                  <div className="p-6">
+                    {/* Dates */}
+                    <div className="space-y-4 mb-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                            Pick-up Date
+                          </label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className={cn(
+                                "w-full flex items-center justify-start text-left font-medium p-3 rounded-xl border transition-all",
+                                !startDate ? "text-gray-500 border-gray-200 hover:border-primary/50" : "text-gray-900 border-primary bg-primary/5"
+                              )}>
+                                <Calendar className="mr-2 h-4 w-4 shrink-0" />
+                                <span className="truncate">
+                                  {startDate ? parseLocalDate(startDate)?.toLocaleDateString() : "Select Date"}
+                                </span>
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <AvailabilityCalendar
+                                selectedStart={parseLocalDate(startDate)}
+                                selectedEnd={parseLocalDate(endDate)}
+                                onSelectStart={(date) => setStartDate(formatLocalDate(date))}
+                                onSelectEnd={(date) => {
+                                  if (date) {
+                                    setEndDate(formatLocalDate(date));
+                                  } else {
+                                    setEndDate('');
+                                  }
+                                }}
+                                minDate={new Date()}
+                                selectionMode="start"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                            Return Date
+                          </label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className={cn(
+                                "w-full flex items-center justify-start text-left font-medium p-3 rounded-xl border transition-all",
+                                !endDate ? "text-gray-500 border-gray-200 hover:border-primary/50" : "text-gray-900 border-primary bg-primary/5"
+                              )}>
+                                <Calendar className="mr-2 h-4 w-4 shrink-0" />
+                                <span className="truncate">
+                                  {endDate ? parseLocalDate(endDate)?.toLocaleDateString() : "Select Date"}
+                                </span>
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                              <AvailabilityCalendar
+                                selectedStart={parseLocalDate(startDate)}
+                                selectedEnd={parseLocalDate(endDate)}
+                                onSelectStart={(date) => setStartDate(formatLocalDate(date))}
+                                onSelectEnd={(date) => {
+                                  if (date) {
+                                    setEndDate(formatLocalDate(date));
+                                  } else {
+                                    setEndDate('');
+                                  }
+                                }}
+                                minDate={startDate ? parseLocalDate(startDate) || new Date() : new Date()}
+                                selectionMode="end"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Extras */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-bold text-gray-700 mb-3">
+                        Optional Extras
+                      </label>
+                      <div className="space-y-2">
+                        {extras.map((extra) => (
+                          <label
+                            key={extra.id}
+                            className={cn(
+                              'flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md',
+                              selectedExtras.includes(extra.id)
+                                ? 'border-primary bg-primary/5 shadow-orange-100'
+                                : 'border-gray-200 hover:border-primary/50'
+                            )}
+                          >
+                            <div className={cn(
+                              "w-5 h-5 rounded border flex items-center justify-center transition-colors",
+                              selectedExtras.includes(extra.id) ? "bg-primary border-primary" : "border-gray-300 bg-white"
+                            )}>
+                              {selectedExtras.includes(extra.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                              <input
+                                type="checkbox"
+                                checked={selectedExtras.includes(extra.id)}
+                                onChange={() => toggleExtra(extra.id)}
+                                className="hidden"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900 truncate">{extra.name}</p>
+                              <p className="text-xs text-gray-500 truncate">{extra.description}</p>
+                            </div>
+                            <span className="text-sm font-bold text-primary">
+                              +${extra.price}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    {days > 0 && (
+                      <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            ${vehicle.dailyRate} x {days} days
+                          </span>
+                          <span className="font-bold text-gray-900">${basePrice}</span>
+                        </div>
+                        {extrasPrice > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Extras</span>
+                            <span className="font-bold text-gray-900">${extrasPrice}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-3 text-gray-900">
+                          <span>Total</span>
+                          <span>${totalPrice}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <Link
+                      to={days > 0 ? `/booking/${vehicle.id}?start=${startDate}&end=${endDate}&extras=${selectedExtras.join(',')}` : '#'}
+                      className={cn(
+                        'block w-full py-4 text-center text-lg font-bold rounded-xl transition-all shadow-lg transform active:scale-[0.98]',
+                        days > 0
+                          ? 'bg-primary text-white hover:bg-orange-600 shadow-orange-200 hover:shadow-orange-300'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      )}
+                      onClick={(e) => !days && e.preventDefault()}
+                    >
+                      {days > 0 ? 'Book Now' : 'Select Dates'}
+                    </Link>
+
+                    <div className="flex items-center justify-center gap-2 mt-4 text-xs text-gray-500">
+                      <Shield className="w-3.5 h-3.5" />
+                      <span>Secure SSL Booking</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Help Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900 text-sm">Need Help?</p>
+                      <p className="text-xs text-gray-500">Call our expert support team</p>
+                      <a href="tel:+1234567890" className="text-primary font-bold text-sm block mt-0.5 hover:underline">
+                        +1 (555) 123-4567
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

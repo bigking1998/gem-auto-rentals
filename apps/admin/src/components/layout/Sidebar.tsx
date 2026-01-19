@@ -61,14 +61,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
           <>
             <span className="font-medium">{item.label}</span>
             {item.badge && (
-              <span className="ml-auto bg-indigo-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+              <span className="ml-auto bg-primary text-white text-xs font-medium px-2 py-0.5 rounded-full">
                 {item.badge}
               </span>
             )}
           </>
         )}
         {collapsed && item.badge && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-indigo-500 text-white text-xs font-medium rounded-full flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs font-medium rounded-full flex items-center justify-center">
             {item.badge}
           </span>
         )}
@@ -96,7 +96,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
             <Car className="w-5 h-5 text-white" />
           </div>
           {!collapsed && (
@@ -133,7 +133,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       {!collapsed && (
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold">
               JD
             </div>
             <div className="flex-1 min-w-0">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Plus, Search, Filter, MoreHorizontal, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { VehicleModal } from '@/components/vehicles/VehicleModal';
@@ -131,15 +132,15 @@ const initialVehicles: Vehicle[] = [
 
 const statusColors: Record<string, string> = {
   AVAILABLE: 'bg-green-100 text-green-800',
-  RENTED: 'bg-blue-100 text-blue-800',
+  RENTED: 'bg-purple-100 text-purple-800',
   MAINTENANCE: 'bg-orange-100 text-orange-800',
   RETIRED: 'bg-gray-100 text-gray-800',
 };
 
 const categoryColors: Record<string, string> = {
   ECONOMY: 'bg-green-100 text-green-800',
-  STANDARD: 'bg-blue-100 text-blue-800',
-  PREMIUM: 'bg-purple-100 text-purple-800',
+  STANDARD: 'bg-purple-100 text-purple-800',
+  PREMIUM: 'bg-rose-100 text-rose-800',
   LUXURY: 'bg-amber-100 text-amber-800',
   SUV: 'bg-orange-100 text-orange-800',
   VAN: 'bg-teal-100 text-teal-800',
@@ -341,7 +342,7 @@ export default function FleetManagement() {
         </div>
         <button
           onClick={handleAddVehicle}
-          className="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+          className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white font-bold rounded-xl shadow-lg shadow-orange-200 hover:bg-orange-600 hover:shadow-orange-300 transition-all"
         >
           <Plus className="w-5 h-5 mr-2" />
           Add Vehicle
@@ -350,36 +351,84 @@ export default function FleetManagement() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500">Total Vehicles</p>
-          <p className="text-2xl font-bold text-gray-900">{vehicles.length}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500">Available</p>
-          <p className="text-2xl font-bold text-green-600">
-            {vehicles.filter((v) => v.status === 'AVAILABLE').length}
-          </p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500">Rented</p>
-          <p className="text-2xl font-bold text-blue-600">
-            {vehicles.filter((v) => v.status === 'RENTED').length}
-          </p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500">Maintenance</p>
-          <p className="text-2xl font-bold text-orange-600">
-            {vehicles.filter((v) => v.status === 'MAINTENANCE').length}
-          </p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+              <Car className="w-5 h-5 text-gray-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{vehicles.length}</p>
+              <p className="text-sm text-gray-500">Total Vehicles</p>
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+              <Car className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-green-600">
+                {vehicles.filter((v) => v.status === 'AVAILABLE').length}
+              </p>
+              <p className="text-sm text-gray-500">Available</p>
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <Car className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-purple-600">
+                {vehicles.filter((v) => v.status === 'RENTED').length}
+              </p>
+              <p className="text-sm text-gray-500">Rented</p>
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+              <Wrench className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-orange-600">
+                {vehicles.filter((v) => v.status === 'MAINTENANCE').length}
+              </p>
+              <p className="text-sm text-gray-500">Maintenance</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Bulk Actions Bar */}
       {hasSelection && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CheckSquare className="w-5 h-5 text-indigo-600" />
-            <span className="font-medium text-indigo-900">
+            <CheckSquare className="w-5 h-5 text-primary" />
+            <span className="font-medium text-orange-900">
               {selectedVehicles.size} vehicle{selectedVehicles.size > 1 ? 's' : ''} selected
             </span>
           </div>
@@ -387,14 +436,14 @@ export default function FleetManagement() {
             <div className="relative">
               <button
                 onClick={() => setShowBulkActions(!showBulkActions)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors"
               >
                 Bulk Actions
               </button>
               {showBulkActions && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowBulkActions(false)} />
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-2">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-2">
                     <p className="px-4 py-1 text-xs text-gray-400 uppercase">Change Status</p>
                     {['AVAILABLE', 'MAINTENANCE', 'RETIRED'].map((status) => (
                       <button
@@ -427,7 +476,7 @@ export default function FleetManagement() {
             </div>
             <button
               onClick={() => setSelectedVehicles(new Set())}
-              className="px-4 py-2 border border-indigo-300 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+              className="px-4 py-2 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors"
             >
               Clear Selection
             </button>
@@ -436,7 +485,7 @@ export default function FleetManagement() {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
@@ -446,7 +495,7 @@ export default function FleetManagement() {
               placeholder="Search vehicles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
 
@@ -456,7 +505,7 @@ export default function FleetManagement() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">All Status</option>
               <option value="AVAILABLE">Available</option>
@@ -469,7 +518,12 @@ export default function FleetManagement() {
       </div>
 
       {/* Vehicle Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+      >
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -480,7 +534,7 @@ export default function FleetManagement() {
                     className="p-1 rounded hover:bg-gray-200 transition-colors"
                   >
                     {isAllSelected ? (
-                      <CheckSquare className="w-5 h-5 text-indigo-600" />
+                      <CheckSquare className="w-5 h-5 text-primary" />
                     ) : (
                       <Square className="w-5 h-5 text-gray-400" />
                     )}
@@ -510,7 +564,7 @@ export default function FleetManagement() {
                     key={vehicle.id}
                     className={cn(
                       'hover:bg-gray-50 transition-colors',
-                      selectedVehicles.has(vehicle.id) && 'bg-indigo-50'
+                      selectedVehicles.has(vehicle.id) && 'bg-orange-50'
                     )}
                   >
                     <td className="px-6 py-4">
@@ -519,7 +573,7 @@ export default function FleetManagement() {
                         className="p-1 rounded hover:bg-gray-200 transition-colors"
                       >
                         {selectedVehicles.has(vehicle.id) ? (
-                          <CheckSquare className="w-5 h-5 text-indigo-600" />
+                          <CheckSquare className="w-5 h-5 text-primary" />
                         ) : (
                           <Square className="w-5 h-5 text-gray-400" />
                         )}
@@ -613,7 +667,7 @@ export default function FleetManagement() {
                               className="fixed inset-0 z-10"
                               onClick={() => setActiveDropdown(null)}
                             />
-                            <div className="absolute right-0 mt-1 w-52 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
+                            <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20">
                               <button
                                 onClick={() => handleEditVehicle(vehicle)}
                                 className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -645,14 +699,14 @@ export default function FleetManagement() {
                                   onClick={() => handleStatusChange(vehicle.id, status as Vehicle['status'])}
                                   className={cn(
                                     'w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50',
-                                    vehicle.status === status ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700'
+                                    vehicle.status === status ? 'text-primary bg-orange-50' : 'text-gray-700'
                                   )}
                                 >
                                   <span
                                     className={cn(
                                       'w-2 h-2 rounded-full',
                                       status === 'AVAILABLE' && 'bg-green-500',
-                                      status === 'RENTED' && 'bg-blue-500',
+                                      status === 'RENTED' && 'bg-purple-500',
                                       status === 'MAINTENANCE' && 'bg-orange-500',
                                       status === 'RETIRED' && 'bg-gray-500'
                                     )}
@@ -686,18 +740,18 @@ export default function FleetManagement() {
             Showing {filteredVehicles.length} of {vehicles.length} vehicles
           </p>
           <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+            <button className="px-3 py-1.5 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50">
               Previous
             </button>
-            <button className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+            <button className="px-3 py-1.5 text-sm bg-primary text-white rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-200">
               1
             </button>
-            <button className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">
+            <button className="px-3 py-1.5 text-sm border border-gray-200 rounded-xl hover:bg-gray-50">
               Next
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Vehicle Modal */}
       <VehicleModal
@@ -760,7 +814,7 @@ export default function FleetManagement() {
                 <select
                   value={maintenanceForm.type}
                   onChange={(e) => setMaintenanceForm({ ...maintenanceForm, type: e.target.value as MaintenanceSchedule['type'] })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   {maintenanceTypes.map((type) => (
                     <option key={type.value} value={type.value}>

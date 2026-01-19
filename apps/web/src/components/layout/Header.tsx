@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Car } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const navItems = [
+const navLinks = [
+  { label: 'Home', href: '/' },
   { label: 'Browse Cars', href: '/vehicles' },
   { label: 'How It Works', href: '/#how-it-works' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'Why Us', href: '/#why-us' },
+  { label: 'FAQ', href: '/#faq' },
 ];
 
 export default function Header() {
@@ -17,118 +17,98 @@ export default function Header() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        isScrolled
-          ? 'bg-white/80 backdrop-blur-lg shadow-sm'
-          : 'bg-transparent'
-      )}
-    >
-      <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+    <header className="fixed top-0 left-0 right-0 z-50 pt-6 px-4 sm:px-6 lg:px-8 transition-all duration-300">
+      <div
+        className={`
+          max-w-7xl mx-auto rounded-2xl transition-all duration-300
+          ${isScrolled
+            ? 'bg-white/95 backdrop-blur-md shadow-lg py-3 px-6'
+            : 'bg-white shadow-md py-4 px-8'}
+        `}
+      >
+        <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <Link to="/" className="flex items-center space-x-2 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center transition-transform group-hover:scale-105">
               <Car className="w-6 h-6 text-white" />
             </div>
-            <span className={cn(
-              'text-xl font-bold transition-colors',
-              isScrolled ? 'text-gray-900' : 'text-white'
-            )}>
-              Gem Auto
+            <span className="text-xl font-bold text-gray-900 tracking-tight">
+              Gem Auto Rentals
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                to={item.href}
-                className={cn(
-                  'text-sm font-medium transition-colors hover:text-indigo-500',
-                  isScrolled ? 'text-gray-700' : 'text-white/90 hover:text-white'
-                )}
+          <nav className="hidden md:flex items-center space-x-8">
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-sm font-medium text-gray-600 hover:text-primary transition-colors hover:bg-gray-50 px-3 py-2 rounded-lg"
               >
-                {item.label}
-              </Link>
+                {link.label}
+              </a>
             ))}
-          </div>
+          </nav>
 
           {/* Auth Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
-            <Link
-              to="/login"
-              className={cn(
-                'text-sm font-medium transition-colors',
-                isScrolled ? 'text-gray-700 hover:text-gray-900' : 'text-white/90 hover:text-white'
-              )}
-            >
+          <div className="hidden md:flex items-center space-x-4">
+            <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-primary hover:bg-orange-50 px-4 py-2 rounded-lg transition-colors">
               Log in
             </Link>
-            <Link
-              to="/register"
-              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
-            >
-              Sign Up
+            <Link to="/signup" className="text-sm font-bold bg-primary hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all">
+              Sign up
             </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <button
+            className="md:hidden p-2 text-gray-600 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg"
-            aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? (
-              <X className={cn('w-6 h-6', isScrolled ? 'text-gray-900' : 'text-white')} />
-            ) : (
-              <Menu className={cn('w-6 h-6', isScrolled ? 'text-gray-900' : 'text-white')} />
-            )}
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
+      </div>
 
-        {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
         {isMobileMenuOpen && (
-          <div className="lg:hidden py-4 bg-white rounded-lg shadow-lg mt-2">
-            <div className="flex flex-col space-y-1 px-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.href}
-                  className="text-gray-700 hover:text-indigo-500 py-2 text-sm font-medium transition-colors"
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-[calc(100%+0.5rem)] left-4 right-4 bg-white rounded-2xl shadow-xl p-6 md:hidden border border-gray-100"
+          >
+            <nav className="flex flex-col space-y-4">
+              {navLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className="text-lg font-medium text-gray-600 hover:text-primary hover:bg-gray-50 px-4 py-3 rounded-xl transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  {item.label}
-                </Link>
+                  {link.label}
+                </a>
               ))}
-              <hr className="my-2" />
-              <Link
-                to="/login"
-                className="text-gray-700 hover:text-gray-900 py-2 text-sm font-medium transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Log in
-              </Link>
-              <Link
-                to="/register"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg mt-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Sign Up
-              </Link>
-            </div>
-          </div>
+              <div className="pt-4 border-t border-gray-100 flex flex-col space-y-3">
+                <Link to="/login" className="w-full text-center text-gray-700 hover:bg-gray-50 hover:text-primary font-medium py-3 rounded-lg border border-gray-200 block" onClick={() => setIsMobileMenuOpen(false)}>
+                  Log in
+                </Link>
+                <Link to="/signup" className="w-full text-center bg-primary hover:bg-orange-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-orange-200 block" onClick={() => setIsMobileMenuOpen(false)}>
+                  Sign up
+                </Link>
+              </div>
+            </nav>
+          </motion.div>
         )}
-      </nav>
+      </AnimatePresence>
     </header>
   );
 }

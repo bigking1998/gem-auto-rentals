@@ -93,3 +93,11 @@ export {
   PaginationPrevious,
   SimplePagination,
 } from './components/pagination';
+
+export { Checkbox } from './components/checkbox';
+
+export { RadioGroup, RadioGroupItem } from './components/radio-group';
+
+export { Slider } from './components/slider';
+
+export { Popover, PopoverTrigger, PopoverContent } from './components/popover';

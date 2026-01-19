@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   Search,
   MoreHorizontal,
@@ -13,9 +15,9 @@ import {
   CheckCircle,
   XCircle,
   Users,
+  ArrowRight,
 } from 'lucide-react';
 import { cn, formatDate, formatCurrency } from '@/lib/utils';
-import { CustomerProfileModal } from '@/components/customers/CustomerProfileModal';
 
 // Extended mock data with full customer details
 interface CustomerBooking {
@@ -225,11 +227,10 @@ const initialCustomers: Customer[] = [
 ];
 
 export default function CustomersPage() {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [searchQuery, setSearchQuery] = useState('');
   const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'pending'>('all');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   const filteredCustomers = customers.filter((customer) => {
@@ -244,55 +245,13 @@ export default function CustomersPage() {
   });
 
   const handleViewProfile = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setIsModalOpen(true);
+    navigate(`/customers/${customer.id}`);
     setActiveDropdown(null);
-  };
-
-  const handleVerifyDocument = (customerId: string, documentId: string) => {
-    setCustomers((prev) =>
-      prev.map((c) =>
-        c.id === customerId
-          ? {
-              ...c,
-              documents: c.documents?.map((d) =>
-                d.id === documentId ? { ...d, verified: true } : d
-              ),
-            }
-          : c
-      )
-    );
-
-    // Check if all documents are now verified
-    const customer = customers.find((c) => c.id === customerId);
-    if (customer?.documents?.every((d) => d.verified || d.id === documentId)) {
-      setCustomers((prev) =>
-        prev.map((c) =>
-          c.id === customerId ? { ...c, verified: true } : c
-        )
-      );
-    }
-
-    // Update selected customer if modal is open
-    if (selectedCustomer?.id === customerId) {
-      setSelectedCustomer((prev) =>
-        prev
-          ? {
-              ...prev,
-              documents: prev.documents?.map((d) =>
-                d.id === documentId ? { ...d, verified: true } : d
-              ),
-            }
-          : null
-      );
-    }
   };
 
   const handleDeleteCustomer = (customerId: string) => {
     if (window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
       setCustomers((prev) => prev.filter((c) => c.id !== customerId));
-      setIsModalOpen(false);
-      setSelectedCustomer(null);
     }
   };
 
@@ -312,7 +271,7 @@ export default function CustomersPage() {
           <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-500">Manage your customer accounts</p>
         </div>
-        <button className="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+        <button className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white font-bold rounded-xl shadow-lg shadow-orange-200 hover:bg-orange-600 hover:shadow-orange-300 transition-all">
           <Plus className="w-5 h-5 mr-2" />
           Add Customer
         </button>
@@ -320,26 +279,74 @@ export default function CustomersPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500">Total Customers</p>
-          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500">Verified</p>
-          <p className="text-2xl font-bold text-green-600">{stats.verified}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500">Total Revenue</p>
-          <p className="text-2xl font-bold text-indigo-600">{formatCurrency(stats.totalRevenue)}</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+              <Users className="w-5 h-5 text-gray-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-sm text-gray-500">Total Customers</p>
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-green-600">{stats.verified}</p>
+              <p className="text-sm text-gray-500">Verified</p>
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
+              <XCircle className="w-5 h-5 text-yellow-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+              <p className="text-sm text-gray-500">Pending</p>
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+              <Users className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-primary">{formatCurrency(stats.totalRevenue)}</p>
+              <p className="text-sm text-gray-500">Total Revenue</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
@@ -349,7 +356,7 @@ export default function CustomersPage() {
               placeholder="Search customers by name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
 
@@ -359,7 +366,7 @@ export default function CustomersPage() {
             <select
               value={verificationFilter}
               onChange={(e) => setVerificationFilter(e.target.value as 'all' | 'verified' | 'pending')}
-              className="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">All Status</option>
               <option value="verified">Verified</option>
@@ -370,28 +377,31 @@ export default function CustomersPage() {
       </div>
 
       {/* Customers Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredCustomers.map((customer) => (
-          <div
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredCustomers.map((customer, index) => (
+          <motion.div
             key={customer.id}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05, duration: 0.3 }}
+            className="group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer"
             onClick={() => handleViewProfile(customer)}
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold shadow-lg shadow-orange-200">
                   {customer.name.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{customer.name}</h3>
+                  <h3 className="font-bold text-gray-900 group-hover:text-primary transition-colors">{customer.name}</h3>
                   <div className="flex items-center gap-1">
                     {customer.verified ? (
-                      <span className="flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full font-medium">
                         <CheckCircle className="w-3 h-3" />
                         Verified
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-xs text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full font-medium">
                         <XCircle className="w-3 h-3" />
                         Pending
                       </span>
@@ -405,7 +415,7 @@ export default function CustomersPage() {
                     e.stopPropagation();
                     setActiveDropdown(activeDropdown === customer.id ? null : customer.id);
                   }}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
                 >
                   <MoreHorizontal className="w-5 h-5 text-gray-400" />
                 </button>
@@ -420,7 +430,7 @@ export default function CustomersPage() {
                         setActiveDropdown(null);
                       }}
                     />
-                    <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
+                    <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -499,35 +509,28 @@ export default function CustomersPage() {
                   e.stopPropagation();
                   handleViewProfile(customer);
                 }}
-                className="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl shadow-lg shadow-orange-200 hover:bg-orange-600 hover:shadow-orange-300 transition-all group/btn"
               >
-                View Profile
+                View
+                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
               </button>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {/* Empty State */}
       {filteredCustomers.length === 0 && (
-        <div className="bg-white rounded-xl p-12 shadow-sm border border-gray-100 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 text-center"
+        >
           <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-1">No customers found</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">No customers found</h3>
           <p className="text-gray-500 mb-4">Try adjusting your search or filter criteria.</p>
-        </div>
+        </motion.div>
       )}
-
-      {/* Customer Profile Modal */}
-      <CustomerProfileModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedCustomer(null);
-        }}
-        customer={selectedCustomer}
-        onVerifyDocument={handleVerifyDocument}
-        onDeleteCustomer={handleDeleteCustomer}
-      />
     </div>
   );
 }

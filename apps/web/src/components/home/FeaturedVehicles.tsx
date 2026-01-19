@@ -17,7 +17,7 @@ const vehicles = [
     seats: 5,
     transmission: 'AUTOMATIC',
     fuelType: 'GASOLINE',
-    image: null,
+    image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800&q=80',
   },
   {
     id: '2',
@@ -31,7 +31,7 @@ const vehicles = [
     seats: 5,
     transmission: 'AUTOMATIC',
     fuelType: 'GASOLINE',
-    image: null,
+    image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80',
   },
   {
     id: '3',
@@ -45,7 +45,7 @@ const vehicles = [
     seats: 5,
     transmission: 'AUTOMATIC',
     fuelType: 'ELECTRIC',
-    image: null,
+    image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&q=80',
   },
   {
     id: '4',
@@ -59,17 +59,17 @@ const vehicles = [
     seats: 7,
     transmission: 'AUTOMATIC',
     fuelType: 'GASOLINE',
-    image: null,
+    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80',
   },
 ];
 
 const categoryColors: Record<string, string> = {
-  ECONOMY: 'bg-green-100 text-green-800',
-  STANDARD: 'bg-blue-100 text-blue-800',
-  PREMIUM: 'bg-purple-100 text-purple-800',
-  LUXURY: 'bg-amber-100 text-amber-800',
-  SUV: 'bg-orange-100 text-orange-800',
-  VAN: 'bg-teal-100 text-teal-800',
+  ECONOMY: 'bg-primary text-white shadow-md',
+  STANDARD: 'bg-primary text-white shadow-md',
+  PREMIUM: 'bg-primary text-white shadow-md',
+  LUXURY: 'bg-primary text-white shadow-md',
+  SUV: 'bg-primary text-white shadow-md',
+  VAN: 'bg-primary text-white shadow-md',
 };
 
 export default function FeaturedVehicles() {
@@ -84,7 +84,7 @@ export default function FeaturedVehicles() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12 lg:mb-16"
         >
-          <span className="inline-block px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-4">
+          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
             Our Fleet
           </span>
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -108,10 +108,10 @@ export default function FeaturedVehicles() {
             >
               <Link
                 to={`/vehicles/${vehicle.id}`}
-                className="group block bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="group block bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Image */}
-                <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 overflow-hidden">
+                <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
                   {vehicle.image ? (
                     <img
                       src={vehicle.image}
@@ -121,14 +121,14 @@ export default function FeaturedVehicles() {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <svg className="w-20 h-20 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5-1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
                       </svg>
                     </div>
                   )}
 
                   {/* Category Badge */}
                   <span className={cn(
-                    'absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-medium',
+                    'absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-bold tracking-wide uppercase',
                     categoryColors[vehicle.category] || 'bg-gray-100 text-gray-800'
                   )}>
                     {vehicle.category}
@@ -138,13 +138,13 @@ export default function FeaturedVehicles() {
                 {/* Content */}
                 <div className="p-5">
                   {/* Title */}
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors">
                     {vehicle.year} {vehicle.make} {vehicle.model}
                   </h3>
 
                   {/* Rating */}
                   <div className="flex items-center gap-1 mb-4">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <Star className="w-4 h-4 text-primary fill-current" />
                     <span className="text-sm font-medium text-gray-900">{vehicle.rating}</span>
                     <span className="text-sm text-gray-500">({vehicle.reviewCount} reviews)</span>
                   </div>
@@ -171,7 +171,7 @@ export default function FeaturedVehicles() {
                       <span className="text-2xl font-bold text-gray-900">{formatCurrency(vehicle.dailyRate)}</span>
                       <span className="text-gray-500">/day</span>
                     </div>
-                    <span className="inline-flex items-center text-sm font-medium text-indigo-600 group-hover:text-indigo-700">
+                    <span className="inline-flex items-center text-sm font-bold text-primary group-hover:text-orange-700 uppercase tracking-wide">
                       View Details
                       <ArrowRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </span>
@@ -192,7 +192,7 @@ export default function FeaturedVehicles() {
         >
           <Link
             to="/vehicles"
-            className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl group"
+            className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-primary rounded-lg hover:bg-orange-600 transition-all shadow-lg hover:shadow-xl group"
           >
             View All Vehicles
             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />

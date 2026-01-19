@@ -12,6 +12,7 @@ import {
   User,
   Phone,
   Check,
+  ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -123,65 +124,28 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Image/Branding */}
-      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-indigo-600 to-purple-700 relative overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center p-12 text-white">
-          <div className="max-w-md text-center">
-            <h2 className="text-3xl font-bold mb-4">
-              Join Gem Auto Rentals Today
-            </h2>
-            <p className="text-white/80 text-lg mb-8">
-              Create your account and unlock access to our premium fleet of vehicles
-              at competitive rates.
-            </p>
-
-            {/* Benefits */}
-            <div className="grid grid-cols-2 gap-4 text-left">
-              {[
-                { title: 'Premium Fleet', desc: '50+ vehicles to choose from' },
-                { title: 'Best Prices', desc: 'Guaranteed lowest rates' },
-                { title: '24/7 Support', desc: 'Always here to help' },
-                { title: 'Easy Booking', desc: 'Book in just 2 minutes' },
-              ].map((benefit, index) => (
-                <div
-                  key={index}
-                  className="bg-white/10 backdrop-blur-sm rounded-lg p-4"
-                >
-                  <h3 className="font-semibold mb-1">{benefit.title}</h3>
-                  <p className="text-sm text-white/70">{benefit.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+      {/* Left Side - Form */}
+      <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto bg-white relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
+          className="w-full max-w-md py-8"
         >
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <Car className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Gem Auto Rentals</span>
-          </Link>
+          {/* Back to Home */}
+          <div className="mb-8">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Home</span>
+            </Link>
+          </div>
 
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Create an account</h1>
-            <p className="text-gray-500 mt-1">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Create an account</h1>
+            <p className="text-gray-500 mt-2">
               Get started with your free account today
             </p>
           </div>
@@ -202,7 +166,7 @@ export default function RegisterPage() {
                     onChange={(e) => updateField('firstName', e.target.value)}
                     placeholder="John"
                     className={cn(
-                      'w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+                      'w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
                       errors.firstName ? 'border-red-300' : 'border-gray-200'
                     )}
                   />
@@ -221,7 +185,7 @@ export default function RegisterPage() {
                   onChange={(e) => updateField('lastName', e.target.value)}
                   placeholder="Doe"
                   className={cn(
-                    'w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+                    'w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
                     errors.lastName ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
@@ -244,7 +208,7 @@ export default function RegisterPage() {
                   onChange={(e) => updateField('email', e.target.value)}
                   placeholder="you@example.com"
                   className={cn(
-                    'w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+                    'w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
                     errors.email ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
@@ -267,7 +231,7 @@ export default function RegisterPage() {
                   onChange={(e) => updateField('phone', e.target.value)}
                   placeholder="+1 (555) 123-4567"
                   className={cn(
-                    'w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+                    'w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
                     errors.phone ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
@@ -290,7 +254,7 @@ export default function RegisterPage() {
                   onChange={(e) => updateField('password', e.target.value)}
                   placeholder="Create a strong password"
                   className={cn(
-                    'w-full pl-10 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+                    'w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
                     errors.password ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
@@ -338,7 +302,7 @@ export default function RegisterPage() {
                   onChange={(e) => updateField('confirmPassword', e.target.value)}
                   placeholder="Confirm your password"
                   className={cn(
-                    'w-full pl-10 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+                    'w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
                     errors.confirmPassword ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
@@ -362,15 +326,15 @@ export default function RegisterPage() {
                   type="checkbox"
                   checked={formData.agreeToTerms}
                   onChange={(e) => updateField('agreeToTerms', e.target.checked)}
-                  className="w-4 h-4 mt-0.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  className="w-4 h-4 mt-0.5 text-primary border-gray-300 rounded focus:ring-primary"
                 />
                 <span className="text-sm text-gray-600">
                   I agree to the{' '}
-                  <Link to="/terms" className="text-indigo-600 hover:underline">
+                  <Link to="/terms" className="text-primary hover:underline font-medium">
                     Terms of Service
                   </Link>{' '}
                   and{' '}
-                  <Link to="/privacy" className="text-indigo-600 hover:underline">
+                  <Link to="/privacy" className="text-primary hover:underline font-medium">
                     Privacy Policy
                   </Link>
                 </span>
@@ -385,11 +349,11 @@ export default function RegisterPage() {
               type="submit"
               disabled={isLoading}
               className={cn(
-                'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-all',
-                'bg-gradient-to-r from-indigo-600 to-purple-600',
+                'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold transition-all shadow-lg shadow-orange-200 hover:shadow-orange-300',
+                'bg-primary hover:bg-orange-600',
                 isLoading
                   ? 'opacity-70 cursor-not-allowed'
-                  : 'hover:from-indigo-700 hover:to-purple-700'
+                  : ''
               )}
             >
               {isLoading ? (
@@ -410,13 +374,67 @@ export default function RegisterPage() {
           <p className="mt-6 text-center text-gray-600">
             Already have an account?{' '}
             <Link
-              to="/auth/login"
-              className="text-indigo-600 hover:text-indigo-700 font-medium"
+              to="/login"
+              className="text-primary hover:text-orange-600 font-bold"
             >
               Sign in
             </Link>
           </p>
         </motion.div>
+      </div>
+
+      {/* Right Side - Image/Branding */}
+      <div className="hidden lg:flex lg:flex-1 bg-gray-900 relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gray-900/90 z-10" />
+          <img
+            src="https://images.unsplash.com/photo-1503376763036-066120622c74?w=1920"
+            alt="Luxury SUV"
+            className="w-full h-full object-cover opacity-50 grayscale"
+          />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center p-12 text-white h-full">
+          {/* Logo */}
+          <div className="absolute top-8 left-8">
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-all">
+                <Car className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xl font-bold text-white">Gem Auto Rentals</span>
+            </Link>
+          </div>
+
+          <div className="max-w-md text-center">
+            <h2 className="text-4xl font-bold mb-6">
+              Join Gem <span className="text-primary">Auto Rentals</span>
+            </h2>
+            <p className="text-gray-300 text-lg mb-12">
+              Create your account and unlock access to our premium fleet of vehicles
+              at competitive rates.
+            </p>
+
+            {/* Benefits */}
+            <div className="grid grid-cols-2 gap-4 text-left">
+              {[
+                { title: 'Premium Fleet', desc: '50+ vehicles' },
+                { title: 'Best Prices', desc: 'Guaranteed rates' },
+                { title: '24/7 Support', desc: 'Always here' },
+                { title: 'Easy Booking', desc: 'Book in 2 mins' },
+              ].map((benefit, index) => (
+                <div
+                  key={index}
+                  className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10"
+                >
+                  <h3 className="font-bold mb-2 text-primary">{benefit.title}</h3>
+                  <p className="text-sm text-gray-400">{benefit.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

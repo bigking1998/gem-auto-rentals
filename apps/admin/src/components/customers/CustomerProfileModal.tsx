@@ -133,7 +133,7 @@ export function CustomerProfileModal({
           {/* Header */}
           <div className="relative">
             {/* Background gradient */}
-            <div className="h-24 bg-gradient-to-r from-indigo-500 to-purple-600" />
+            <div className="h-24 bg-gradient-to-r from-orange-400 to-orange-600" />
 
             {/* Close button */}
             <button
@@ -145,7 +145,7 @@ export function CustomerProfileModal({
 
             {/* Customer info overlay */}
             <div className="absolute -bottom-12 left-6 flex items-end gap-4">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
                 {customer.name.split(' ').map(n => n[0]).join('')}
               </div>
               <div className="mb-2">
@@ -189,7 +189,7 @@ export function CustomerProfileModal({
                 className={cn(
                   'px-4 py-3 text-sm font-medium transition-colors',
                   activeTab === tab
-                    ? 'text-indigo-600 border-b-2 border-indigo-600'
+                    ? 'text-primary border-b-2 border-primary'
                     : 'text-gray-500 hover:text-gray-700'
                 )}
               >
@@ -273,8 +273,8 @@ export function CustomerProfileModal({
                 <div className="space-y-6">
                   {/* Statistics */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-indigo-50 rounded-xl p-4 text-center">
-                      <Car className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
+                    <div className="bg-orange-50 rounded-xl p-4 text-center">
+                      <Car className="w-8 h-8 text-primary mx-auto mb-2" />
                       <p className="text-2xl font-bold text-gray-900">{customer.totalBookings}</p>
                       <p className="text-sm text-gray-500">Total Bookings</p>
                     </div>
@@ -283,8 +283,8 @@ export function CustomerProfileModal({
                       <p className="text-2xl font-bold text-gray-900">{formatCurrency(customer.totalSpent)}</p>
                       <p className="text-sm text-gray-500">Total Spent</p>
                     </div>
-                    <div className="bg-purple-50 rounded-xl p-4 text-center">
-                      <Star className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                    <div className="bg-amber-50 rounded-xl p-4 text-center">
+                      <Star className="w-8 h-8 text-amber-600 mx-auto mb-2" />
                       <p className="text-2xl font-bold text-gray-900">{formatCurrency(averageBookingValue)}</p>
                       <p className="text-sm text-gray-500">Avg. Booking</p>
                     </div>
@@ -334,8 +334,8 @@ export function CustomerProfileModal({
                       className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                          <Car className="w-5 h-5 text-indigo-600" />
+                        <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                          <Car className="w-5 h-5 text-primary" />
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">{booking.vehicle}</p>
@@ -393,7 +393,7 @@ export function CustomerProfileModal({
                         ) : (
                           <button
                             onClick={() => onVerifyDocument?.(customer.id, doc.id)}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-orange-600 transition-colors"
                           >
                             <Shield className="w-3 h-3" />
                             Verify
@@ -429,14 +429,14 @@ export function CustomerProfileModal({
                       onChange={(e) => setNewNote(e.target.value)}
                       placeholder="Write a note about this customer..."
                       rows={3}
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                     />
                   </div>
                   <div className="flex justify-end mt-3">
                     <button
                       onClick={handleAddNote}
                       disabled={!newNote.trim()}
-                      className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add Note
                     </button>
@@ -449,7 +449,7 @@ export function CustomerProfileModal({
                     <div key={note.id} className="bg-gray-50 rounded-xl p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-sm font-medium">
+                          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-primary text-sm font-medium">
                             {note.author.split(' ').map(n => n[0]).join('')}
                           </div>
                           <div>

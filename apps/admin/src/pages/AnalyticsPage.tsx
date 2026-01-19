@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, DollarSign, Car, Users, Calendar, Download, FileText, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { exportToCSV, exportToPDF, formatCurrencyForExport } from '@/lib/export';
@@ -200,7 +201,11 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
           <p className="text-gray-500">Track your business performance</p>
@@ -210,7 +215,7 @@ export default function AnalyticsPage() {
           <select
             value={timePeriod}
             onChange={(e) => setTimePeriod(e.target.value)}
-            className="border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
           >
             <option>Last 6 months</option>
             <option>Last 12 months</option>
@@ -222,7 +227,7 @@ export default function AnalyticsPage() {
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300"
             >
               <Download className="w-4 h-4" />
               Export
@@ -235,7 +240,7 @@ export default function AnalyticsPage() {
                   className="fixed inset-0 z-10"
                   onClick={() => setShowExportMenu(false)}
                 />
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-2">
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-2">
                   <button
                     onClick={handleExportPDF}
                     className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors"
@@ -271,22 +276,25 @@ export default function AnalyticsPage() {
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <div
+        {stats.map((stat, index) => (
+          <motion.div
             key={stat.label}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 * index, duration: 0.3 }}
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <stat.icon className="w-5 h-5 text-indigo-600" />
+              <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
+                <stat.icon className="w-6 h-6 text-primary" />
               </div>
               <div className={cn(
-                'flex items-center gap-1 text-sm font-medium',
-                stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                'flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-lg',
+                stat.trend === 'up' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
               )}>
                 {stat.trend === 'up' ? (
                   <TrendingUp className="w-4 h-4" />
@@ -302,14 +310,19 @@ export default function AnalyticsPage() {
                 : `${stat.value.toLocaleString()}${stat.suffix || ''}`}
             </p>
             <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
+        >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Monthly Revenue</h2>
             <button
@@ -326,7 +339,7 @@ export default function AnalyticsPage() {
                   ]
                 );
               }}
-              className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+              className="text-sm text-primary hover:text-orange-600 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
             >
               <Download className="w-3 h-3" />
               CSV
@@ -342,18 +355,24 @@ export default function AnalyticsPage() {
                   contentStyle={{
                     backgroundColor: '#fff',
                     border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                   }}
                   formatter={(value: number) => [formatCurrency(value), 'Revenue']}
                 />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="#FF871E" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </motion.div>
 
         {/* Booking Trends */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
+        >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Booking Trends</h2>
             <button
@@ -367,7 +386,7 @@ export default function AnalyticsPage() {
                   ]
                 );
               }}
-              className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+              className="text-sm text-primary hover:text-orange-600 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
             >
               <Download className="w-3 h-3" />
               CSV
@@ -383,24 +402,31 @@ export default function AnalyticsPage() {
                   contentStyle={{
                     backgroundColor: '#fff',
                     border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                   }}
                 />
                 <Line
                   type="monotone"
                   dataKey="bookings"
-                  stroke="#6366f1"
+                  stroke="#FF871E"
                   strokeWidth={2}
-                  dot={{ fill: '#6366f1' }}
+                  dot={{ fill: '#FF871E' }}
+                  activeDot={{ r: 6, fill: '#FF871E', stroke: '#fff', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Fleet Utilization */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-900">Fleet Utilization by Category</h2>
           <button
@@ -417,7 +443,7 @@ export default function AnalyticsPage() {
                 ]
               );
             }}
-            className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+            className="text-sm text-primary hover:text-orange-600 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
           >
             <Download className="w-3 h-3" />
             CSV
@@ -445,15 +471,22 @@ export default function AnalyticsPage() {
                   contentStyle={{
                     backgroundColor: '#fff',
                     border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                   }}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="flex flex-col justify-center space-y-4">
-            {fleetUtilization.map((category) => (
-              <div key={category.name} className="flex items-center gap-4">
+            {fleetUtilization.map((category, index) => (
+              <motion.div
+                key={category.name}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + index * 0.1 }}
+                className="flex items-center gap-4"
+              >
                 <div
                   className="w-4 h-4 rounded-full"
                   style={{ backgroundColor: category.color }}
@@ -464,20 +497,20 @@ export default function AnalyticsPage() {
                     <span className="text-sm font-semibold text-gray-900">{category.value}%</span>
                   </div>
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${category.value}%` }}
+                      transition={{ delay: 0.6 + index * 0.1, duration: 0.5 }}
                       className="h-full rounded-full"
-                      style={{
-                        width: `${category.value}%`,
-                        backgroundColor: category.color,
-                      }}
+                      style={{ backgroundColor: category.color }}
                     />
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

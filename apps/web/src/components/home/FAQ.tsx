@@ -52,14 +52,14 @@ function FAQItem({ question, answer, isOpen, onClick }: {
       >
         <span className={cn(
           'text-lg font-medium transition-colors',
-          isOpen ? 'text-indigo-600' : 'text-gray-900 group-hover:text-indigo-600'
+          isOpen ? 'text-primary' : 'text-gray-900 group-hover:text-primary'
         )}>
           {question}
         </span>
         <ChevronDown
           className={cn(
             'w-5 h-5 text-gray-500 transition-transform duration-200',
-            isOpen && 'rotate-180 text-indigo-600'
+            isOpen && 'rotate-180 text-primary'
           )}
         />
       </button>
@@ -97,7 +97,7 @@ export default function FAQ() {
             transition={{ duration: 0.5 }}
             className="text-center mb-12"
           >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-4">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
               <HelpCircle className="w-4 h-4" />
               FAQ
             </span>
@@ -141,7 +141,7 @@ export default function FAQ() {
             </p>
             <a
               href="/contact"
-              className="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium"
+              className="inline-flex items-center text-primary hover:text-orange-600 font-medium"
             >
               Contact our support team
               <ChevronDown className="w-4 h-4 ml-1 rotate-[-90deg]" />

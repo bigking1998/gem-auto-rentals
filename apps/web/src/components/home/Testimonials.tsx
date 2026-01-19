@@ -59,7 +59,7 @@ export default function Testimonials() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12 lg:mb-16"
         >
-          <span className="inline-block px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-4">
+          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
             Testimonials
           </span>
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -80,17 +80,17 @@ export default function Testimonials() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white rounded-2xl p-8 lg:p-12 shadow-lg"
+                className="bg-white rounded-2xl p-8 lg:p-12 shadow-lg border border-gray-100"
               >
                 {/* Quote Icon */}
-                <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mb-6">
-                  <Quote className="w-6 h-6 text-indigo-600" />
+                <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-6">
+                  <Quote className="w-6 h-6 text-primary" />
                 </div>
 
                 {/* Stars */}
                 <div className="flex items-center gap-1 mb-6">
                   {[...Array(testimonials[currentIndex].rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                    <Star key={i} className="w-5 h-5 text-primary fill-current" />
                   ))}
                 </div>
 
@@ -101,11 +101,11 @@ export default function Testimonials() {
 
                 {/* Author */}
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-lg">
+                  <div className="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center text-white font-bold text-lg">
                     {testimonials[currentIndex].name.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-bold text-gray-900">
                       {testimonials[currentIndex].name}
                     </p>
                     <p className="text-gray-500">
@@ -120,7 +120,7 @@ export default function Testimonials() {
             <div className="flex items-center justify-center gap-4 mt-8">
               <button
                 onClick={prevTestimonial}
-                className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors border border-gray-100"
                 aria-label="Previous testimonial"
               >
                 <ChevronLeft className="w-6 h-6 text-gray-600" />
@@ -132,11 +132,10 @@ export default function Testimonials() {
                   <button
                     key={index}
                     onClick={() => setCurrentIndex(index)}
-                    className={`w-2.5 h-2.5 rounded-full transition-all ${
-                      index === currentIndex
-                        ? 'bg-indigo-600 w-8'
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${index === currentIndex
+                        ? 'bg-primary w-8'
                         : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
+                      }`}
                     aria-label={`Go to testimonial ${index + 1}`}
                   />
                 ))}
@@ -144,7 +143,7 @@ export default function Testimonials() {
 
               <button
                 onClick={nextTestimonial}
-                className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors border border-gray-100"
                 aria-label="Next testimonial"
               >
                 <ChevronRight className="w-6 h-6 text-gray-600" />

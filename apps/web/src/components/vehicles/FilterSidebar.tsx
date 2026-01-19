@@ -1,6 +1,19 @@
-import { useState } from 'react';
-import { X, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@gem/ui'; // We need to check if these are exported from index.ts. Yes they are.
+import { RadioGroup, RadioGroupItem } from '@gem/ui';
+import { Checkbox } from '@gem/ui';
+import { Slider } from '@gem/ui';
+import { Label } from '@gem/ui'; /* Helper for RadioGroup labels */
+
+// If @gem/ui exports aren't working immediately, we might need to rely on the fact they are workspace packages.
+// Assuming @gem/ui exports all these.
 
 export interface VehicleFilters {
   category?: string;
@@ -20,7 +33,6 @@ interface FilterSidebarProps {
 }
 
 const categories = [
-  { value: '', label: 'All Categories' },
   { value: 'ECONOMY', label: 'Economy' },
   { value: 'STANDARD', label: 'Standard' },
   { value: 'PREMIUM', label: 'Premium' },
@@ -30,13 +42,11 @@ const categories = [
 ];
 
 const transmissions = [
-  { value: '', label: 'Any Transmission' },
   { value: 'AUTOMATIC', label: 'Automatic' },
   { value: 'MANUAL', label: 'Manual' },
 ];
 
 const fuelTypes = [
-  { value: '', label: 'Any Fuel Type' },
   { value: 'GASOLINE', label: 'Gasoline' },
   { value: 'DIESEL', label: 'Diesel' },
   { value: 'ELECTRIC', label: 'Electric' },
@@ -44,20 +54,10 @@ const fuelTypes = [
 ];
 
 const seatOptions = [
-  { value: 0, label: 'Any Seats' },
   { value: 2, label: '2+ Seats' },
   { value: 4, label: '4+ Seats' },
   { value: 5, label: '5+ Seats' },
   { value: 7, label: '7+ Seats' },
-];
-
-const priceRanges = [
-  { min: 0, max: 0, label: 'Any Price' },
-  { min: 0, max: 50, label: 'Under $50/day' },
-  { min: 50, max: 100, label: '$50 - $100/day' },
-  { min: 100, max: 150, label: '$100 - $150/day' },
-  { min: 150, max: 200, label: '$150 - $200/day' },
-  { min: 200, max: 0, label: '$200+/day' },
 ];
 
 export default function FilterSidebar({
@@ -67,27 +67,30 @@ export default function FilterSidebar({
   isOpen = true,
   onClose,
 }: FilterSidebarProps) {
-  const [expandedSections, setExpandedSections] = useState({
-    category: true,
-    price: true,
-    transmission: true,
-    fuelType: true,
-    seats: true,
-  });
+  // Local state for slider to allow smooth dragging before committing
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 300]);
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
-  };
+  useEffect(() => {
+    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+      setPriceRange([filters.minPrice || 0, filters.maxPrice || 300]);
+    } else {
+      setPriceRange([0, 300]);
+    }
+  }, [filters.minPrice, filters.maxPrice]);
 
   const activeFilterCount = Object.values(filters).filter(
     (v) => v !== undefined && v !== '' && v !== 0
   ).length;
 
-  const handlePriceChange = (min: number, max: number) => {
+  const handlePriceChange = (value: number[]) => {
+    setPriceRange([value[0], value[1]]);
+  };
+
+  const handlePriceCommit = (value: number[]) => {
     onFilterChange({
       ...filters,
-      minPrice: min || undefined,
-      maxPrice: max || undefined,
+      minPrice: value[0] > 0 ? value[0] : undefined,
+      maxPrice: value[1] < 300 ? value[1] : undefined,
     });
   };
 
@@ -109,12 +112,12 @@ export default function FilterSidebar({
         )}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-5 h-5 text-gray-600" />
+            <SlidersHorizontal className="w-5 h-5 text-gray-900" />
             <h2 className="font-semibold text-gray-900">Filters</h2>
             {activeFilterCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full">
+              <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full">
                 {activeFilterCount}
               </span>
             )}
@@ -123,7 +126,7 @@ export default function FilterSidebar({
             {activeFilterCount > 0 && (
               <button
                 onClick={onClearFilters}
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-sm text-primary hover:text-orange-600 font-medium"
               >
                 Clear all
               </button>
@@ -139,185 +142,139 @@ export default function FilterSidebar({
           </div>
         </div>
 
-        <div className="p-4 space-y-1">
-          {/* Category */}
-          <FilterSection
-            title="Category"
-            expanded={expandedSections.category}
-            onToggle={() => toggleSection('category')}
-          >
-            <div className="space-y-2">
-              {categories.map((cat) => (
-                <label
-                  key={cat.value}
-                  className="flex items-center gap-2 cursor-pointer group"
-                >
-                  <input
-                    type="radio"
-                    name="category"
-                    checked={(filters.category || '') === cat.value}
-                    onChange={() =>
-                      onFilterChange({ ...filters, category: cat.value || undefined })
-                    }
-                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                    {cat.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </FilterSection>
+        <div className="p-4">
+          <Accordion type="multiple" defaultValue={['category', 'price', 'transmission', 'fuel', 'seats']} className="space-y-4">
 
-          {/* Price Range */}
-          <FilterSection
-            title="Price Range"
-            expanded={expandedSections.price}
-            onToggle={() => toggleSection('price')}
-          >
-            <div className="space-y-2">
-              {priceRanges.map((range, idx) => (
-                <label
-                  key={idx}
-                  className="flex items-center gap-2 cursor-pointer group"
+            {/* Category */}
+            <AccordionItem value="category" className="border-none">
+              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+                Category
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <RadioGroup
+                  value={filters.category || ""}
+                  onValueChange={(val) => onFilterChange({ ...filters, category: val === "" ? undefined : val })}
                 >
-                  <input
-                    type="radio"
-                    name="price"
-                    checked={
-                      (filters.minPrice || 0) === range.min &&
-                      (filters.maxPrice || 0) === range.max
-                    }
-                    onChange={() => handlePriceChange(range.min, range.max)}
-                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                    {range.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </FilterSection>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <RadioGroupItem value="" id="cat-all" />
+                    <Label htmlFor="cat-all" className="text-sm text-gray-600 cursor-pointer">All Categories</Label>
+                  </div>
+                  {categories.map((cat) => (
+                    <div key={cat.value} className="flex items-center space-x-2 mb-2">
+                      <RadioGroupItem value={cat.value} id={`cat-${cat.value}`} />
+                      <Label htmlFor={`cat-${cat.value}`} className="text-sm text-gray-600 cursor-pointer">{cat.label}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Transmission */}
-          <FilterSection
-            title="Transmission"
-            expanded={expandedSections.transmission}
-            onToggle={() => toggleSection('transmission')}
-          >
-            <div className="space-y-2">
-              {transmissions.map((trans) => (
-                <label
-                  key={trans.value}
-                  className="flex items-center gap-2 cursor-pointer group"
-                >
-                  <input
-                    type="radio"
-                    name="transmission"
-                    checked={(filters.transmission || '') === trans.value}
-                    onChange={() =>
-                      onFilterChange({ ...filters, transmission: trans.value || undefined })
-                    }
-                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                    {trans.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </FilterSection>
+            {/* Price Range */}
+            <AccordionItem value="price" className="border-none">
+              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+                Price Range
+              </AccordionTrigger>
+              <AccordionContent className="pt-6 px-1">
+                <Slider
+                  defaultValue={[0, 300]}
+                  value={priceRange}
+                  min={0}
+                  max={300}
+                  step={10}
+                  onValueChange={handlePriceChange}
+                  onValueCommit={handlePriceCommit}
+                  className="mb-6"
+                />
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span className="font-medium text-gray-900">${priceRange[0]}</span>
+                  <span className="font-medium text-gray-900">${priceRange[1]}{priceRange[1] === 300 && '+'}</span>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Fuel Type */}
-          <FilterSection
-            title="Fuel Type"
-            expanded={expandedSections.fuelType}
-            onToggle={() => toggleSection('fuelType')}
-          >
-            <div className="space-y-2">
-              {fuelTypes.map((fuel) => (
-                <label
-                  key={fuel.value}
-                  className="flex items-center gap-2 cursor-pointer group"
-                >
-                  <input
-                    type="radio"
-                    name="fuelType"
-                    checked={(filters.fuelType || '') === fuel.value}
-                    onChange={() =>
-                      onFilterChange({ ...filters, fuelType: fuel.value || undefined })
-                    }
-                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                    {fuel.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </FilterSection>
+            {/* Transmission */}
+            <AccordionItem value="transmission" className="border-none">
+              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+                Transmission
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <div className="space-y-3">
+                  {transmissions.map((trans) => (
+                    <div key={trans.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`trans-${trans.value}`}
+                        checked={filters.transmission === trans.value}
+                        onCheckedChange={(checked) => {
+                          onFilterChange({
+                            ...filters,
+                            transmission: checked ? trans.value : undefined
+                          })
+                        }}
+                      />
+                      <Label htmlFor={`trans-${trans.value}`} className="text-sm text-gray-600 cursor-pointer">
+                        {trans.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Seats */}
-          <FilterSection
-            title="Seats"
-            expanded={expandedSections.seats}
-            onToggle={() => toggleSection('seats')}
-          >
-            <div className="space-y-2">
-              {seatOptions.map((opt) => (
-                <label
-                  key={opt.value}
-                  className="flex items-center gap-2 cursor-pointer group"
+            {/* Fuel Type */}
+            <AccordionItem value="fuel" className="border-none">
+              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+                Fuel Type
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <div className="space-y-3">
+                  {fuelTypes.map((fuel) => (
+                    <div key={fuel.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`fuel-${fuel.value}`}
+                        checked={filters.fuelType === fuel.value}
+                        onCheckedChange={(checked) => {
+                          onFilterChange({
+                            ...filters,
+                            fuelType: checked ? fuel.value : undefined
+                          })
+                        }}
+                      />
+                      <Label htmlFor={`fuel-${fuel.value}`} className="text-sm text-gray-600 cursor-pointer">
+                        {fuel.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Seats */}
+            <AccordionItem value="seats" className="border-none">
+              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+                Seats
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <RadioGroup
+                  value={filters.seats?.toString() || "0"}
+                  onValueChange={(val) => onFilterChange({ ...filters, seats: val === "0" ? undefined : parseInt(val) })}
                 >
-                  <input
-                    type="radio"
-                    name="seats"
-                    checked={(filters.seats || 0) === opt.value}
-                    onChange={() =>
-                      onFilterChange({ ...filters, seats: opt.value || undefined })
-                    }
-                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                    {opt.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </FilterSection>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <RadioGroupItem value="0" id="seats-any" />
+                    <Label htmlFor="seats-any" className="text-sm text-gray-600 cursor-pointer">Any Seats</Label>
+                  </div>
+                  {seatOptions.map((opt) => (
+                    <div key={opt.value} className="flex items-center space-x-2 mb-2">
+                      <RadioGroupItem value={opt.value.toString()} id={`seats-${opt.value}`} />
+                      <Label htmlFor={`seats-${opt.value}`} className="text-sm text-gray-600 cursor-pointer">{opt.label}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </AccordionContent>
+            </AccordionItem>
+
+          </Accordion>
         </div>
       </aside>
     </>
-  );
-}
-
-// Filter Section Component
-function FilterSection({
-  title,
-  expanded,
-  onToggle,
-  children,
-}: {
-  title: string;
-  expanded: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-b border-gray-100 pb-4">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between py-3 text-left"
-      >
-        <span className="font-medium text-gray-900">{title}</span>
-        <ChevronDown
-          className={cn(
-            'w-4 h-4 text-gray-500 transition-transform',
-            expanded && 'rotate-180'
-          )}
-        />
-      </button>
-      {expanded && <div className="pt-1">{children}</div>}
-    </div>
   );
 }

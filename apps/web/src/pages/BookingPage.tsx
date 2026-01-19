@@ -205,25 +205,31 @@ export default function BookingPage() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
 
-      <main className="flex-1 py-8">
+      <main className="flex-1 py-12 pt-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Progress Steps */}
-          <div className="max-w-4xl mx-auto mb-8">
-            <div className="flex items-center justify-between">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center">
-                  <div className="flex flex-col items-center">
+          <div className="max-w-4xl mx-auto mb-12">
+            <div className="relative flex items-center justify-between">
+              {/* Connector Lines */}
+              <div className="absolute left-0 top-1/2 -mt-px w-full h-0.5 bg-gray-100 -z-10" />
+
+              {steps.map((step) => {
+                const isCompleted = currentStep > step.id;
+                const isCurrent = currentStep === step.id;
+
+                return (
+                  <div key={step.id} className="relative flex flex-col items-center bg-gray-50 px-2">
                     <div
                       className={cn(
-                        'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all',
-                        currentStep > step.id
+                        'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-sm',
+                        isCompleted
                           ? 'bg-green-500 border-green-500 text-white'
-                          : currentStep === step.id
-                          ? 'bg-indigo-600 border-indigo-600 text-white'
-                          : 'bg-white border-gray-300 text-gray-400'
+                          : isCurrent
+                            ? 'bg-primary border-primary text-white scale-110 shadow-primary/25 shadow-lg'
+                            : 'bg-white border-gray-200 text-gray-300'
                       )}
                     >
-                      {currentStep > step.id ? (
+                      {isCompleted ? (
                         <Check className="w-5 h-5" />
                       ) : (
                         <step.icon className="w-5 h-5" />
@@ -231,24 +237,15 @@ export default function BookingPage() {
                     </div>
                     <span
                       className={cn(
-                        'mt-2 text-xs font-medium hidden sm:block',
-                        currentStep >= step.id ? 'text-gray-900' : 'text-gray-400'
+                        'mt-3 text-xs font-bold tracking-wide transition-colors duration-300',
+                        isCurrent ? 'text-gray-900' : isCompleted ? 'text-gray-700' : 'text-gray-400'
                       )}
                     >
                       {step.title}
                     </span>
                   </div>
-
-                  {index < steps.length - 1 && (
-                    <div
-                      className={cn(
-                        'flex-1 h-0.5 mx-2 sm:mx-4',
-                        currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
-                      )}
-                    />
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -304,15 +301,15 @@ export default function BookingPage() {
 
                 {/* Navigation */}
                 {currentStep < 5 && (
-                  <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
+                  <div className="flex items-center justify-between px-8 py-6 border-t border-gray-100 bg-gray-50/50">
                     <button
                       onClick={prevStep}
                       disabled={currentStep === 1}
                       className={cn(
-                        'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                        'flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200',
                         currentStep === 1
                           ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-gray-700 hover:bg-gray-200'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       )}
                     >
                       <ArrowLeft className="w-4 h-4" />
@@ -323,10 +320,10 @@ export default function BookingPage() {
                       onClick={nextStep}
                       disabled={!canProceed()}
                       className={cn(
-                        'flex items-center gap-2 px-6 py-2 text-sm font-medium rounded-lg transition-colors',
+                        'flex items-center gap-2 px-8 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 shadow-lg shadow-primary/20 transform active:scale-95',
                         !canProceed()
-                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+                          : 'bg-primary text-white hover:bg-orange-600 hover:shadow-primary/30'
                       )}
                     >
                       Continue
@@ -339,122 +336,141 @@ export default function BookingPage() {
 
             {/* Order Summary Sidebar */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
-                <h3 className="font-semibold text-lg text-gray-900 mb-4">Order Summary</h3>
+              <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-6 sticky top-28 transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/60">
+                <h3 className="font-bold text-lg text-gray-900 mb-6 flex items-center gap-2">
+                  <span>Order Summary</span>
+                  <div className="h-1 w-1 rounded-full bg-primary/50" />
+                </h3>
 
                 {/* Vehicle Info */}
-                <div className="flex gap-4 mb-4 pb-4 border-b border-gray-100">
-                  <img
-                    src={vehicle.images[0]}
-                    alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                    className="w-20 h-16 object-cover rounded-lg"
-                  />
+                <div className="flex gap-4 mb-6 pb-6 border-b border-gray-100">
+                  <div className="relative w-24 h-20 rounded-xl overflow-hidden shadow-sm">
+                    <img
+                      src={vehicle.images[0]}
+                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div>
-                    <h4 className="font-medium text-gray-900">
+                    <h4 className="font-bold text-gray-900 leading-tight mb-1">
                       {vehicle.year} {vehicle.make} {vehicle.model}
                     </h4>
-                    <p className="text-sm text-gray-500">{vehicle.category}</p>
+                    <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
+                      {vehicle.category}
+                    </span>
                   </div>
                 </div>
 
                 {/* Dates */}
                 {bookingData.startDate && bookingData.endDate && (
-                  <div className="space-y-2 mb-4 pb-4 border-b border-gray-100">
+                  <div className="space-y-3 mb-6 pb-6 border-b border-gray-100 bg-gray-50/50 p-4 rounded-xl">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Pick-up</span>
-                      <span className="text-gray-900">
+                      <span className="text-gray-500 font-medium">Pick-up</span>
+                      <span className="text-gray-900 font-semibold">
                         {new Date(bookingData.startDate).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
-                          year: 'numeric',
                         })}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Return</span>
-                      <span className="text-gray-900">
+                      <span className="text-gray-500 font-medium">Return</span>
+                      <span className="text-gray-900 font-semibold">
                         {new Date(bookingData.endDate).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
-                          year: 'numeric',
                         })}
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Duration</span>
-                      <span className="text-gray-900">{days} days</span>
+                    <div className="flex justify-between text-sm pt-2 border-t border-gray-200/50">
+                      <span className="text-gray-500 font-medium">Duration</span>
+                      <span className="text-primary font-bold">{days} days</span>
                     </div>
                   </div>
                 )}
 
                 {/* Pricing */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">
-                      ${vehicle.dailyRate} x {days} days
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between text-sm group">
+                    <span className="text-gray-600 font-medium group-hover:text-gray-900 transition-colors">
+                      Car Rental
                     </span>
-                    <span className="text-gray-900">${vehicle.dailyRate * days}</span>
+                    <span className="text-gray-900 font-semibold">${vehicle.dailyRate * days}</span>
                   </div>
 
                   {bookingData.extras.insurance && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Insurance</span>
-                      <span className="text-gray-900">${25 * days}</span>
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span className="font-medium flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5" /> Insurance
+                      </span>
+                      <span className="font-semibold">+${25 * days}</span>
                     </div>
                   )}
                   {bookingData.extras.gps && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">GPS Navigation</span>
-                      <span className="text-gray-900">${10 * days}</span>
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span className="font-medium flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5" /> GPS
+                      </span>
+                      <span className="font-semibold">+${10 * days}</span>
                     </div>
                   )}
                   {bookingData.extras.childSeat && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Child Seat</span>
-                      <span className="text-gray-900">${8 * days}</span>
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span className="font-medium flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5" /> Child Seat
+                      </span>
+                      <span className="font-semibold">+${8 * days}</span>
                     </div>
                   )}
                   {bookingData.extras.additionalDriver && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Additional Driver</span>
-                      <span className="text-gray-900">${15 * days}</span>
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span className="font-medium flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5" /> Add. Driver
+                      </span>
+                      <span className="font-semibold">+${15 * days}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Total */}
-                <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                  <span className="text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-2xl font-bold text-indigo-600">${total}</span>
+                <div className="flex justify-between items-end pt-6 border-t-2 border-dashed border-gray-100">
+                  <span className="text-sm font-semibold text-gray-500 mb-1">Total Amount</span>
+                  <span className="text-3xl font-bold text-gray-900">${total}</span>
                 </div>
 
                 {/* Progress Indicator */}
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-gray-500">Booking Progress</span>
-                    <span className="font-medium text-gray-900">{currentStep} of {steps.length}</span>
+                <div className="mt-8 pt-6 border-t border-gray-100">
+                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider mb-2">
+                    <span className="text-gray-400">Completion</span>
+                    <span className="text-primary">{Math.round((currentStep / steps.length) * 100)}%</span>
                   </div>
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-indigo-600 rounded-full transition-all"
+                      className="h-full bg-primary rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(249,115,22,0.5)]"
                       style={{ width: `${(currentStep / steps.length) * 100}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Trust Badges */}
-                <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Check className="w-4 h-4 text-green-500" />
-                    Free cancellation up to 24h before
+                <div className="mt-6 space-y-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
+                  <div className="flex items-center gap-2.5 text-xs text-gray-600 font-medium">
+                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                      <Check className="w-3 h-3 text-green-600" />
+                    </div>
+                    Free cancellation (24h)
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Check className="w-4 h-4 text-green-500" />
+                  <div className="flex items-center gap-2.5 text-xs text-gray-600 font-medium">
+                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                      <Check className="w-3 h-3 text-green-600" />
+                    </div>
                     No hidden fees
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Check className="w-4 h-4 text-green-500" />
-                    Secure payment
+                  <div className="flex items-center gap-2.5 text-xs text-gray-600 font-medium">
+                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                      <Check className="w-3 h-3 text-green-600" />
+                    </div>
+                    Secure SSL payment
                   </div>
                 </div>
               </div>

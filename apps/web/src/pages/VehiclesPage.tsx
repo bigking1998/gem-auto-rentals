@@ -3,12 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Grid, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import PageHeader from '@/components/layout/PageHeader';
 import VehicleCard from '@/components/vehicles/VehicleCard';
 import FilterSidebar, { VehicleFilters } from '@/components/vehicles/FilterSidebar';
 import { VehicleGridSkeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
 
-// Mock data for vehicles (will be replaced with API call)
+// Mock data (same as before)
 const mockVehicles = [
   {
     id: '1',
@@ -36,7 +37,7 @@ const mockVehicles = [
     seats: 5,
     transmission: 'AUTOMATIC',
     fuelType: 'HYBRID',
-    images: ['https://images.unsplash.com/photo-1568844293986-ca9c5c1f1f34?w=800'],
+    images: ['https://images.unsplash.com/photo-1542362567-b07e54358753?w=800'],
     averageRating: 4.7,
     reviewCount: 98,
   },
@@ -81,7 +82,7 @@ const mockVehicles = [
     seats: 4,
     transmission: 'AUTOMATIC',
     fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1584345604476-8ec5f82bd3c2?w=800'],
+    images: ['https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800'], // Keeping existing as it is a Mustang
     averageRating: 4.8,
     reviewCount: 87,
   },
@@ -96,7 +97,7 @@ const mockVehicles = [
     seats: 5,
     transmission: 'AUTOMATIC',
     fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800'],
+    images: ['https://images.unsplash.com/photo-1469285994282-454ceb49e63c?w=800'],
     averageRating: 4.5,
     reviewCount: 234,
   },
@@ -111,7 +112,7 @@ const mockVehicles = [
     seats: 8,
     transmission: 'AUTOMATIC',
     fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800'],
+    images: ['https://images.unsplash.com/photo-1559416523-140ddc3d238c?w=800'],
     averageRating: 4.6,
     reviewCount: 67,
   },
@@ -170,11 +171,9 @@ export default function VehiclesPage() {
 
   const itemsPerPage = 9;
 
-  // Simulate initial data loading
   useEffect(() => {
     const loadVehicles = async () => {
       setIsLoading(true);
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 800));
       setVehicles(mockVehicles);
       setIsLoading(false);
@@ -182,13 +181,11 @@ export default function VehiclesPage() {
     loadVehicles();
   }, []);
 
-  // Apply filters and search
   useEffect(() => {
     if (isLoading) return;
 
     let result = [...vehicles];
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -199,12 +196,10 @@ export default function VehiclesPage() {
       );
     }
 
-    // Category filter
     if (filters.category) {
       result = result.filter((v) => v.category === filters.category);
     }
 
-    // Price filter
     if (filters.minPrice) {
       result = result.filter((v) => v.dailyRate >= filters.minPrice!);
     }
@@ -212,22 +207,18 @@ export default function VehiclesPage() {
       result = result.filter((v) => v.dailyRate <= filters.maxPrice!);
     }
 
-    // Transmission filter
     if (filters.transmission) {
       result = result.filter((v) => v.transmission === filters.transmission);
     }
 
-    // Fuel type filter
     if (filters.fuelType) {
       result = result.filter((v) => v.fuelType === filters.fuelType);
     }
 
-    // Seats filter
     if (filters.seats) {
       result = result.filter((v) => v.seats >= filters.seats!);
     }
 
-    // Sort
     switch (sortBy) {
       case 'price-asc':
         result.sort((a, b) => a.dailyRate - b.dailyRate);
@@ -247,7 +238,6 @@ export default function VehiclesPage() {
     setCurrentPage(1);
   }, [vehicles, searchQuery, filters, sortBy, isLoading]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
   const paginatedVehicles = filteredVehicles.slice(
     (currentPage - 1) * itemsPerPage,
@@ -256,7 +246,6 @@ export default function VehiclesPage() {
 
   const handleFilterChange = (newFilters: VehicleFilters) => {
     setFilters(newFilters);
-    // Update URL params
     const params = new URLSearchParams();
     if (newFilters.category) params.set('category', newFilters.category);
     if (searchQuery) params.set('search', searchQuery);
@@ -281,23 +270,19 @@ export default function VehiclesPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
 
       <main className="flex-1">
-        {/* Hero */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 py-12 lg:py-16">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Browse Our Fleet
-            </h1>
-            <p className="text-lg text-white/80 max-w-2xl">
-              Find the perfect vehicle for your next adventure. From economy cars to
-              luxury sedans, we have something for everyone.
-            </p>
+        <PageHeader
+          title="Browse Our Fleet"
+          description="Find the perfect vehicle for your next adventure. From economy cars to luxury sedans, we have something for everyone."
+        />
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="mt-8 max-w-xl">
+        {/* Content */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-30">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mb-8">
+            <form onSubmit={handleSearch}>
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -305,16 +290,13 @@ export default function VehiclesPage() {
                   placeholder="Search by make, model, or category..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl border-0 focus:ring-2 focus:ring-white/50 text-gray-900 placeholder:text-gray-500"
+                  className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-gray-900 placeholder:text-gray-500 transition-all"
                 />
               </div>
             </form>
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex gap-8">
+          <div className="flex flex-col lg:flex-row gap-8 pb-16">
             {/* Filter Sidebar */}
             <FilterSidebar
               filters={filters}
@@ -331,7 +313,7 @@ export default function VehiclesPage() {
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => setFilterSidebarOpen(true)}
-                    className="lg:hidden inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="lg:hidden inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 from-neutral-50"
                   >
                     <SlidersHorizontal className="w-4 h-4" />
                     Filters
@@ -342,7 +324,7 @@ export default function VehiclesPage() {
                       <span className="inline-block h-4 w-24 animate-pulse bg-gray-200 rounded" />
                     ) : (
                       <>
-                        <span className="font-medium text-gray-900">
+                        <span className="font-bold text-gray-900">
                           {filteredVehicles.length}
                         </span>{' '}
                         vehicles found
@@ -353,26 +335,29 @@ export default function VehiclesPage() {
 
                 <div className="flex items-center gap-3">
                   {/* Sort */}
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  >
-                    {sortOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="appearance-none pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white hover:bg-gray-50 cursor-pointer"
+                    >
+                      {sortOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronLeft className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 -rotate-90 text-gray-400 pointer-events-none" />
+                  </div>
 
                   {/* View Toggle */}
-                  <div className="hidden sm:flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="hidden sm:flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
                     <button
                       onClick={() => setViewMode('grid')}
                       className={cn(
-                        'p-2',
+                        'p-2 transition-colors',
                         viewMode === 'grid'
-                          ? 'bg-indigo-50 text-indigo-600'
+                          ? 'bg-primary/10 text-primary'
                           : 'text-gray-400 hover:text-gray-600'
                       )}
                     >
@@ -381,9 +366,9 @@ export default function VehiclesPage() {
                     <button
                       onClick={() => setViewMode('list')}
                       className={cn(
-                        'p-2',
+                        'p-2 transition-colors',
                         viewMode === 'list'
-                          ? 'bg-indigo-50 text-indigo-600'
+                          ? 'bg-primary/10 text-primary'
                           : 'text-gray-400 hover:text-gray-600'
                       )}
                     >
@@ -410,16 +395,16 @@ export default function VehiclesPage() {
                     <VehicleCard
                       key={vehicle.id}
                       {...vehicle}
-                      className={viewMode === 'list' ? 'flex flex-row' : ''}
+                      variant={viewMode}
                     />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16">
+                <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Search className="w-8 h-8 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
                     No vehicles found
                   </h3>
                   <p className="text-gray-500 mb-4">
@@ -427,7 +412,7 @@ export default function VehiclesPage() {
                   </p>
                   <button
                     onClick={handleClearFilters}
-                    className="text-indigo-600 hover:text-indigo-700 font-medium"
+                    className="text-primary hover:text-orange-600 font-medium"
                   >
                     Clear all filters
                   </button>
@@ -440,7 +425,7 @@ export default function VehiclesPage() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
@@ -452,8 +437,8 @@ export default function VehiclesPage() {
                       className={cn(
                         'w-10 h-10 rounded-lg text-sm font-medium transition-colors',
                         currentPage === page
-                          ? 'bg-indigo-600 text-white'
-                          : 'hover:bg-gray-100 text-gray-700'
+                          ? 'bg-primary text-white shadow-lg shadow-orange-200'
+                          : 'hover:bg-gray-100 text-gray-700 bg-white border border-gray-200'
                       )}
                     >
                       {page}
@@ -463,7 +448,7 @@ export default function VehiclesPage() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>

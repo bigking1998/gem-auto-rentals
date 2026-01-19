@@ -48,11 +48,11 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
 
 export default function Statistics() {
   return (
-    <section className="py-20 lg:py-28 bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 relative overflow-hidden">
+    <section className="py-20 lg:py-28 bg-gray-900 relative overflow-hidden">
       {/* Background Effects */}
-      <div className="absolute inset-0">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/30 rounded-full blur-[100px]" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gray-100/10 rounded-full blur-[100px]" />
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -67,7 +67,7 @@ export default function Statistics() {
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
             Trusted by Thousands
           </h2>
-          <p className="text-lg text-white/80 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
             Numbers that speak to our commitment to excellence and customer satisfaction.
           </p>
         </motion.div>
@@ -86,7 +86,7 @@ export default function Statistics() {
               <div className="text-4xl lg:text-5xl font-bold text-white mb-2">
                 <AnimatedCounter value={stat.value} suffix={stat.suffix} />
               </div>
-              <p className="text-white/70 text-lg">{stat.label}</p>
+              <p className="text-gray-400 text-lg">{stat.label}</p>
             </motion.div>
           ))}
         </div>

@@ -32,13 +32,13 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer className="bg-gray-950 text-gray-300">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center">
                 <Car className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl font-bold text-white">Gem Auto Rentals</span>
@@ -49,15 +49,15 @@ export default function Footer() {
             </p>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-indigo-400" />
+                <Phone className="w-5 h-5 text-primary" />
                 <span>1-800-GEM-AUTO</span>
               </div>
               <div className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-indigo-400" />
+                <Mail className="w-5 h-5 text-primary" />
                 <span>support@gemautorentals.com</span>
               </div>
               <div className="flex items-center space-x-3">
-                <MapPin className="w-5 h-5 text-indigo-400" />
+                <MapPin className="w-5 h-5 text-primary" />
                 <span>123 Rental Way, Miami, FL 33101</span>
               </div>
             </div>
@@ -71,7 +71,7 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="hover:text-indigo-400 transition-colors"
+                    className="hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -88,7 +88,7 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="hover:text-indigo-400 transition-colors"
+                    className="hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -105,7 +105,7 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="hover:text-indigo-400 transition-colors"
+                    className="hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -126,11 +126,11 @@ export default function Footer() {
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 lg:w-64 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400"
+                className="flex-1 lg:w-64 px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-white placeholder-gray-400"
               />
               <button
                 type="submit"
-                className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all"
+                className="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-orange-600 transition-all"
               >
                 Subscribe
               </button>
@@ -150,7 +150,7 @@ export default function Footer() {
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-indigo-500 transition-colors"
+                className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary transition-colors"
                 aria-label={social.label}
               >
                 <social.icon className="w-5 h-5" />

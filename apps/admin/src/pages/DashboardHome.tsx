@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   Car,
   DollarSign,
@@ -37,7 +37,7 @@ const stats = [
     change: 12,
     trend: 'up',
     icon: Car,
-    color: 'bg-blue-500',
+    color: 'bg-red-500',
   },
   {
     label: "Today's Revenue",
@@ -62,7 +62,7 @@ const stats = [
     change: 5,
     trend: 'up',
     icon: CalendarCheck,
-    color: 'bg-purple-500',
+    color: 'bg-orange-500',
   },
 ];
 
@@ -117,7 +117,7 @@ const recentBookings = [
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-blue-100 text-blue-800',
+  CONFIRMED: 'bg-purple-100 text-purple-800',
   ACTIVE: 'bg-green-100 text-green-800',
   COMPLETED: 'bg-gray-100 text-gray-800',
   CANCELLED: 'bg-red-100 text-red-800',
@@ -130,9 +130,9 @@ const quickActions = [
     label: 'Add Vehicle',
     description: 'Add a new vehicle to fleet',
     icon: Car,
-    color: 'bg-blue-500',
-    hoverBorder: 'hover:border-blue-500',
-    hoverBg: 'hover:bg-blue-50',
+    color: 'bg-purple-500',
+    hoverBorder: 'hover:border-purple-500',
+    hoverBg: 'hover:bg-purple-50',
     route: '/fleet',
     action: 'modal', // Will open modal on fleet page
   },
@@ -152,9 +152,9 @@ const quickActions = [
     label: 'Add Customer',
     description: 'Register a new customer',
     icon: Users,
-    color: 'bg-purple-500',
-    hoverBorder: 'hover:border-purple-500',
-    hoverBg: 'hover:bg-purple-50',
+    color: 'bg-primary',
+    hoverBorder: 'hover:border-primary',
+    hoverBg: 'hover:bg-orange-50',
     route: '/customers',
     action: 'navigate',
   },
@@ -185,9 +185,9 @@ const quickActions = [
     label: 'View Reports',
     description: 'Analytics & insights',
     icon: TrendingUp,
-    color: 'bg-indigo-500',
-    hoverBorder: 'hover:border-indigo-500',
-    hoverBg: 'hover:bg-indigo-50',
+    color: 'bg-amber-500',
+    hoverBorder: 'hover:border-amber-500',
+    hoverBg: 'hover:bg-amber-50',
     route: '/analytics',
     action: 'navigate',
   },
@@ -243,7 +243,7 @@ export default function DashboardHome() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/fleet', { state: { action: 'add-vehicle' } })}
-            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:bg-orange-600 hover:shadow-orange-300 transition-all"
           >
             <Plus className="w-4 h-4" />
             Quick Add
@@ -254,45 +254,51 @@ export default function DashboardHome() {
       {/* Alerts Section */}
       {alerts.length > 0 && (
         <div className="space-y-2">
-          {alerts.map((alert) => (
-            <div
+          {alerts.map((alert, index) => (
+            <motion.div
               key={alert.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
               className={cn(
-                'flex items-center justify-between p-3 rounded-lg border',
+                'flex items-center justify-between p-4 rounded-2xl border',
                 alert.type === 'warning' && 'bg-amber-50 border-amber-200',
-                alert.type === 'info' && 'bg-blue-50 border-blue-200',
+                alert.type === 'info' && 'bg-purple-50 border-purple-200',
                 alert.type === 'success' && 'bg-green-50 border-green-200'
               )}
             >
               <div className="flex items-center gap-3">
                 {alert.type === 'warning' && <AlertCircle className="w-5 h-5 text-amber-500" />}
-                {alert.type === 'info' && <AlertCircle className="w-5 h-5 text-blue-500" />}
+                {alert.type === 'info' && <AlertCircle className="w-5 h-5 text-purple-500" />}
                 {alert.type === 'success' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
-                <span className="text-sm text-gray-700">{alert.message}</span>
+                <span className="text-sm font-medium text-gray-700">{alert.message}</span>
               </div>
               <button
                 onClick={() => handleAlertAction(alert)}
                 className={cn(
-                  'text-sm font-medium flex items-center gap-1',
-                  alert.type === 'warning' && 'text-amber-600 hover:text-amber-700',
-                  alert.type === 'info' && 'text-blue-600 hover:text-blue-700',
-                  alert.type === 'success' && 'text-green-600 hover:text-green-700'
+                  'text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-xl transition-colors',
+                  alert.type === 'warning' && 'text-amber-600 hover:bg-amber-100',
+                  alert.type === 'info' && 'text-purple-600 hover:bg-purple-100',
+                  alert.type === 'success' && 'text-green-600 hover:bg-green-100'
                 )}
               >
                 {alert.action}
                 <ChevronRight className="w-4 h-4" />
               </button>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        {stats.map((stat) => (
-          <div
+        {stats.map((stat, index) => (
+          <motion.div
             key={stat.label}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1, duration: 0.3 }}
+            className="group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer"
             onClick={() => {
               if (stat.label === 'Active Rentals') navigate('/bookings');
               if (stat.label === 'Pending Bookings') navigate('/bookings');
@@ -306,8 +312,8 @@ export default function DashboardHome() {
                   {stat.isCurrency ? formatCurrency(stat.value) : stat.value}
                 </p>
               </div>
-              <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', stat.color)}>
-                <stat.icon className="w-5 h-5 text-white" />
+              <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform', stat.color)}>
+                <stat.icon className="w-6 h-6 text-white" />
               </div>
             </div>
             <div className="flex items-center gap-1 mt-3">
@@ -326,55 +332,65 @@ export default function DashboardHome() {
               </span>
               <span className="text-sm text-gray-500">vs last week</span>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {/* Quick Actions Panel */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+      >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+          <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
           <span className="text-sm text-gray-500">Common tasks</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {quickActions.map((action) => (
             <button
               key={action.id}
               onClick={() => handleQuickAction(action)}
               className={cn(
-                'group flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-200 transition-all duration-200',
+                'group flex flex-col items-center gap-3 p-4 rounded-2xl border border-gray-200 transition-all duration-300',
                 action.hoverBorder,
                 action.hoverBg,
-                'hover:shadow-md'
+                'hover:shadow-xl'
               )}
             >
               <div
                 className={cn(
-                  'w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110',
+                  'w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110',
                   action.color
                 )}
               >
                 <action.icon className="w-6 h-6 text-white" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-900">{action.label}</p>
+                <p className="text-sm font-bold text-gray-900">{action.label}</p>
                 <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{action.description}</p>
               </div>
             </button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Charts & Tables Row */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+        >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Weekly Revenue</h2>
+              <h2 className="text-lg font-bold text-gray-900">Weekly Revenue</h2>
               <p className="text-sm text-gray-500">Last 7 days performance</p>
             </div>
-            <select className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select className="text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
               <option>This Week</option>
               <option>Last Week</option>
               <option>This Month</option>
@@ -390,45 +406,50 @@ export default function DashboardHome() {
                   contentStyle={{
                     backgroundColor: '#fff',
                     border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
                   }}
                   formatter={(value: number) => [formatCurrency(value), 'Revenue']}
                 />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="#FF871E" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </motion.div>
 
         {/* Recent Bookings */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+        >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Recent Bookings</h2>
+              <h2 className="text-lg font-bold text-gray-900">Recent Bookings</h2>
               <p className="text-sm text-gray-500">Latest rental reservations</p>
             </div>
             <button
               onClick={() => navigate('/bookings')}
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+              className="text-sm text-primary hover:text-orange-600 font-bold flex items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-orange-50 transition-colors"
             >
               View All
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {recentBookings.map((booking) => (
               <div
                 key={booking.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer"
                 onClick={() => navigate('/bookings')}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-orange-200">
                     {booking.customer.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{booking.customer}</p>
+                    <p className="font-semibold text-gray-900">{booking.customer}</p>
                     <p className="text-sm text-gray-500">{booking.vehicle}</p>
                   </div>
                 </div>
@@ -441,21 +462,26 @@ export default function DashboardHome() {
                   >
                     {booking.status}
                   </span>
-                  <p className="text-sm font-medium text-gray-900 mt-1">
+                  <p className="text-sm font-bold text-gray-900 mt-1">
                     {formatCurrency(booking.amount)}
                   </p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Activity Timeline */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+      >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-          <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+          <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
+          <button className="text-sm text-primary hover:text-orange-600 font-bold flex items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-orange-50 transition-colors">
             View All
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -473,16 +499,16 @@ export default function DashboardHome() {
               <div key={index} className="relative pl-10">
                 <div
                   className={cn(
-                    'absolute left-2 w-4 h-4 rounded-full border-2 border-white',
-                    activity.type === 'booking' && 'bg-blue-500',
+                    'absolute left-2 w-4 h-4 rounded-full border-2 border-white shadow-lg',
+                    activity.type === 'booking' && 'bg-orange-500',
                     activity.type === 'payment' && 'bg-green-500',
-                    activity.type === 'return' && 'bg-purple-500',
+                    activity.type === 'return' && 'bg-amber-500',
                     activity.type === 'customer' && 'bg-orange-500',
                     activity.type === 'maintenance' && 'bg-gray-500'
                   )}
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{activity.event}</p>
+                  <p className="text-sm font-semibold text-gray-900">{activity.event}</p>
                   <p className="text-sm text-gray-500">{activity.detail}</p>
                   <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
                 </div>
@@ -490,7 +516,7 @@ export default function DashboardHome() {
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
