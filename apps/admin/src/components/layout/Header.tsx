@@ -10,7 +10,6 @@ import {
   LogOut,
   Moon,
   Sun,
-  Check,
   X,
   Car,
   CreditCard,

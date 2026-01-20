@@ -1,30 +1,29 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   User,
   Mail,
   Phone,
-  MapPin,
   Calendar,
-  CreditCard,
   FileText,
   Car,
   DollarSign,
   CheckCircle2,
-  XCircle,
   Clock,
-  AlertCircle,
   Shield,
   Star,
   Edit,
   Trash2,
-  MessageSquare,
   Download,
   Eye,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface CustomerBooking {
   id: string;
@@ -37,124 +36,28 @@ interface CustomerBooking {
 
 interface CustomerDocument {
   id: string;
-  type: 'DRIVERS_LICENSE' | 'ID_CARD' | 'PASSPORT' | 'PROOF_OF_ADDRESS';
+  type: 'DRIVERS_LICENSE' | 'ID_CARD' | 'PASSPORT' | 'PROOF_OF_ADDRESS' | 'INSURANCE';
   name: string;
   uploadedAt: Date;
   verified: boolean;
   url?: string;
 }
 
-interface CustomerNote {
-  id: string;
-  content: string;
-  author: string;
-  createdAt: Date;
-}
-
 interface Customer {
   id: string;
   name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  dateOfBirth?: Date;
-  licenseNumber?: string;
-  licenseExpiry?: Date;
+  avatarUrl?: string | null;
   verified: boolean;
   totalBookings: number;
   totalSpent: number;
   createdAt: Date;
-  bookings?: CustomerBooking[];
-  documents?: CustomerDocument[];
-  notes?: CustomerNote[];
+  bookings: CustomerBooking[];
+  documents: CustomerDocument[];
 }
-
-// Mock customer data (in production, this would come from an API)
-const mockCustomers: Customer[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@example.com',
-    phone: '+1 (555) 123-4567',
-    address: '123 Main Street',
-    city: 'Miami',
-    state: 'FL',
-    zipCode: '33101',
-    dateOfBirth: new Date('1990-05-15'),
-    licenseNumber: 'J123-456-78-901',
-    licenseExpiry: new Date('2027-05-15'),
-    verified: true,
-    totalBookings: 5,
-    totalSpent: 1250,
-    createdAt: new Date('2025-06-15'),
-    bookings: [
-      { id: 'BK001', vehicle: '2024 Toyota Camry', startDate: new Date('2026-01-18'), endDate: new Date('2026-01-22'), status: 'CONFIRMED', amount: 260 },
-      { id: 'BK007', vehicle: '2024 Honda Civic', startDate: new Date('2025-11-10'), endDate: new Date('2025-11-15'), status: 'COMPLETED', amount: 225 },
-      { id: 'BK008', vehicle: '2024 BMW 3 Series', startDate: new Date('2025-09-01'), endDate: new Date('2025-09-05'), status: 'COMPLETED', amount: 480 },
-    ],
-    documents: [
-      { id: 'DOC001', type: 'DRIVERS_LICENSE', name: 'Drivers_License.pdf', uploadedAt: new Date('2025-06-15'), verified: true },
-      { id: 'DOC002', type: 'PROOF_OF_ADDRESS', name: 'Utility_Bill.pdf', uploadedAt: new Date('2025-06-15'), verified: true },
-    ],
-    notes: [
-      { id: 'NOTE001', content: 'VIP customer - prefers luxury vehicles. Always returns cars in excellent condition.', author: 'Admin User', createdAt: new Date('2025-07-01') },
-      { id: 'NOTE002', content: 'Requested early morning pickup for next booking.', author: 'Support Team', createdAt: new Date('2026-01-15') },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Michael Chen',
-    email: 'michael.chen@example.com',
-    phone: '+1 (555) 234-5678',
-    address: '456 Oak Avenue',
-    city: 'Miami Beach',
-    state: 'FL',
-    zipCode: '33139',
-    dateOfBirth: new Date('1985-08-22'),
-    licenseNumber: 'C987-654-32-109',
-    licenseExpiry: new Date('2026-08-22'),
-    verified: true,
-    totalBookings: 3,
-    totalSpent: 2100,
-    createdAt: new Date('2025-08-20'),
-    bookings: [
-      { id: 'BK002', vehicle: '2024 BMW 5 Series', startDate: new Date('2026-01-19'), endDate: new Date('2026-01-25'), status: 'PENDING', amount: 900 },
-    ],
-    documents: [
-      { id: 'DOC003', type: 'DRIVERS_LICENSE', name: 'License_MChen.pdf', uploadedAt: new Date('2025-08-20'), verified: true },
-    ],
-    notes: [
-      { id: 'NOTE003', content: 'Business traveler - usually books for week-long trips.', author: 'Admin User', createdAt: new Date('2025-09-01') },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Emily Rodriguez',
-    email: 'emily.r@example.com',
-    phone: '+1 (555) 345-6789',
-    address: '789 Palm Drive',
-    city: 'Coral Gables',
-    state: 'FL',
-    zipCode: '33134',
-    dateOfBirth: new Date('1992-12-03'),
-    licenseNumber: 'R456-789-01-234',
-    licenseExpiry: new Date('2028-12-03'),
-    verified: false,
-    totalBookings: 1,
-    totalSpent: 360,
-    createdAt: new Date('2026-01-10'),
-    bookings: [
-      { id: 'BK003', vehicle: '2024 Tesla Model 3', startDate: new Date('2026-01-17'), endDate: new Date('2026-01-20'), status: 'ACTIVE', amount: 360 },
-    ],
-    documents: [
-      { id: 'DOC004', type: 'DRIVERS_LICENSE', name: 'DL_Emily.jpg', uploadedAt: new Date('2026-01-10'), verified: false },
-    ],
-    notes: [],
-  },
-];
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -169,23 +72,116 @@ const documentTypeLabels: Record<string, string> = {
   ID_CARD: 'ID Card',
   PASSPORT: 'Passport',
   PROOF_OF_ADDRESS: 'Proof of Address',
+  INSURANCE: 'Insurance',
 };
 
 export default function CustomerProfilePage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'documents' | 'notes'>('overview');
-  const [newNote, setNewNote] = useState('');
+  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'documents'>('overview');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
 
-  // Find customer by ID (in production, this would be an API call)
-  const customer = mockCustomers.find(c => c.id === id);
+  useEffect(() => {
+    if (id) {
+      fetchCustomerData(id);
+    }
+  }, [id]);
 
-  if (!customer) {
+  const fetchCustomerData = async (customerId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Fetch customer profile from API
+      const userData = await api.customers.get(customerId);
+
+      // Fetch customer's bookings
+      const bookingsResponse = await api.bookings.list({ userId: customerId, limit: 50 });
+
+      // Process bookings
+      const processedBookings: CustomerBooking[] = bookingsResponse.items.map((b) => ({
+        id: b.id,
+        vehicle: b.vehicle
+          ? `${b.vehicle.year} ${b.vehicle.make} ${b.vehicle.model}`
+          : 'Unknown Vehicle',
+        startDate: new Date(b.startDate),
+        endDate: new Date(b.endDate),
+        status: b.status,
+        amount: Number(b.totalAmount),
+      }));
+
+      // Calculate totals
+      const totalSpent = processedBookings.reduce((sum, b) => sum + b.amount, 0);
+
+      const customerProfile: Customer = {
+        id: userData.id,
+        name: `${userData.firstName} ${userData.lastName}`,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        phone: userData.phone,
+        avatarUrl: null,
+        verified: userData.emailVerified,
+        createdAt: new Date(userData.createdAt),
+        totalBookings: processedBookings.length,
+        totalSpent,
+        bookings: processedBookings,
+        documents: [], // TODO: Add documents API endpoint
+      };
+
+      setCustomer(customerProfile);
+    } catch (err) {
+      console.error('Error fetching customer:', err);
+      setError('Failed to load customer data');
+      toast.error('Customer not found');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyDocument = async (documentId: string) => {
+    // TODO: Implement document verification API endpoint
+    toast.error('Document verification is not yet implemented');
+    console.log('Would verify document:', documentId);
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (!customer) return;
+
+    if (!window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+      return;
+    }
+
+    // TODO: Implement customer deletion API endpoint
+    toast.error('Customer deletion is not yet implemented');
+    console.log('Would delete customer:', customer.id);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
+          <p className="text-gray-500">Loading customer profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !customer) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <User className="w-16 h-16 text-gray-300 mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Customer Not Found</h2>
-        <p className="text-gray-500 mb-6">The customer you're looking for doesn't exist.</p>
+        {error ? (
+          <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
+        ) : (
+          <User className="w-16 h-16 text-gray-300 mb-4" />
+        )}
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          {error ? 'Error Loading Customer' : 'Customer Not Found'}
+        </h2>
+        <p className="text-gray-500 mb-6">
+          {error || "The customer you're looking for doesn't exist."}
+        </p>
         <Link
           to="/customers"
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium rounded-xl hover:bg-orange-600 transition-colors"
@@ -201,23 +197,9 @@ export default function CustomerProfilePage() {
     ? customer.totalSpent / customer.totalBookings
     : 0;
 
-  const handleAddNote = () => {
-    if (newNote.trim()) {
-      console.log('Adding note:', newNote);
-      setNewNote('');
-    }
-  };
-
-  const handleVerifyDocument = (documentId: string) => {
-    console.log('Verifying document:', documentId);
-  };
-
-  const handleDeleteCustomer = () => {
-    if (window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-      console.log('Deleting customer:', customer.id);
-      navigate('/customers');
-    }
-  };
+  const daysAsCustomer = Math.floor(
+    (Date.now() - customer.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
   return (
     <motion.div
@@ -247,7 +229,7 @@ export default function CustomerProfilePage() {
         <div className="relative px-6 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4 -mt-12">
             <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg flex-shrink-0">
-              {customer.name.split(' ').map(n => n[0]).join('')}
+              {customer.firstName[0]}{customer.lastName[0]}
             </div>
             <div className="flex-1 pt-14 sm:pt-14">
               <div className="flex items-center gap-2 mb-1">
@@ -282,7 +264,7 @@ export default function CustomerProfilePage() {
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 bg-white rounded-t-2xl px-6">
-        {(['overview', 'bookings', 'documents', 'notes'] as const).map((tab) => (
+        {(['overview', 'bookings', 'documents'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -294,10 +276,10 @@ export default function CustomerProfilePage() {
             )}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            {tab === 'bookings' && customer.bookings && (
+            {tab === 'bookings' && (
               <span className="ml-1 text-xs text-gray-400">({customer.bookings.length})</span>
             )}
-            {tab === 'documents' && customer.documents && (
+            {tab === 'documents' && (
               <span className="ml-1 text-xs text-gray-400">({customer.documents.length})</span>
             )}
           </button>
@@ -377,9 +359,7 @@ export default function CustomerProfilePage() {
                     <Calendar className="w-6 h-6 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {Math.floor((Date.now() - customer.createdAt.getTime()) / (1000 * 60 * 60 * 24))}
-                    </p>
+                    <p className="text-2xl font-bold text-gray-900">{daysAsCustomer}</p>
                     <p className="text-sm text-gray-500">Days as Customer</p>
                   </div>
                 </div>
@@ -413,55 +393,6 @@ export default function CustomerProfilePage() {
                       </div>
                     </div>
                   )}
-                  {customer.address && (
-                    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl sm:col-span-2">
-                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-gray-500">Address</p>
-                        <p className="text-sm font-medium text-gray-900">
-                          {customer.address}
-                          {customer.city && customer.state && (
-                            <>, {customer.city}, {customer.state} {customer.zipCode}</>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-
-              {/* Personal Information */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-              >
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
-                <div className="grid sm:grid-cols-3 gap-4">
-                  {customer.dateOfBirth && (
-                    <div className="p-3 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 mb-1">Date of Birth</p>
-                      <p className="text-sm font-medium text-gray-900">{formatDate(customer.dateOfBirth)}</p>
-                    </div>
-                  )}
-                  {customer.licenseNumber && (
-                    <div className="p-3 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 mb-1">License Number</p>
-                      <p className="text-sm font-medium text-gray-900 font-mono">{customer.licenseNumber}</p>
-                    </div>
-                  )}
-                  {customer.licenseExpiry && (
-                    <div className="p-3 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 mb-1">License Expiry</p>
-                      <p className={cn(
-                        'text-sm font-medium',
-                        new Date(customer.licenseExpiry) < new Date() ? 'text-red-600' : 'text-gray-900'
-                      )}>
-                        {formatDate(customer.licenseExpiry)}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </motion.div>
 
@@ -473,7 +404,7 @@ export default function CustomerProfilePage() {
                 className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-                {customer.bookings && customer.bookings.length > 0 ? (
+                {customer.bookings.length > 0 ? (
                   <div className="space-y-3">
                     {customer.bookings.slice(0, 3).map((booking) => (
                       <div
@@ -510,7 +441,7 @@ export default function CustomerProfilePage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking History</h3>
-              {customer.bookings && customer.bookings.length > 0 ? (
+              {customer.bookings.length > 0 ? (
                 <div className="space-y-4">
                   {customer.bookings.map((booking, index) => (
                     <motion.div
@@ -558,7 +489,7 @@ export default function CustomerProfilePage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Documents</h3>
-              {customer.documents && customer.documents.length > 0 ? (
+              {customer.documents.length > 0 ? (
                 <div className="space-y-4">
                   {customer.documents.map((doc, index) => (
                     <motion.div
@@ -573,7 +504,7 @@ export default function CustomerProfilePage() {
                           <FileText className="w-6 h-6 text-purple-600" />
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">{documentTypeLabels[doc.type]}</p>
+                          <p className="font-semibold text-gray-900">{documentTypeLabels[doc.type] || doc.type}</p>
                           <p className="text-sm text-gray-500">
                             Uploaded {formatDate(doc.uploadedAt)}
                           </p>
@@ -611,75 +542,6 @@ export default function CustomerProfilePage() {
                   <p className="text-gray-500">This customer hasn't uploaded any documents yet.</p>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'notes' && (
-          <div className="space-y-6">
-            {/* Add Note */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Note</h3>
-              <div className="space-y-3">
-                <textarea
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  placeholder="Write a note about this customer..."
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                />
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleAddNote}
-                    disabled={!newNote.trim()}
-                    className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-                  >
-                    Add Note
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Notes List */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes History</h3>
-                {customer.notes && customer.notes.length > 0 ? (
-                  <div className="space-y-4">
-                    {customer.notes.map((note, index) => (
-                      <motion.div
-                        key={note.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="p-4 bg-gray-50 rounded-xl"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-primary text-sm font-medium">
-                              {note.author.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">{note.author}</p>
-                              <p className="text-xs text-gray-500">{formatDate(note.createdAt)}</p>
-                            </div>
-                          </div>
-                          <button className="p-1.5 rounded-lg hover:bg-gray-200 transition-colors">
-                            <Trash2 className="w-4 h-4 text-gray-400" />
-                          </button>
-                        </div>
-                        <p className="text-sm text-gray-700 pl-11">{note.content}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">No notes yet</h3>
-                    <p className="text-gray-500">Add notes to keep track of important information.</p>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         )}

@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Filter, MoreHorizontal, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { VehicleModal } from '@/components/vehicles/VehicleModal';
+import { api, type Vehicle as ApiVehicle } from '@/lib/api';
+import { toast } from 'sonner';
 
 // Vehicle type for the fleet
 interface Vehicle {
@@ -33,103 +35,6 @@ interface MaintenanceSchedule {
   status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 }
 
-// Mock data
-const initialVehicles: Vehicle[] = [
-  {
-    id: '1',
-    make: 'Toyota',
-    model: 'Camry',
-    year: 2024,
-    category: 'STANDARD',
-    status: 'AVAILABLE',
-    dailyRate: 65,
-    licensePlate: 'ABC-1234',
-    mileage: 15000,
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    vin: '1HGBH41JXMN109186',
-    features: ['Air Conditioning', 'Bluetooth', 'Backup Camera', 'Cruise Control'],
-    images: [],
-  },
-  {
-    id: '2',
-    make: 'BMW',
-    model: '5 Series',
-    year: 2024,
-    category: 'LUXURY',
-    status: 'RENTED',
-    dailyRate: 150,
-    licensePlate: 'XYZ-5678',
-    mileage: 8000,
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    vin: 'WBAPH5C55BA238456',
-    features: ['Leather Seats', 'Navigation', 'Sunroof', 'Heated Seats', 'Apple CarPlay'],
-    images: [],
-  },
-  {
-    id: '3',
-    make: 'Tesla',
-    model: 'Model 3',
-    year: 2024,
-    category: 'PREMIUM',
-    status: 'AVAILABLE',
-    dailyRate: 120,
-    licensePlate: 'EV-0001',
-    mileage: 5000,
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'ELECTRIC',
-    vin: '5YJ3E1EA8PF123456',
-    features: ['Autopilot', 'Navigation', 'Premium Sound', 'Glass Roof'],
-    images: [],
-  },
-  {
-    id: '4',
-    make: 'Ford',
-    model: 'Explorer',
-    year: 2024,
-    category: 'SUV',
-    status: 'MAINTENANCE',
-    dailyRate: 95,
-    licensePlate: 'SUV-9999',
-    mileage: 22000,
-    seats: 7,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    vin: '1FMSK8DH0PGA12345',
-    features: ['Third Row Seating', 'Backup Camera', 'Apple CarPlay', 'Android Auto'],
-    images: [],
-    maintenanceSchedule: {
-      id: 'm1',
-      vehicleId: '4',
-      type: 'BRAKE_SERVICE',
-      scheduledDate: '2026-01-20',
-      notes: 'Brake pads replacement needed',
-      status: 'IN_PROGRESS',
-    },
-  },
-  {
-    id: '5',
-    make: 'Honda',
-    model: 'Civic',
-    year: 2024,
-    category: 'ECONOMY',
-    status: 'AVAILABLE',
-    dailyRate: 45,
-    licensePlate: 'ECO-1111',
-    mileage: 12000,
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    vin: '19XFC2F59PE012345',
-    features: ['Air Conditioning', 'Bluetooth', 'USB Ports'],
-    images: [],
-  },
-];
-
 const statusColors: Record<string, string> = {
   AVAILABLE: 'bg-green-100 text-green-800',
   RENTED: 'bg-purple-100 text-purple-800',
@@ -154,13 +59,33 @@ const maintenanceTypes = [
   { value: 'FULL_SERVICE', label: 'Full Service' },
 ];
 
+// Helper function to convert API vehicle to local Vehicle type
+const apiToVehicle = (v: ApiVehicle): Vehicle => ({
+  id: v.id,
+  make: v.make,
+  model: v.model,
+  year: v.year,
+  category: v.category,
+  status: v.status,
+  dailyRate: Number(v.dailyRate),
+  licensePlate: v.licensePlate,
+  mileage: v.mileage,
+  seats: v.seats,
+  transmission: v.transmission,
+  fuelType: v.fuelType,
+  vin: v.vin,
+  features: v.features || [],
+  images: v.images || [],
+});
+
 export default function FleetManagement() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // Bulk selection state
@@ -175,6 +100,25 @@ export default function FleetManagement() {
     scheduledDate: '',
     notes: '',
   });
+
+  // Fetch vehicles on component mount
+  useEffect(() => {
+    fetchVehicles();
+  }, []);
+
+  const fetchVehicles = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.vehicles.list({ limit: 100 });
+      const convertedVehicles = response.items.map(apiToVehicle);
+      setVehicles(convertedVehicles);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+      toast.error('Failed to load vehicles');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredVehicles = vehicles.filter((vehicle) => {
     const matchesSearch =
@@ -204,21 +148,43 @@ export default function FleetManagement() {
     setSelectedVehicles(newSelected);
   };
 
-  const handleBulkStatusChange = (newStatus: Vehicle['status']) => {
-    setVehicles((prev) =>
-      prev.map((v) =>
-        selectedVehicles.has(v.id) ? { ...v, status: newStatus } : v
-      )
-    );
-    setSelectedVehicles(new Set());
-    setShowBulkActions(false);
+  const handleBulkStatusChange = async (newStatus: Vehicle['status']) => {
+    try {
+      const ids = Array.from(selectedVehicles);
+      // Update each vehicle's status via API
+      await Promise.all(ids.map(id => api.vehicles.updateStatus(id, newStatus)));
+
+      setVehicles((prev) =>
+        prev.map((v) =>
+          selectedVehicles.has(v.id) ? { ...v, status: newStatus } : v
+        )
+      );
+      setSelectedVehicles(new Set());
+      setShowBulkActions(false);
+      toast.success(`Updated ${ids.length} vehicles to ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating vehicles:', error);
+      toast.error('Failed to update vehicles');
+    }
   };
 
-  const handleBulkDelete = () => {
-    if (window.confirm(`Are you sure you want to delete ${selectedVehicles.size} vehicles?`)) {
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedVehicles.size} vehicles?`)) {
+      return;
+    }
+
+    try {
+      const ids = Array.from(selectedVehicles);
+      // Delete each vehicle via API
+      await Promise.all(ids.map(id => api.vehicles.delete(id)));
+
       setVehicles((prev) => prev.filter((v) => !selectedVehicles.has(v.id)));
       setSelectedVehicles(new Set());
       setShowBulkActions(false);
+      toast.success(`Deleted ${ids.length} vehicles`);
+    } catch (error) {
+      console.error('Error deleting vehicles:', error);
+      toast.error('Failed to delete vehicles');
     }
   };
 
@@ -233,46 +199,89 @@ export default function FleetManagement() {
     setActiveDropdown(null);
   };
 
-  const handleDeleteVehicle = (vehicleId: string) => {
-    if (window.confirm('Are you sure you want to delete this vehicle?')) {
+  const handleDeleteVehicle = async (vehicleId: string) => {
+    if (!window.confirm('Are you sure you want to delete this vehicle?')) {
+      return;
+    }
+
+    try {
+      await api.vehicles.delete(vehicleId);
       setVehicles((prev) => prev.filter((v) => v.id !== vehicleId));
+      toast.success('Vehicle deleted successfully');
+    } catch (error) {
+      console.error('Error deleting vehicle:', error);
+      toast.error('Failed to delete vehicle');
     }
     setActiveDropdown(null);
   };
 
-  const handleSubmitVehicle = (data: Omit<Vehicle, 'id'>) => {
-    setIsLoading(true);
+  const handleSubmitVehicle = async (data: Omit<Vehicle, 'id'> & { pendingFiles?: File[] }) => {
+    setIsSaving(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const { pendingFiles, ...vehicleData } = data;
+
       if (editingVehicle) {
-        // Update existing vehicle
+        // Update existing vehicle (images are uploaded immediately in the modal)
+        const updated = await api.vehicles.update(editingVehicle.id, vehicleData);
         setVehicles((prev) =>
           prev.map((v) =>
-            v.id === editingVehicle.id ? { ...v, ...data } : v
+            v.id === editingVehicle.id ? apiToVehicle(updated) : v
           )
         );
+        toast.success('Vehicle updated successfully');
       } else {
-        // Add new vehicle
-        const newVehicle: Vehicle = {
-          ...data,
-          id: String(Date.now()),
-        };
-        setVehicles((prev) => [...prev, newVehicle]);
+        // Add new vehicle first (without images)
+        const { images: _images, ...createData } = vehicleData;
+        const newVehicle = await api.vehicles.create(createData);
+
+        // Upload pending files if any
+        if (pendingFiles && pendingFiles.length > 0) {
+          toast.info(`Uploading ${pendingFiles.length} image(s)...`);
+          const uploadedImages: string[] = [];
+          for (const file of pendingFiles) {
+            try {
+              const result = await api.vehicles.uploadImage(newVehicle.id, file);
+              uploadedImages.push(result.imageUrl);
+            } catch (uploadError) {
+              console.error('Error uploading image:', uploadError);
+              // Continue with other uploads even if one fails
+            }
+          }
+          // Update the vehicle object with uploaded images
+          if (uploadedImages.length > 0) {
+            newVehicle.images = uploadedImages;
+          }
+        }
+
+        setVehicles((prev) => [apiToVehicle(newVehicle), ...prev]);
+        toast.success('Vehicle added successfully');
       }
 
-      setIsLoading(false);
       setIsModalOpen(false);
       setEditingVehicle(null);
-    }, 1000);
+    } catch (error: any) {
+      console.error('Error saving vehicle:', error);
+      toast.error(error.message || 'Failed to save vehicle');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleStatusChange = (vehicleId: string, newStatus: Vehicle['status']) => {
-    setVehicles((prev) =>
-      prev.map((v) =>
-        v.id === vehicleId ? { ...v, status: newStatus } : v
-      )
-    );
+  const handleStatusChange = async (vehicleId: string, newStatus: Vehicle['status']) => {
+    try {
+      await api.vehicles.updateStatus(vehicleId, newStatus);
+
+      setVehicles((prev) =>
+        prev.map((v) =>
+          v.id === vehicleId ? { ...v, status: newStatus } : v
+        )
+      );
+      toast.success(`Vehicle status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update vehicle status');
+    }
     setActiveDropdown(null);
   };
 
@@ -288,49 +297,65 @@ export default function FleetManagement() {
     setActiveDropdown(null);
   };
 
-  const handleScheduleMaintenance = () => {
+  const handleScheduleMaintenance = async () => {
     if (!maintenanceVehicle || !maintenanceForm.scheduledDate) return;
 
-    const newMaintenance: MaintenanceSchedule = {
-      id: `m${Date.now()}`,
-      vehicleId: maintenanceVehicle.id,
-      type: maintenanceForm.type,
-      scheduledDate: maintenanceForm.scheduledDate,
-      notes: maintenanceForm.notes,
-      status: 'SCHEDULED',
-    };
+    try {
+      // Update vehicle status to MAINTENANCE
+      await api.vehicles.updateStatus(maintenanceVehicle.id, 'MAINTENANCE');
 
-    setVehicles((prev) =>
-      prev.map((v) =>
-        v.id === maintenanceVehicle.id
-          ? { ...v, status: 'MAINTENANCE', maintenanceSchedule: newMaintenance }
-          : v
-      )
-    );
+      // Note: Maintenance record creation would require a separate API endpoint
+      // For now, we just update the status
 
-    setShowMaintenanceModal(false);
-    setMaintenanceVehicle(null);
+      setVehicles((prev) =>
+        prev.map((v) =>
+          v.id === maintenanceVehicle.id
+            ? { ...v, status: 'MAINTENANCE' as const }
+            : v
+        )
+      );
+
+      setShowMaintenanceModal(false);
+      setMaintenanceVehicle(null);
+      toast.success('Maintenance scheduled successfully');
+    } catch (error) {
+      console.error('Error scheduling maintenance:', error);
+      toast.error('Failed to schedule maintenance');
+    }
   };
 
-  const handleCompleteMaintenance = (vehicleId: string) => {
-    setVehicles((prev) =>
-      prev.map((v) =>
-        v.id === vehicleId
-          ? {
-              ...v,
-              status: 'AVAILABLE',
-              maintenanceSchedule: v.maintenanceSchedule
-                ? { ...v.maintenanceSchedule, status: 'COMPLETED' }
-                : undefined,
-            }
-          : v
-      )
-    );
+  const handleCompleteMaintenance = async (vehicleId: string) => {
+    try {
+      await api.vehicles.updateStatus(vehicleId, 'AVAILABLE');
+
+      setVehicles((prev) =>
+        prev.map((v) =>
+          v.id === vehicleId
+            ? { ...v, status: 'AVAILABLE' as const }
+            : v
+        )
+      );
+      toast.success('Maintenance completed');
+    } catch (error) {
+      console.error('Error completing maintenance:', error);
+      toast.error('Failed to complete maintenance');
+    }
     setActiveDropdown(null);
   };
 
   const isAllSelected = filteredVehicles.length > 0 && selectedVehicles.size === filteredVehicles.length;
   const hasSelection = selectedVehicles.size > 0;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
+          <p className="text-gray-500">Loading fleet...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -620,12 +645,6 @@ export default function FleetManagement() {
                         >
                           {vehicle.status}
                         </span>
-                        {vehicle.maintenanceSchedule && vehicle.status === 'MAINTENANCE' && (
-                          <span className="text-xs text-orange-600 flex items-center gap-1">
-                            <Wrench className="w-3 h-3" />
-                            {maintenanceTypes.find(t => t.value === vehicle.maintenanceSchedule?.type)?.label}
-                          </span>
-                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -682,7 +701,7 @@ export default function FleetManagement() {
                                 <Wrench className="w-4 h-4" />
                                 Schedule Maintenance
                               </button>
-                              {vehicle.status === 'MAINTENANCE' && vehicle.maintenanceSchedule && (
+                              {vehicle.status === 'MAINTENANCE' && (
                                 <button
                                   onClick={() => handleCompleteMaintenance(vehicle.id)}
                                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50"
@@ -739,17 +758,6 @@ export default function FleetManagement() {
           <p className="text-sm text-gray-500">
             Showing {filteredVehicles.length} of {vehicles.length} vehicles
           </p>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50">
-              Previous
-            </button>
-            <button className="px-3 py-1.5 text-sm bg-primary text-white rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-200">
-              1
-            </button>
-            <button className="px-3 py-1.5 text-sm border border-gray-200 rounded-xl hover:bg-gray-50">
-              Next
-            </button>
-          </div>
         </div>
       </motion.div>
 
@@ -762,7 +770,7 @@ export default function FleetManagement() {
         }}
         onSubmit={handleSubmitVehicle}
         initialData={editingVehicle || undefined}
-        isLoading={isLoading}
+        isLoading={isSaving}
       />
 
       {/* Maintenance Scheduling Modal */}

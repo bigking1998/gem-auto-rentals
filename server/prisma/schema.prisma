@@ -12,17 +12,19 @@ datasource db {
 
 // User model - customers and staff
 model User {
-  id            String     @id @default(cuid())
-  email         String     @unique
-  password      String
-  firstName     String
-  lastName      String
-  phone         String?
-  role          Role       @default(CUSTOMER)
-  emailVerified Boolean    @default(false)
-  avatarUrl     String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id                 String     @id @default(cuid())
+  email              String     @unique
+  password           String
+  firstName          String
+  lastName           String
+  phone              String?
+  role               Role       @default(CUSTOMER)
+  emailVerified      Boolean    @default(false)
+  avatarUrl          String?
+  resetToken         String?    @unique
+  resetTokenExpiry   DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   bookings      Booking[]
   documents     Document[]
@@ -163,30 +165,43 @@ enum PaymentMethod {
 
 // Document model - customer documents
 model Document {
-  id          String       @id @default(cuid())
+  id          String         @id @default(cuid())
   userId      String
+  bookingId   String?
   type        DocumentType
-  url         String
-  filename    String
-  verified    Boolean      @default(false)
+  fileName    String
+  fileUrl     String         // Storage path in Supabase
+  fileSize    Int            // File size in bytes
+  mimeType    String
+  status      DocumentStatus @default(PENDING)
   verifiedAt  DateTime?
   verifiedBy  String?
   expiresAt   DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  user        User         @relation(fields: [userId], references: [id])
+  user        User           @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@index([bookingId])
   @@index([type])
+  @@index([status])
 }
 
 enum DocumentType {
-  DRIVERS_LICENSE
+  DRIVERS_LICENSE_FRONT
+  DRIVERS_LICENSE_BACK
   ID_CARD
   PASSPORT
   PROOF_OF_ADDRESS
   INSURANCE
+}
+
+enum DocumentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
 }
 
 // Review model - vehicle reviews

@@ -21,7 +21,6 @@ import {
   ChevronUp,
   Search,
   X,
-  SlidersHorizontal,
 } from 'lucide-react';
 
 import { cn } from '../lib/utils';
@@ -124,7 +123,7 @@ export function DataTable<TData, TValue>({
               }}
               className="pl-9 pr-9"
             />
-            {(searchKey ? table.getColumn(searchKey)?.getFilterValue() : globalFilter) && (
+            {!!(searchKey ? table.getColumn(searchKey)?.getFilterValue() : globalFilter) && (
               <button
                 onClick={() => {
                   if (searchKey) {

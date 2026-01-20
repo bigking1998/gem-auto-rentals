@@ -5,12 +5,14 @@ import { z } from 'zod';
 import {
   X,
   Upload,
-  Image as ImageIcon,
   Trash2,
   Car,
   Plus,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 // Vehicle form validation schema
 const vehicleSchema = z.object({
@@ -34,7 +36,7 @@ type VehicleFormData = z.infer<typeof vehicleSchema>;
 interface VehicleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: VehicleFormData & { images: string[] }) => void;
+  onSubmit: (data: VehicleFormData & { images: string[]; pendingFiles?: File[] }) => void;
   initialData?: Partial<VehicleFormData & { id: string; images: string[] }>;
   isLoading?: boolean;
 }
@@ -90,10 +92,15 @@ export function VehicleModal({
   isLoading = false,
 }: VehicleModalProps) {
   const [images, setImages] = useState<string[]>(initialData?.images || []);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]); // Files waiting to upload (for new vehicles)
+  const [pendingPreviews, setPendingPreviews] = useState<string[]>([]); // Preview URLs for pending files
   const [customFeature, setCustomFeature] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeletingImage, setIsDeletingImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!initialData?.id;
+  const vehicleId = initialData?.id;
 
   const {
     register,
@@ -122,22 +129,68 @@ export function VehicleModal({
 
   const selectedFeatures = watch('features') || [];
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
-    // Convert files to base64 for preview (in production, upload to cloud storage)
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImages((prev) => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    const fileArray = Array.from(files);
+
+    if (isEditing && vehicleId) {
+      // For existing vehicles, upload immediately to the API
+      setIsUploading(true);
+      try {
+        for (const file of fileArray) {
+          const result = await api.vehicles.uploadImage(vehicleId, file);
+          setImages((prev) => [...prev, result.imageUrl]);
+          toast.success('Image uploaded successfully');
+        }
+      } catch (error: any) {
+        console.error('Error uploading image:', error);
+        toast.error(error.message || 'Failed to upload image');
+      } finally {
+        setIsUploading(false);
+      }
+    } else {
+      // For new vehicles, store files and create previews (will upload after vehicle creation)
+      fileArray.forEach((file) => {
+        setPendingFiles((prev) => [...prev, file]);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPendingPreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = async (index: number, imageUrl: string) => {
+    if (isEditing && vehicleId && !imageUrl.startsWith('data:')) {
+      // For existing images on the server, delete via API
+      setIsDeletingImage(imageUrl);
+      try {
+        await api.vehicles.deleteImage(vehicleId, imageUrl);
+        setImages((prev) => prev.filter((_, i) => i !== index));
+        toast.success('Image deleted successfully');
+      } catch (error: any) {
+        console.error('Error deleting image:', error);
+        toast.error(error.message || 'Failed to delete image');
+      } finally {
+        setIsDeletingImage(null);
+      }
+    } else {
+      // For pending local images, just remove from state
+      setImages((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const removePendingImage = (index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+    setPendingPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const toggleFeature = (feature: string) => {
@@ -157,7 +210,8 @@ export function VehicleModal({
   };
 
   const onFormSubmit = (data: VehicleFormData) => {
-    onSubmit({ ...data, images });
+    // Pass both existing images and pending files for new vehicles
+    onSubmit({ ...data, images, pendingFiles });
   };
 
   if (!isOpen) return null;
@@ -203,12 +257,18 @@ export function VehicleModal({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Vehicle Images
+                  {isUploading && (
+                    <span className="ml-2 text-orange-500 text-xs">
+                      <Loader2 className="w-3 h-3 inline animate-spin mr-1" />
+                      Uploading...
+                    </span>
+                  )}
                 </label>
                 <div className="grid grid-cols-4 gap-3">
-                  {/* Uploaded Images */}
+                  {/* Uploaded Images (from server) */}
                   {images.map((image, index) => (
                     <div
-                      key={index}
+                      key={`uploaded-${index}`}
                       className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group"
                     >
                       <img
@@ -216,9 +276,40 @@ export function VehicleModal({
                         alt={`Vehicle ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
+                      {isDeletingImage === image ? (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <Loader2 className="w-5 h-5 text-white animate-spin" />
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index, image)}
+                          disabled={isUploading || isDeletingImage !== null}
+                          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center disabled:cursor-not-allowed"
+                        >
+                          <Trash2 className="w-5 h-5 text-white" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Pending Images (local previews for new vehicles) */}
+                  {pendingPreviews.map((preview, index) => (
+                    <div
+                      key={`pending-${index}`}
+                      className="relative aspect-square rounded-lg overflow-hidden border-2 border-dashed border-orange-300 group"
+                    >
+                      <img
+                        src={preview}
+                        alt={`Pending ${index + 1}`}
+                        className="w-full h-full object-cover opacity-80"
+                      />
+                      <div className="absolute top-1 left-1 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded">
+                        Pending
+                      </div>
                       <button
                         type="button"
-                        onClick={() => removeImage(index)}
+                        onClick={() => removePendingImage(index)}
                         className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                       >
                         <Trash2 className="w-5 h-5 text-white" />
@@ -227,27 +318,38 @@ export function VehicleModal({
                   ))}
 
                   {/* Upload Button */}
-                  {images.length < 8 && (
+                  {images.length + pendingPreviews.length < 8 && (
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-primary transition-colors flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-primary"
+                      disabled={isUploading}
+                      className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-primary transition-colors flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Upload className="w-6 h-6" />
-                      <span className="text-xs">Upload</span>
+                      {isUploading ? (
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                      ) : (
+                        <Upload className="w-6 h-6" />
+                      )}
+                      <span className="text-xs">{isUploading ? 'Uploading...' : 'Upload'}</span>
                     </button>
                   )}
                 </div>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   multiple
                   className="hidden"
                   onChange={handleImageUpload}
+                  disabled={isUploading}
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Upload up to 8 images. Recommended: 800x600px or larger.
+                  Upload up to 8 images (JPEG, PNG, WebP). Max 5MB each.
+                  {!isEditing && pendingPreviews.length > 0 && (
+                    <span className="text-orange-500 ml-1">
+                      Pending images will be uploaded when the vehicle is saved.
+                    </span>
+                  )}
                 </p>
               </div>
 

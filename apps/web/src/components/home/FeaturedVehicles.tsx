@@ -1,67 +1,25 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Star, Users, Fuel, Settings2, ArrowRight } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { api } from '@/lib/api';
 
-// Mock data - in production, fetch from API
-const vehicles = [
-  {
-    id: '1',
-    make: 'Toyota',
-    model: 'Camry',
-    year: 2024,
-    category: 'STANDARD',
-    dailyRate: 65,
-    rating: 4.8,
-    reviewCount: 124,
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800&q=80',
-  },
-  {
-    id: '2',
-    make: 'BMW',
-    model: '5 Series',
-    year: 2024,
-    category: 'LUXURY',
-    dailyRate: 150,
-    rating: 4.9,
-    reviewCount: 89,
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80',
-  },
-  {
-    id: '3',
-    make: 'Tesla',
-    model: 'Model 3',
-    year: 2024,
-    category: 'PREMIUM',
-    dailyRate: 120,
-    rating: 4.9,
-    reviewCount: 156,
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'ELECTRIC',
-    image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&q=80',
-  },
-  {
-    id: '4',
-    make: 'Ford',
-    model: 'Explorer',
-    year: 2024,
-    category: 'SUV',
-    dailyRate: 95,
-    rating: 4.7,
-    reviewCount: 78,
-    seats: 7,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80',
-  },
-];
+interface FeaturedVehicle {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  category: string;
+  dailyRate: number;
+  rating: number;
+  reviewCount: number;
+  seats: number;
+  transmission: string;
+  fuelType: string;
+  image: string;
+}
+
 
 const categoryColors: Record<string, string> = {
   ECONOMY: 'bg-primary text-white shadow-md',
@@ -73,6 +31,42 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function FeaturedVehicles() {
+  const [vehicles, setVehicles] = useState<FeaturedVehicle[]>([]);
+  const [, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFeaturedVehicles() {
+      try {
+        const response = await api.vehicles.list({ limit: 4 });
+
+        if (response.items && response.items.length > 0) {
+          const transformedVehicles: FeaturedVehicle[] = response.items.map((v) => ({
+            id: v.id,
+            make: v.make,
+            model: v.model,
+            year: v.year,
+            category: v.category,
+            dailyRate: Number(v.dailyRate),
+            rating: v.averageRating || 4.8,
+            reviewCount: v.reviewCount || 0,
+            seats: v.seats,
+            transmission: v.transmission,
+            fuelType: v.fuelType,
+            image: v.images?.[0] || '',
+          }));
+          setVehicles(transformedVehicles);
+        }
+      } catch (err) {
+        console.error('Failed to fetch featured vehicles:', err);
+        setVehicles([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchFeaturedVehicles();
+  }, []);
+
   return (
     <section className="py-20 lg:py-28 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

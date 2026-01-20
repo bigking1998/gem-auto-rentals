@@ -11,7 +11,6 @@ import {
   Trash2,
   MoreHorizontal,
   Clock,
-  User,
   ArrowLeft,
   Paperclip,
   Reply,

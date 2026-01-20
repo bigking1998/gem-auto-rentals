@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -9,14 +10,14 @@ import {
   ArrowDownRight,
   Plus,
   Users,
-  FileText,
   Wrench,
   ChevronRight,
   AlertCircle,
   CheckCircle2,
   TrendingUp,
+  Loader2,
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import {
   BarChart,
   Bar,
@@ -25,95 +26,27 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
 } from 'recharts';
+import { api } from '@/lib/api';
 
-// Mock data
-const stats = [
-  {
-    label: 'Active Rentals',
-    value: 24,
-    change: 12,
-    trend: 'up',
-    icon: Car,
-    color: 'bg-red-500',
-  },
-  {
-    label: "Today's Revenue",
-    value: 4850,
-    change: 8.2,
-    trend: 'up',
-    icon: DollarSign,
-    color: 'bg-green-500',
-    isCurrency: true,
-  },
-  {
-    label: 'Pending Bookings',
-    value: 8,
-    change: -3,
-    trend: 'down',
-    icon: Clock,
-    color: 'bg-orange-500',
-  },
-  {
-    label: 'Available Vehicles',
-    value: 32,
-    change: 5,
-    trend: 'up',
-    icon: CalendarCheck,
-    color: 'bg-orange-500',
-  },
-];
+interface DashboardStats {
+  activeRentals: number;
+  todaysRevenue: number;
+  pendingBookings: number;
+  availableVehicles: number;
+  totalCustomers: number;
+  vehiclesInMaintenance: number;
+}
 
-const revenueData = [
-  { name: 'Mon', revenue: 4000 },
-  { name: 'Tue', revenue: 3000 },
-  { name: 'Wed', revenue: 5000 },
-  { name: 'Thu', revenue: 4500 },
-  { name: 'Fri', revenue: 6000 },
-  { name: 'Sat', revenue: 7500 },
-  { name: 'Sun', revenue: 5500 },
-];
-
-const recentBookings = [
-  {
-    id: 'BK001',
-    customer: 'Sarah Johnson',
-    vehicle: '2024 Toyota Camry',
-    startDate: new Date('2026-01-18'),
-    endDate: new Date('2026-01-22'),
-    status: 'CONFIRMED',
-    amount: 260,
-  },
-  {
-    id: 'BK002',
-    customer: 'Michael Chen',
-    vehicle: '2024 BMW 5 Series',
-    startDate: new Date('2026-01-19'),
-    endDate: new Date('2026-01-25'),
-    status: 'PENDING',
-    amount: 900,
-  },
-  {
-    id: 'BK003',
-    customer: 'Emily Rodriguez',
-    vehicle: '2024 Tesla Model 3',
-    startDate: new Date('2026-01-17'),
-    endDate: new Date('2026-01-20'),
-    status: 'ACTIVE',
-    amount: 360,
-  },
-  {
-    id: 'BK004',
-    customer: 'David Thompson',
-    vehicle: '2024 Ford Explorer',
-    startDate: new Date('2026-01-20'),
-    endDate: new Date('2026-01-27'),
-    status: 'CONFIRMED',
-    amount: 665,
-  },
-];
+interface RecentBooking {
+  id: string;
+  customer: string;
+  vehicle: string;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  amount: number;
+}
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -134,7 +67,7 @@ const quickActions = [
     hoverBorder: 'hover:border-purple-500',
     hoverBg: 'hover:bg-purple-50',
     route: '/fleet',
-    action: 'modal', // Will open modal on fleet page
+    action: 'modal',
   },
   {
     id: 'new-booking',
@@ -193,37 +126,91 @@ const quickActions = [
   },
 ];
 
-// Alerts/notifications mock data
-const alerts = [
-  {
-    id: 1,
-    type: 'warning',
-    message: '3 vehicles due for maintenance this week',
-    action: 'View Schedule',
-    route: '/fleet',
-  },
-  {
-    id: 2,
-    type: 'info',
-    message: '5 pending document verifications',
-    action: 'Review',
-    route: '/customers',
-  },
-  {
-    id: 3,
-    type: 'success',
-    message: 'Revenue target achieved for this month',
-    action: 'View Details',
-    route: '/analytics',
-  },
+// Mock revenue data for the chart (would be fetched from payments table in production)
+const revenueData = [
+  { name: 'Mon', revenue: 4000 },
+  { name: 'Tue', revenue: 3000 },
+  { name: 'Wed', revenue: 5000 },
+  { name: 'Thu', revenue: 4500 },
+  { name: 'Fri', revenue: 6000 },
+  { name: 'Sat', revenue: 7500 },
+  { name: 'Sun', revenue: 5500 },
 ];
 
 export default function DashboardHome() {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats>({
+    activeRentals: 0,
+    todaysRevenue: 0,
+    pendingBookings: 0,
+    availableVehicles: 0,
+    totalCustomers: 0,
+    vehiclesInMaintenance: 0,
+  });
+  const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
+  const [alerts, setAlerts] = useState<{ id: number; type: string; message: string; action: string; route: string }[]>([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch dashboard stats from API
+      const dashboardData = await api.stats.dashboard();
+
+      // Update stats
+      setStats({
+        activeRentals: dashboardData.metrics.activeRentals,
+        todaysRevenue: dashboardData.metrics.todaysRevenue,
+        pendingBookings: dashboardData.metrics.pendingBookings,
+        availableVehicles: dashboardData.metrics.availableVehicles,
+        totalCustomers: dashboardData.metrics.totalCustomers,
+        vehiclesInMaintenance: 0, // Not included in metrics, could add later
+      });
+
+      // Process recent bookings
+      if (dashboardData.recentBookings && dashboardData.recentBookings.length > 0) {
+        const processedBookings: RecentBooking[] = dashboardData.recentBookings.map((booking) => ({
+          id: booking.id,
+          customer: booking.user
+            ? `${booking.user.firstName} ${booking.user.lastName}`
+            : 'Unknown Customer',
+          vehicle: booking.vehicle
+            ? `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`
+            : 'Unknown Vehicle',
+          startDate: new Date(booking.startDate),
+          endDate: new Date(booking.endDate),
+          status: booking.status,
+          amount: Number(booking.totalAmount),
+        }));
+        setRecentBookings(processedBookings);
+      }
+
+      // Generate alerts based on data
+      const newAlerts = [];
+      if (dashboardData.metrics.pendingBookings > 0) {
+        newAlerts.push({
+          id: 2,
+          type: 'info',
+          message: `${dashboardData.metrics.pendingBookings} pending booking${dashboardData.metrics.pendingBookings > 1 ? 's' : ''} awaiting confirmation`,
+          action: 'Review',
+          route: '/bookings',
+        });
+      }
+      setAlerts(newAlerts);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleQuickAction = (action: typeof quickActions[0]) => {
     if (action.route) {
-      // Navigate with state to potentially trigger actions
       navigate(action.route, { state: { action: action.id } });
     }
   };
@@ -231,6 +218,53 @@ export default function DashboardHome() {
   const handleAlertAction = (alert: typeof alerts[0]) => {
     navigate(alert.route);
   };
+
+  const statsConfig = [
+    {
+      label: 'Active Rentals',
+      value: stats.activeRentals,
+      change: 12,
+      trend: 'up' as const,
+      icon: Car,
+      color: 'bg-red-500',
+    },
+    {
+      label: "Today's Revenue",
+      value: stats.todaysRevenue,
+      change: 8.2,
+      trend: 'up' as const,
+      icon: DollarSign,
+      color: 'bg-green-500',
+      isCurrency: true,
+    },
+    {
+      label: 'Pending Bookings',
+      value: stats.pendingBookings,
+      change: -3,
+      trend: 'down' as const,
+      icon: Clock,
+      color: 'bg-orange-500',
+    },
+    {
+      label: 'Available Vehicles',
+      value: stats.availableVehicles,
+      change: 5,
+      trend: 'up' as const,
+      icon: CalendarCheck,
+      color: 'bg-orange-500',
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
+          <p className="text-gray-500">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -292,7 +326,7 @@ export default function DashboardHome() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        {stats.map((stat, index) => (
+        {statsConfig.map((stat, index) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
@@ -438,36 +472,43 @@ export default function DashboardHome() {
             </button>
           </div>
           <div className="space-y-3">
-            {recentBookings.map((booking) => (
-              <div
-                key={booking.id}
-                className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer"
-                onClick={() => navigate('/bookings')}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-orange-200">
-                    {booking.customer.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">{booking.customer}</p>
-                    <p className="text-sm text-gray-500">{booking.vehicle}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span
-                    className={cn(
-                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                      statusColors[booking.status]
-                    )}
-                  >
-                    {booking.status}
-                  </span>
-                  <p className="text-sm font-bold text-gray-900 mt-1">
-                    {formatCurrency(booking.amount)}
-                  </p>
-                </div>
+            {recentBookings.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <CalendarCheck className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                <p>No recent bookings</p>
               </div>
-            ))}
+            ) : (
+              recentBookings.map((booking) => (
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 hover:shadow-md transition-all cursor-pointer"
+                  onClick={() => navigate('/bookings')}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-orange-200">
+                      {booking.customer.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{booking.customer}</p>
+                      <p className="text-sm text-gray-500">{booking.vehicle}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span
+                      className={cn(
+                        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                        statusColors[booking.status]
+                      )}
+                    >
+                      {booking.status}
+                    </span>
+                    <p className="text-sm font-bold text-gray-900 mt-1">
+                      {formatCurrency(booking.amount)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </motion.div>
       </div>

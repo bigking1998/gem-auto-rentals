@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { api, tokenManager, ApiError, type User as ApiUser } from '@/lib/api';
 
 export interface User {
   id: string;
@@ -9,25 +10,26 @@ export interface User {
   phone?: string;
   role: 'CUSTOMER' | 'SUPPORT' | 'MANAGER' | 'ADMIN';
   emailVerified: boolean;
+  avatarUrl?: string | null;
   createdAt: string;
 }
 
 interface AuthState {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
 }
 
 interface AuthActions {
   setUser: (user: User | null) => void;
-  setToken: (token: string | null) => void;
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   clearError: () => void;
-  fetchUser: () => Promise<void>;
+  fetchProfile: () => Promise<void>;
+  initialize: () => Promise<void>;
 }
 
 interface RegisterData {
@@ -38,47 +40,85 @@ interface RegisterData {
   password: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// Convert API user to store user format
+function toStoreUser(apiUser: ApiUser): User {
+  return {
+    id: apiUser.id,
+    email: apiUser.email,
+    firstName: apiUser.firstName,
+    lastName: apiUser.lastName,
+    phone: apiUser.phone,
+    role: apiUser.role,
+    emailVerified: apiUser.emailVerified,
+    avatarUrl: null,
+    createdAt: apiUser.createdAt,
+  };
+}
 
 export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       // State
       user: null,
-      token: null,
       isAuthenticated: false,
-      isLoading: false,
+      isLoading: true,
+      isInitialized: false,
       error: null,
 
       // Actions
       setUser: (user) => set({ user, isAuthenticated: !!user }),
 
-      setToken: (token) => set({ token }),
+      initialize: async () => {
+        try {
+          // Check if we have a token stored
+          const token = tokenManager.getToken();
+
+          if (token) {
+            // Verify token is still valid by fetching profile
+            try {
+              const apiUser = await api.auth.me();
+              const user = toStoreUser(apiUser);
+              set({ user, isAuthenticated: true });
+            } catch (error) {
+              // Token is invalid, clear it
+              console.error('Token validation failed:', error);
+              tokenManager.removeToken();
+              set({ user: null, isAuthenticated: false });
+            }
+          }
+
+          set({ isLoading: false, isInitialized: true });
+        } catch (error) {
+          console.error('Auth initialization error:', error);
+          set({ isLoading: false, isInitialized: true });
+        }
+      },
 
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch(`${API_BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-          });
+          const response = await api.auth.login({ email, password });
 
-          const data = await response.json();
+          // Store the token
+          tokenManager.setToken(response.token);
 
-          if (!response.ok) {
-            throw new Error(data.message || 'Login failed');
-          }
+          // Convert to store user format
+          const user = toStoreUser(response.user);
 
           set({
-            user: data.user,
-            token: data.token,
+            user,
             isAuthenticated: true,
             isLoading: false,
           });
         } catch (error) {
+          const message = error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : 'Login failed';
+
           set({
-            error: error instanceof Error ? error.message : 'Login failed',
+            error: message,
             isLoading: false,
           });
           throw error;
@@ -88,70 +128,76 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       register: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch(`${API_BASE_URL}/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
+          const response = await api.auth.register({
+            email: data.email,
+            password: data.password,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            phone: data.phone,
           });
 
-          const result = await response.json();
+          // Store the token
+          tokenManager.setToken(response.token);
 
-          if (!response.ok) {
-            throw new Error(result.message || 'Registration failed');
-          }
+          // Convert to store user format
+          const user = toStoreUser(response.user);
 
           set({
-            user: result.user,
-            token: result.token,
+            user,
             isAuthenticated: true,
             isLoading: false,
           });
         } catch (error) {
+          const message = error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : 'Registration failed';
+
           set({
-            error: error instanceof Error ? error.message : 'Registration failed',
+            error: message,
             isLoading: false,
           });
           throw error;
         }
       },
 
-      logout: () => {
+      logout: async () => {
+        set({ isLoading: true });
+        try {
+          // Call logout endpoint (optional, JWT is stateless)
+          await api.auth.logout();
+        } catch (error) {
+          // Ignore logout API errors
+          console.error('Logout API error:', error);
+        }
+
+        // Clear token and state
+        tokenManager.removeToken();
         set({
           user: null,
-          token: null,
           isAuthenticated: false,
+          isLoading: false,
           error: null,
         });
       },
 
       clearError: () => set({ error: null }),
 
-      fetchUser: async () => {
-        const token = get().token;
-        if (!token) return;
+      fetchProfile: async () => {
+        if (!tokenManager.isAuthenticated()) return;
 
-        set({ isLoading: true });
         try {
-          const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch user');
-          }
-
-          const data = await response.json();
-          set({ user: data.user, isAuthenticated: true, isLoading: false });
+          const apiUser = await api.auth.me();
+          const user = toStoreUser(apiUser);
+          set({ user });
         } catch (error) {
-          // Token is invalid, clear auth state
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            isLoading: false,
-          });
+          console.error('Profile fetch error:', error);
+          // If profile fetch fails, user might need to re-login
+          if (error instanceof ApiError && error.status === 401) {
+            tokenManager.removeToken();
+            set({ user: null, isAuthenticated: false });
+          }
         }
       },
     }),
@@ -159,7 +205,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       name: 'gem-auth-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        token: state.token,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),

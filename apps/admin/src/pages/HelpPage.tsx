@@ -12,7 +12,6 @@ import {
   ChevronUp,
   ExternalLink,
   Zap,
-  Shield,
   Car,
   CreditCard,
   Users,

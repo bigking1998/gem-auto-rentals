@@ -240,3 +240,6 @@ Phase 5: Polish & Testing - Responsive design testing and component tests remain
 - Component documentation created for UI library (packages/ui/README.md) and custom hooks (apps/web/src/hooks/README.md)
 - Server API endpoint tests created with Vitest + Supertest (auth, vehicles, bookings)
 - Test setup includes Prisma mocks for isolated unit testing
+- Password reset email implemented with Resend (free tier: 3,000 emails/month)
+- Email service includes password reset, welcome, and booking confirmation templates
+- Graceful degradation: logs reset links to console when RESEND_API_KEY is not set

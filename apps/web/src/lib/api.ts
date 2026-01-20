@@ -2,7 +2,7 @@
  * API client for the Gem Auto Rentals backend
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -17,6 +17,14 @@ class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+// Backend response wrapper type
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+  message?: string;
 }
 
 async function request<T>(
@@ -57,22 +65,27 @@ async function request<T>(
     headers,
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new ApiError(
-      response.status,
-      response.statusText,
-      errorData.message || `API Error: ${response.status} ${response.statusText}`
-    );
-  }
-
   // Handle empty responses
   const text = await response.text();
   if (!text) {
+    if (!response.ok) {
+      throw new ApiError(response.status, response.statusText, 'Empty response from server');
+    }
     return {} as T;
   }
 
-  return JSON.parse(text);
+  const json = JSON.parse(text) as ApiResponse<T>;
+
+  if (!response.ok || !json.success) {
+    throw new ApiError(
+      response.status,
+      response.statusText,
+      json.error || json.message || `API Error: ${response.status} ${response.statusText}`
+    );
+  }
+
+  // Unwrap the data from the response wrapper
+  return json.data;
 }
 
 // ============ Vehicle Types ============
@@ -167,6 +180,25 @@ export interface CreateBookingData {
   };
 }
 
+// ============ Document Types ============
+export interface Document {
+  id: string;
+  userId: string;
+  bookingId?: string;
+  type: 'DRIVERS_LICENSE_FRONT' | 'DRIVERS_LICENSE_BACK' | 'ID_CARD' | 'PASSPORT' | 'PROOF_OF_ADDRESS' | 'INSURANCE';
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+  status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verifiedAt?: string;
+  verifiedBy?: string;
+  notes?: string;
+  signedUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ============ Auth Types ============
 export interface User {
   id: string;
@@ -176,6 +208,7 @@ export interface User {
   phone?: string;
   role: 'CUSTOMER' | 'SUPPORT' | 'MANAGER' | 'ADMIN';
   emailVerified: boolean;
+  avatarUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -204,7 +237,7 @@ export const api = {
   // Vehicles
   vehicles: {
     list: (params?: VehicleFiltersParams): Promise<PaginatedResponse<Vehicle>> =>
-      request('/vehicles', { params }),
+      request('/vehicles', { params: params as Record<string, string | number | boolean | undefined> }),
 
     get: (id: string): Promise<Vehicle> =>
       request(`/vehicles/${id}`),
@@ -266,17 +299,163 @@ export const api = {
 
   // Payments
   payments: {
-    createIntent: (amount: number, bookingId: string): Promise<{ clientSecret: string; paymentIntentId: string }> =>
+    createIntent: (bookingId: string): Promise<{ clientSecret: string; amount: number }> =>
       request('/payments/create-intent', {
         method: 'POST',
-        body: JSON.stringify({ amount, bookingId }),
+        body: JSON.stringify({ bookingId }),
       }),
 
-    confirm: (paymentIntentId: string): Promise<{ success: boolean }> =>
+    confirm: (paymentIntentId: string): Promise<{ payment: { status: string }; bookingStatus: string }> =>
       request('/payments/confirm', {
         method: 'POST',
         body: JSON.stringify({ paymentIntentId }),
       }),
+
+    get: (bookingId: string): Promise<{ id: string; amount: number | string; status: string; method?: string }> =>
+      request(`/payments/${bookingId}`),
+  },
+
+  // Profile
+  profile: {
+    get: (): Promise<User> => request('/customers/profile'),
+
+    update: (data: { firstName?: string; lastName?: string; phone?: string }): Promise<User> =>
+      request('/customers/profile', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    uploadAvatar: async (file: File): Promise<User> => {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const token = localStorage.getItem('auth_token');
+      // Get current user ID from token
+      const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
+      const userId = payload?.userId;
+
+      if (!userId) {
+        throw new ApiError(401, 'Unauthorized', 'Not authenticated');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/customers/${userId}/avatar`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new ApiError(
+          response.status,
+          response.statusText,
+          json.error || json.message || 'Upload failed'
+        );
+      }
+      return json.data;
+    },
+
+    deleteAvatar: async (): Promise<User> => {
+      const token = localStorage.getItem('auth_token');
+      const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
+      const userId = payload?.userId;
+
+      if (!userId) {
+        throw new ApiError(401, 'Unauthorized', 'Not authenticated');
+      }
+
+      return request(`/customers/${userId}/avatar`, { method: 'DELETE' });
+    },
+  },
+
+  // Contracts
+  contracts: {
+    upload: async (bookingId: string, file: File): Promise<{ contractSignedUrl: string }> => {
+      const formData = new FormData();
+      formData.append('contract', file);
+
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}/contract`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new ApiError(
+          response.status,
+          response.statusText,
+          json.error || json.message || 'Upload failed'
+        );
+      }
+      return json.data;
+    },
+
+    getDownloadUrl: (bookingId: string): Promise<{ downloadUrl: string }> =>
+      request(`/bookings/${bookingId}/contract`),
+  },
+
+  // Documents
+  documents: {
+    upload: async (
+      file: File,
+      type: Document['type'],
+      bookingId?: string
+    ): Promise<Document> => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', type);
+      if (bookingId) {
+        formData.append('bookingId', bookingId);
+      }
+
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE_URL}/documents/upload`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new ApiError(
+          response.status,
+          response.statusText,
+          json.error || json.message || 'Upload failed'
+        );
+      }
+      return json.data;
+    },
+
+    list: (params?: { type?: string; status?: string; bookingId?: string }): Promise<Document[]> =>
+      request('/documents', { params }),
+
+    get: (id: string): Promise<Document> =>
+      request(`/documents/${id}`),
+
+    delete: (id: string): Promise<{ message: string }> =>
+      request(`/documents/${id}`, { method: 'DELETE' }),
+
+    getDownloadUrl: (id: string): Promise<{ downloadUrl: string; fileName: string; mimeType: string }> =>
+      request(`/documents/${id}/download`),
+  },
+};
+
+// ============ Token Management ============
+export const tokenManager = {
+  getToken: (): string | null => localStorage.getItem('auth_token'),
+
+  setToken: (token: string): void => {
+    localStorage.setItem('auth_token', token);
+  },
+
+  removeToken: (): void => {
+    localStorage.removeItem('auth_token');
+  },
+
+  isAuthenticated: (): boolean => {
+    return !!localStorage.getItem('auth_token');
   },
 };
 

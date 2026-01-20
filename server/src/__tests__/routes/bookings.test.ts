@@ -21,6 +21,8 @@ const mockUser = {
   role: 'CUSTOMER' as const,
   emailVerified: true,
   avatarUrl: null,
+  resetToken: null,
+  resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -35,6 +37,8 @@ const mockAdminUser = {
   role: 'ADMIN' as const,
   emailVerified: true,
   avatarUrl: null,
+  resetToken: null,
+  resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

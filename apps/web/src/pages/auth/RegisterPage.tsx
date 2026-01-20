@@ -13,8 +13,10 @@ import {
   Phone,
   Check,
   ArrowLeft,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
 
 interface FormData {
   firstName: string;
@@ -34,6 +36,7 @@ interface FormErrors {
   password?: string;
   confirmPassword?: string;
   agreeToTerms?: string;
+  general?: string;
 }
 
 const passwordRequirements = [
@@ -45,6 +48,7 @@ const passwordRequirements = [
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { register, error: authError, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,16 +106,27 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearError();
+    setErrors({});
 
     if (!validateForm()) return;
 
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-
-    // Navigate to dashboard on success
-    navigate('/dashboard');
+    try {
+      await register({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+      });
+      // Navigate to dashboard on success
+      navigate('/dashboard');
+    } catch (error) {
+      setErrors({ general: authError || 'Registration failed. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const updateField = (field: keyof FormData, value: string | boolean) => {
@@ -152,6 +167,14 @@ export default function RegisterPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Error Alert */}
+            {(errors.general || authError) && (
+              <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <p className="text-sm">{errors.general || authError}</p>
+              </div>
+            )}
+
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-3">
               <div>

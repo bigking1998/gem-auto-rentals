@@ -1,10 +1,28 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import multer from 'multer';
 import prisma from '../lib/prisma.js';
 import { authenticate, staffOnly } from '../middleware/auth.js';
 import { NotFoundError, BadRequestError } from '../middleware/errorHandler.js';
+import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getPublicUrl } from '../lib/supabase.js';
 
 const router = Router();
+
+// Configure multer for vehicle image uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.'));
+    }
+  },
+});
 
 // Validation schemas
 const vehicleSchema = z.object({
@@ -327,6 +345,123 @@ router.get('/:id/availability', async (req, res, next) => {
         conflictingBookings,
         vehicleStatus: vehicle.status,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/vehicles/:id/images - Upload vehicle image (Admin only)
+router.post('/:id/images', authenticate, staffOnly, upload.single('image'), async (req, res, next) => {
+  try {
+    if (!isStorageConfigured()) {
+      throw BadRequestError('Storage is not configured. Please contact support.');
+    }
+
+    const { id } = req.params;
+
+    // Verify vehicle exists
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id },
+      select: { id: true, images: true },
+    });
+
+    if (!vehicle) {
+      throw NotFoundError('Vehicle not found');
+    }
+
+    if (!req.file) {
+      throw BadRequestError('No image file provided');
+    }
+
+    // Generate unique file path
+    const timestamp = Date.now();
+    const extension = req.file.originalname.split('.').pop() || 'jpg';
+    const filePath = `${id}/${timestamp}.${extension}`;
+
+    // Upload to Supabase
+    const result = await uploadFile(
+      BUCKETS.VEHICLES,
+      filePath,
+      req.file.buffer,
+      req.file.mimetype
+    );
+
+    if ('error' in result) {
+      throw BadRequestError(result.error);
+    }
+
+    // Get public URL
+    const imageUrl = getPublicUrl(BUCKETS.VEHICLES, filePath);
+
+    if (!imageUrl) {
+      throw BadRequestError('Failed to generate image URL');
+    }
+
+    // Update vehicle with new image
+    const updatedVehicle = await prisma.vehicle.update({
+      where: { id },
+      data: {
+        images: [...vehicle.images, imageUrl],
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        imageUrl,
+        vehicle: updatedVehicle,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/vehicles/:id/images - Delete vehicle image (Admin only)
+router.delete('/:id/images', authenticate, staffOnly, async (req, res, next) => {
+  try {
+    if (!isStorageConfigured()) {
+      throw BadRequestError('Storage is not configured. Please contact support.');
+    }
+
+    const { id } = req.params;
+    const { imageUrl } = z.object({
+      imageUrl: z.string().url(),
+    }).parse(req.body);
+
+    // Verify vehicle exists
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id },
+      select: { id: true, images: true },
+    });
+
+    if (!vehicle) {
+      throw NotFoundError('Vehicle not found');
+    }
+
+    if (!vehicle.images.includes(imageUrl)) {
+      throw BadRequestError('Image not found on this vehicle');
+    }
+
+    // Extract file path from URL
+    const urlParts = imageUrl.split('/vehicles/');
+    if (urlParts.length > 1) {
+      const filePath = urlParts[1];
+      await deleteFile(BUCKETS.VEHICLES, filePath);
+    }
+
+    // Update vehicle, removing the image
+    const updatedVehicle = await prisma.vehicle.update({
+      where: { id },
+      data: {
+        images: vehicle.images.filter((img) => img !== imageUrl),
+      },
+    });
+
+    res.json({
+      success: true,
+      data: updatedVehicle,
     });
   } catch (error) {
     next(error);

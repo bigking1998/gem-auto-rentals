@@ -8,145 +8,43 @@ import VehicleCard from '@/components/vehicles/VehicleCard';
 import FilterSidebar, { VehicleFilters } from '@/components/vehicles/FilterSidebar';
 import { VehicleGridSkeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
+import { api, type Vehicle as ApiVehicle } from '@/lib/api';
 
-// Mock data (same as before)
-const mockVehicles = [
-  {
-    id: '1',
-    make: 'Toyota',
-    model: 'Camry',
-    year: 2024,
-    category: 'STANDARD',
-    dailyRate: 65,
-    status: 'AVAILABLE',
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800'],
-    averageRating: 4.8,
-    reviewCount: 124,
-  },
-  {
-    id: '2',
-    make: 'Honda',
-    model: 'CR-V',
-    year: 2024,
-    category: 'SUV',
-    dailyRate: 85,
-    status: 'AVAILABLE',
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'HYBRID',
-    images: ['https://images.unsplash.com/photo-1542362567-b07e54358753?w=800'],
-    averageRating: 4.7,
-    reviewCount: 98,
-  },
-  {
-    id: '3',
-    make: 'BMW',
-    model: '3 Series',
-    year: 2024,
-    category: 'PREMIUM',
-    dailyRate: 120,
-    status: 'AVAILABLE',
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800'],
-    averageRating: 4.9,
-    reviewCount: 156,
-  },
-  {
-    id: '4',
-    make: 'Tesla',
-    model: 'Model 3',
-    year: 2024,
-    category: 'PREMIUM',
-    dailyRate: 130,
-    status: 'AVAILABLE',
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'ELECTRIC',
-    images: ['https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800'],
-    averageRating: 4.9,
-    reviewCount: 203,
-  },
-  {
-    id: '5',
-    make: 'Ford',
-    model: 'Mustang',
-    year: 2024,
-    category: 'LUXURY',
-    dailyRate: 150,
-    status: 'AVAILABLE',
-    seats: 4,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800'], // Keeping existing as it is a Mustang
-    averageRating: 4.8,
-    reviewCount: 87,
-  },
-  {
-    id: '6',
-    make: 'Nissan',
-    model: 'Versa',
-    year: 2024,
-    category: 'ECONOMY',
-    dailyRate: 45,
-    status: 'AVAILABLE',
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1469285994282-454ceb49e63c?w=800'],
-    averageRating: 4.5,
-    reviewCount: 234,
-  },
-  {
-    id: '7',
-    make: 'Chevrolet',
-    model: 'Suburban',
-    year: 2024,
-    category: 'VAN',
-    dailyRate: 140,
-    status: 'AVAILABLE',
-    seats: 8,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1559416523-140ddc3d238c?w=800'],
-    averageRating: 4.6,
-    reviewCount: 67,
-  },
-  {
-    id: '8',
-    make: 'Mercedes-Benz',
-    model: 'S-Class',
-    year: 2024,
-    category: 'LUXURY',
-    dailyRate: 250,
-    status: 'AVAILABLE',
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800'],
-    averageRating: 5.0,
-    reviewCount: 45,
-  },
-  {
-    id: '9',
-    make: 'Hyundai',
-    model: 'Elantra',
-    year: 2024,
-    category: 'ECONOMY',
-    dailyRate: 50,
-    status: 'AVAILABLE',
-    seats: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    images: ['https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=800'],
-    averageRating: 4.6,
-    reviewCount: 189,
-  },
-];
+// Vehicle type that matches VehicleCard props
+interface Vehicle {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  category: string;
+  dailyRate: number;
+  status: string;
+  seats: number;
+  transmission: string;
+  fuelType: string;
+  images: string[];
+  averageRating?: number;
+  reviewCount?: number;
+}
+
+// Transform API vehicle to component format
+function transformVehicle(v: ApiVehicle): Vehicle {
+  return {
+    id: v.id,
+    make: v.make,
+    model: v.model,
+    year: v.year,
+    category: v.category,
+    dailyRate: Number(v.dailyRate),
+    status: v.status,
+    seats: v.seats,
+    transmission: v.transmission,
+    fuelType: v.fuelType,
+    images: v.images || [],
+    averageRating: v.averageRating || 4.5,
+    reviewCount: v.reviewCount || 0,
+  };
+}
 
 const sortOptions = [
   { value: 'price-asc', label: 'Price: Low to High' },
@@ -157,8 +55,8 @@ const sortOptions = [
 
 export default function VehiclesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [vehicles, setVehicles] = useState(mockVehicles);
-  const [filteredVehicles, setFilteredVehicles] = useState(mockVehicles);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('price-asc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -174,9 +72,24 @@ export default function VehiclesPage() {
   useEffect(() => {
     const loadVehicles = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setVehicles(mockVehicles);
-      setIsLoading(false);
+      try {
+        // Fetch vehicles from backend API
+        const response = await api.vehicles.list({
+          limit: 100, // Get all available vehicles
+        });
+
+        if (response.items && response.items.length > 0) {
+          const transformedVehicles = response.items.map(transformVehicle);
+          setVehicles(transformedVehicles);
+        } else {
+          setVehicles([]);
+        }
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+        setVehicles([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadVehicles();
   }, []);

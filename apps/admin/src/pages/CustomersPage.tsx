@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -16,222 +16,67 @@ import {
   XCircle,
   Users,
   ArrowRight,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
-import { cn, formatDate, formatCurrency } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils';
+import { api, Customer as ApiCustomer } from '@/lib/api';
+import { toast } from 'sonner';
 
-// Extended mock data with full customer details
-interface CustomerBooking {
-  id: string;
-  vehicle: string;
-  startDate: Date;
-  endDate: Date;
-  status: 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-  amount: number;
-}
-
-interface CustomerDocument {
-  id: string;
-  type: 'DRIVERS_LICENSE' | 'ID_CARD' | 'PASSPORT' | 'PROOF_OF_ADDRESS';
-  name: string;
-  uploadedAt: Date;
-  verified: boolean;
-  url?: string;
-}
-
-interface CustomerNote {
-  id: string;
-  content: string;
-  author: string;
-  createdAt: Date;
-}
-
+// UI Customer interface
 interface Customer {
   id: string;
   name: string;
   email: string;
   phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  dateOfBirth?: Date;
-  licenseNumber?: string;
-  licenseExpiry?: Date;
   verified: boolean;
   totalBookings: number;
   totalSpent: number;
   createdAt: Date;
-  bookings?: CustomerBooking[];
-  documents?: CustomerDocument[];
-  notes?: CustomerNote[];
 }
 
-const initialCustomers: Customer[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@example.com',
-    phone: '+1 (555) 123-4567',
-    address: '123 Main Street',
-    city: 'Miami',
-    state: 'FL',
-    zipCode: '33101',
-    dateOfBirth: new Date('1990-05-15'),
-    licenseNumber: 'J123-456-78-901',
-    licenseExpiry: new Date('2027-05-15'),
-    verified: true,
-    totalBookings: 5,
-    totalSpent: 1250,
-    createdAt: new Date('2025-06-15'),
-    bookings: [
-      { id: 'BK001', vehicle: '2024 Toyota Camry', startDate: new Date('2026-01-18'), endDate: new Date('2026-01-22'), status: 'CONFIRMED', amount: 260 },
-      { id: 'BK007', vehicle: '2024 Honda Civic', startDate: new Date('2025-11-10'), endDate: new Date('2025-11-15'), status: 'COMPLETED', amount: 225 },
-      { id: 'BK008', vehicle: '2024 BMW 3 Series', startDate: new Date('2025-09-01'), endDate: new Date('2025-09-05'), status: 'COMPLETED', amount: 480 },
-      { id: 'BK009', vehicle: '2024 Tesla Model Y', startDate: new Date('2025-07-20'), endDate: new Date('2025-07-22'), status: 'COMPLETED', amount: 240 },
-      { id: 'BK010', vehicle: '2024 Ford Mustang', startDate: new Date('2025-06-15'), endDate: new Date('2025-06-17'), status: 'CANCELLED', amount: 45 },
-    ],
-    documents: [
-      { id: 'DOC001', type: 'DRIVERS_LICENSE', name: 'Drivers_License.pdf', uploadedAt: new Date('2025-06-15'), verified: true },
-      { id: 'DOC002', type: 'PROOF_OF_ADDRESS', name: 'Utility_Bill.pdf', uploadedAt: new Date('2025-06-15'), verified: true },
-    ],
-    notes: [
-      { id: 'NOTE001', content: 'VIP customer - prefers luxury vehicles. Always returns cars in excellent condition.', author: 'Admin User', createdAt: new Date('2025-07-01') },
-      { id: 'NOTE002', content: 'Requested early morning pickup for next booking.', author: 'Support Team', createdAt: new Date('2026-01-15') },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Michael Chen',
-    email: 'michael.chen@example.com',
-    phone: '+1 (555) 234-5678',
-    address: '456 Oak Avenue',
-    city: 'Miami Beach',
-    state: 'FL',
-    zipCode: '33139',
-    dateOfBirth: new Date('1985-08-22'),
-    licenseNumber: 'C987-654-32-109',
-    licenseExpiry: new Date('2026-08-22'),
-    verified: true,
-    totalBookings: 3,
-    totalSpent: 2100,
-    createdAt: new Date('2025-08-20'),
-    bookings: [
-      { id: 'BK002', vehicle: '2024 BMW 5 Series', startDate: new Date('2026-01-19'), endDate: new Date('2026-01-25'), status: 'PENDING', amount: 900 },
-      { id: 'BK011', vehicle: '2024 Mercedes E-Class', startDate: new Date('2025-10-05'), endDate: new Date('2025-10-10'), status: 'COMPLETED', amount: 750 },
-      { id: 'BK012', vehicle: '2024 Audi A6', startDate: new Date('2025-09-15'), endDate: new Date('2025-09-18'), status: 'COMPLETED', amount: 450 },
-    ],
-    documents: [
-      { id: 'DOC003', type: 'DRIVERS_LICENSE', name: 'License_MChen.pdf', uploadedAt: new Date('2025-08-20'), verified: true },
-    ],
-    notes: [
-      { id: 'NOTE003', content: 'Business traveler - usually books for week-long trips.', author: 'Admin User', createdAt: new Date('2025-09-01') },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Emily Rodriguez',
-    email: 'emily.r@example.com',
-    phone: '+1 (555) 345-6789',
-    address: '789 Palm Drive',
-    city: 'Coral Gables',
-    state: 'FL',
-    zipCode: '33134',
-    dateOfBirth: new Date('1992-12-03'),
-    licenseNumber: 'R456-789-01-234',
-    licenseExpiry: new Date('2028-12-03'),
-    verified: false,
-    totalBookings: 1,
-    totalSpent: 360,
-    createdAt: new Date('2026-01-10'),
-    bookings: [
-      { id: 'BK003', vehicle: '2024 Tesla Model 3', startDate: new Date('2026-01-17'), endDate: new Date('2026-01-20'), status: 'ACTIVE', amount: 360 },
-    ],
-    documents: [
-      { id: 'DOC004', type: 'DRIVERS_LICENSE', name: 'DL_Emily.jpg', uploadedAt: new Date('2026-01-10'), verified: false },
-    ],
-    notes: [],
-  },
-  {
-    id: '4',
-    name: 'David Thompson',
-    email: 'david.t@example.com',
-    phone: '+1 (555) 456-7890',
-    address: '321 Beach Road',
-    city: 'Fort Lauderdale',
-    state: 'FL',
-    zipCode: '33301',
-    dateOfBirth: new Date('1978-03-18'),
-    licenseNumber: 'T789-012-34-567',
-    licenseExpiry: new Date('2025-03-18'),
-    verified: true,
-    totalBookings: 8,
-    totalSpent: 4500,
-    createdAt: new Date('2025-03-05'),
-    bookings: [
-      { id: 'BK004', vehicle: '2024 Ford Explorer', startDate: new Date('2026-01-20'), endDate: new Date('2026-01-27'), status: 'CONFIRMED', amount: 665 },
-      { id: 'BK013', vehicle: '2024 Chevrolet Tahoe', startDate: new Date('2025-12-20'), endDate: new Date('2025-12-27'), status: 'COMPLETED', amount: 700 },
-      { id: 'BK014', vehicle: '2024 Toyota Highlander', startDate: new Date('2025-11-15'), endDate: new Date('2025-11-20'), status: 'COMPLETED', amount: 475 },
-    ],
-    documents: [
-      { id: 'DOC005', type: 'DRIVERS_LICENSE', name: 'Thompson_DL.pdf', uploadedAt: new Date('2025-03-05'), verified: true },
-      { id: 'DOC006', type: 'ID_CARD', name: 'Thompson_ID.pdf', uploadedAt: new Date('2025-03-05'), verified: true },
-    ],
-    notes: [
-      { id: 'NOTE004', content: 'Frequent family traveler. Prefers SUVs for family trips. License expiring soon - need to remind for renewal.', author: 'Admin User', createdAt: new Date('2025-03-10') },
-    ],
-  },
-  {
-    id: '5',
-    name: 'Lisa Wang',
-    email: 'lisa.wang@example.com',
-    phone: '+1 (555) 567-8901',
-    address: '555 Sunset Boulevard',
-    city: 'Hollywood',
-    state: 'FL',
-    zipCode: '33020',
-    dateOfBirth: new Date('1995-07-28'),
-    licenseNumber: 'W234-567-89-012',
-    licenseExpiry: new Date('2029-07-28'),
-    verified: true,
-    totalBookings: 2,
-    totalSpent: 450,
-    createdAt: new Date('2025-11-28'),
-    bookings: [
-      { id: 'BK005', vehicle: '2024 Honda Civic', startDate: new Date('2026-01-10'), endDate: new Date('2026-01-15'), status: 'COMPLETED', amount: 225 },
-      { id: 'BK015', vehicle: '2024 Toyota Corolla', startDate: new Date('2025-12-01'), endDate: new Date('2025-12-05'), status: 'COMPLETED', amount: 225 },
-    ],
-    documents: [
-      { id: 'DOC007', type: 'DRIVERS_LICENSE', name: 'LisaW_License.pdf', uploadedAt: new Date('2025-11-28'), verified: true },
-    ],
-    notes: [],
-  },
-  {
-    id: '6',
-    name: 'James Wilson',
-    email: 'james.wilson@example.com',
-    phone: '+1 (555) 678-9012',
-    address: '888 Marina Way',
-    city: 'Key Biscayne',
-    state: 'FL',
-    zipCode: '33149',
-    verified: false,
-    totalBookings: 0,
-    totalSpent: 0,
-    createdAt: new Date('2026-01-15'),
-    bookings: [],
-    documents: [
-      { id: 'DOC008', type: 'DRIVERS_LICENSE', name: 'JWilson_DL.jpg', uploadedAt: new Date('2026-01-15'), verified: false },
-    ],
-    notes: [],
-  },
-];
+// Transform API customer to UI format
+function transformCustomer(apiCustomer: ApiCustomer): Customer {
+  return {
+    id: apiCustomer.id,
+    name: `${apiCustomer.firstName} ${apiCustomer.lastName}`,
+    email: apiCustomer.email,
+    phone: apiCustomer.phone,
+    verified: apiCustomer.emailVerified,
+    totalBookings: apiCustomer._count?.bookings || 0,
+    totalSpent: 0, // TODO: Add totalSpent to API response
+    createdAt: new Date(apiCustomer.createdAt),
+  };
+}
 
 export default function CustomersPage() {
   const navigate = useNavigate();
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'pending'>('all');
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.customers.list({ limit: 100 });
+      const transformedCustomers = response.items.map(transformCustomer);
+      setCustomers(transformedCustomers);
+    } catch (err) {
+      console.error('Error fetching customers:', err);
+      setError('Failed to load customers. Please try again.');
+      toast.error('Failed to load customers');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredCustomers = customers.filter((customer) => {
     const matchesSearch =
@@ -249,10 +94,15 @@ export default function CustomersPage() {
     setActiveDropdown(null);
   };
 
-  const handleDeleteCustomer = (customerId: string) => {
-    if (window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-      setCustomers((prev) => prev.filter((c) => c.id !== customerId));
+  const handleDeleteCustomer = async (customerId: string) => {
+    if (!window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+      return;
     }
+
+    // TODO: Implement customer deletion API endpoint
+    toast.error('Customer deletion is not yet implemented');
+    console.log('Would delete customer:', customerId);
+    setActiveDropdown(null);
   };
 
   // Stats
@@ -262,6 +112,41 @@ export default function CustomersPage() {
     pending: customers.filter((c) => !c.verified).length,
     totalRevenue: customers.reduce((sum, c) => sum + c.totalSpent, 0),
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
+          <p className="text-gray-500">Loading customers...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
+          <p className="text-gray-500">Manage your customer accounts</p>
+        </div>
+        <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load customers</h3>
+          <p className="text-gray-500 mb-6">{error}</p>
+          <button
+            onClick={() => fetchCustomers()}
+            className="px-5 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-orange-600 transition-all"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

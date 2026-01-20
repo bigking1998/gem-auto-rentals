@@ -1,150 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Calendar,
   MapPin,
-  Clock,
   Car,
   ChevronRight,
   AlertCircle,
   CheckCircle,
   XCircle,
   RotateCcw,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api, Booking } from '@/lib/api';
 
 type TabType = 'active' | 'upcoming' | 'past';
-
-interface Booking {
-  id: string;
-  vehicle: {
-    make: string;
-    model: string;
-    year: number;
-    image: string;
-    category: string;
-  };
-  startDate: string;
-  endDate: string;
-  pickupLocation: string;
-  dropoffLocation: string;
-  status: 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled';
-  totalAmount: number;
-}
-
-// Mock data
-const mockBookings: Booking[] = [
-  {
-    id: 'BK001',
-    vehicle: {
-      make: 'Toyota',
-      model: 'Camry',
-      year: 2024,
-      image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400',
-      category: 'Standard',
-    },
-    startDate: '2026-01-20',
-    endDate: '2026-01-25',
-    pickupLocation: 'Downtown Office',
-    dropoffLocation: 'Downtown Office',
-    status: 'active',
-    totalAmount: 325,
-  },
-  {
-    id: 'BK002',
-    vehicle: {
-      make: 'BMW',
-      model: 'X5',
-      year: 2024,
-      image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400',
-      category: 'SUV',
-    },
-    startDate: '2026-02-01',
-    endDate: '2026-02-05',
-    pickupLocation: 'Airport Terminal',
-    dropoffLocation: 'Airport Terminal',
-    status: 'confirmed',
-    totalAmount: 580,
-  },
-  {
-    id: 'BK003',
-    vehicle: {
-      make: 'Mercedes',
-      model: 'C-Class',
-      year: 2023,
-      image: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400',
-      category: 'Premium',
-    },
-    startDate: '2026-02-15',
-    endDate: '2026-02-18',
-    pickupLocation: 'City Center',
-    dropoffLocation: 'Airport Terminal',
-    status: 'pending',
-    totalAmount: 420,
-  },
-  {
-    id: 'BK004',
-    vehicle: {
-      make: 'Honda',
-      model: 'Civic',
-      year: 2024,
-      image: 'https://images.unsplash.com/photo-1619682817481-e994891cd1f5?w=400',
-      category: 'Economy',
-    },
-    startDate: '2025-12-10',
-    endDate: '2025-12-15',
-    pickupLocation: 'Downtown Office',
-    dropoffLocation: 'Downtown Office',
-    status: 'completed',
-    totalAmount: 195,
-  },
-  {
-    id: 'BK005',
-    vehicle: {
-      make: 'Audi',
-      model: 'A4',
-      year: 2023,
-      image: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400',
-      category: 'Premium',
-    },
-    startDate: '2025-11-20',
-    endDate: '2025-11-22',
-    pickupLocation: 'Airport Terminal',
-    dropoffLocation: 'City Center',
-    status: 'cancelled',
-    totalAmount: 280,
-  },
-];
 
 const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
   { id: 'active', label: 'Active', icon: Car },
   { id: 'upcoming', label: 'Upcoming', icon: Calendar },
-  { id: 'past', label: 'Past', icon: Clock },
+  { id: 'past', label: 'Past', icon: CheckCircle },
 ];
 
 const statusConfig = {
-  pending: {
+  PENDING: {
     label: 'Pending',
     icon: AlertCircle,
     className: 'bg-amber-100 text-amber-700',
   },
-  confirmed: {
+  CONFIRMED: {
     label: 'Confirmed',
     icon: CheckCircle,
     className: 'bg-green-100 text-green-700',
   },
-  active: {
+  ACTIVE: {
     label: 'Active',
     icon: Car,
     className: 'bg-blue-100 text-blue-700',
   },
-  completed: {
+  COMPLETED: {
     label: 'Completed',
     icon: CheckCircle,
     className: 'bg-gray-100 text-gray-700',
   },
-  cancelled: {
+  CANCELLED: {
     label: 'Cancelled',
     icon: XCircle,
     className: 'bg-red-100 text-red-700',
@@ -153,24 +53,59 @@ const statusConfig = {
 
 export default function MyBookingsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('active');
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch bookings from API
+  useEffect(() => {
+    async function fetchBookings() {
+      try {
+        setIsLoading(true);
+        const response = await api.bookings.list({ limit: 50 });
+        setBookings(response.items as Booking[]);
+      } catch (err) {
+        console.error('Error fetching bookings:', err);
+        setError('Failed to load bookings');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchBookings();
+  }, []);
 
   const filterBookings = (tab: TabType): Booking[] => {
     const now = new Date();
-    return mockBookings.filter((booking) => {
+    return bookings.filter((booking) => {
       const startDate = new Date(booking.startDate);
       const endDate = new Date(booking.endDate);
 
       if (tab === 'active') {
-        return booking.status === 'active' || (booking.status === 'confirmed' && startDate <= now && endDate >= now);
+        return booking.status === 'ACTIVE' || (booking.status === 'CONFIRMED' && startDate <= now && endDate >= now);
       }
       if (tab === 'upcoming') {
-        return (booking.status === 'pending' || booking.status === 'confirmed') && startDate > now;
+        return (booking.status === 'PENDING' || booking.status === 'CONFIRMED') && startDate > now;
       }
       if (tab === 'past') {
-        return booking.status === 'completed' || booking.status === 'cancelled' || endDate < now;
+        return booking.status === 'COMPLETED' || booking.status === 'CANCELLED' || endDate < now;
       }
       return false;
     });
+  };
+
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!confirm('Are you sure you want to cancel this booking?')) return;
+
+    try {
+      await api.bookings.cancel(bookingId);
+      setBookings((prev) =>
+        prev.map((b) => (b.id === bookingId ? { ...b, status: 'CANCELLED' as const } : b))
+      );
+    } catch (err) {
+      console.error('Error cancelling booking:', err);
+      alert('Failed to cancel booking');
+    }
   };
 
   const filteredBookings = filterBookings(activeTab);
@@ -183,6 +118,35 @@ export default function MyBookingsPage() {
       year: 'numeric',
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
+          <p className="text-gray-500 mt-1">View and manage all your vehicle rentals</p>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
+          <p className="text-gray-500 mt-1">View and manage all your vehicle rentals</p>
+        </div>
+        <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -262,6 +226,8 @@ export default function MyBookingsPage() {
           filteredBookings.map((booking, index) => {
             const status = statusConfig[booking.status];
             const StatusIcon = status.icon;
+            const vehicle = booking.vehicle;
+            const vehicleImage = vehicle?.images?.[0] || 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400';
 
             return (
               <motion.div
@@ -275,8 +241,8 @@ export default function MyBookingsPage() {
                   {/* Vehicle Image */}
                   <div className="sm:w-48 h-40 sm:h-auto">
                     <img
-                      src={booking.vehicle.image}
-                      alt={`${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`}
+                      src={vehicleImage}
+                      alt={vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Vehicle'}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -286,10 +252,10 @@ export default function MyBookingsPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h3 className="font-semibold text-gray-900">
-                          {booking.vehicle.year} {booking.vehicle.make} {booking.vehicle.model}
+                          {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Vehicle'}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {booking.vehicle.category} • Booking #{booking.id}
+                          {vehicle?.category || 'Standard'} • Booking #{booking.id.slice(0, 8)}
                         </p>
                       </div>
                       <span
@@ -325,20 +291,26 @@ export default function MyBookingsPage() {
                       <div>
                         <span className="text-sm text-gray-500">Total:</span>
                         <span className="ml-2 text-lg font-bold text-gray-900">
-                          ${booking.totalAmount}
+                          ${Number(booking.totalAmount).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex gap-2">
-                        {(booking.status === 'pending' || booking.status === 'confirmed') && (
-                          <button className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
+                          <button
+                            onClick={() => handleCancelBooking(booking.id)}
+                            className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
                             Cancel
                           </button>
                         )}
-                        {booking.status === 'completed' && (
-                          <button className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                        {booking.status === 'COMPLETED' && vehicle && (
+                          <Link
+                            to={`/vehicles/${vehicle.id}/book`}
+                            className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          >
                             <RotateCcw className="w-4 h-4" />
                             Book Again
-                          </button>
+                          </Link>
                         )}
                         <Link
                           to={`/dashboard/bookings/${booking.id}`}

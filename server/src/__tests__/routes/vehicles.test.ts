@@ -5,6 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
+import { Decimal } from '@prisma/client/runtime/library';
 import { createTestApp } from '../helpers/app.js';
 import prisma from '../../lib/prisma.js';
 
@@ -17,7 +18,7 @@ const mockVehicle = {
   model: 'Camry',
   year: 2024,
   category: 'STANDARD' as const,
-  dailyRate: 65,
+  dailyRate: new Decimal(65),
   status: 'AVAILABLE' as const,
   images: ['https://example.com/car.jpg'],
   features: ['Bluetooth', 'Backup Camera'],
@@ -45,6 +46,8 @@ const mockAdminUser = {
   role: 'ADMIN' as const,
   emailVerified: true,
   avatarUrl: null,
+  resetToken: null,
+  resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -59,6 +62,8 @@ const mockCustomerUser = {
   role: 'CUSTOMER' as const,
   emailVerified: true,
   avatarUrl: null,
+  resetToken: null,
+  resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -383,7 +388,7 @@ describe('Vehicles API', () => {
 
       vi.mocked(prisma.vehicle.update).mockResolvedValue({
         ...mockVehicle,
-        dailyRate: 75,
+        dailyRate: new Decimal(75),
       });
 
       const response = await request(app)

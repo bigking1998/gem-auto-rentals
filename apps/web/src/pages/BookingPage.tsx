@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowLeft, ArrowRight, Calendar, Package, User, FileText, CreditCard } from 'lucide-react';
+import { Check, ArrowLeft, ArrowRight, Calendar, Package, User, FileText, CreditCard, Loader2, AlertCircle } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import DateLocationStep from '@/components/booking/DateLocationStep';
@@ -10,20 +10,8 @@ import CustomerInfoStep from '@/components/booking/CustomerInfoStep';
 import DocumentUploadStep from '@/components/booking/DocumentUploadStep';
 import PaymentStep from '@/components/booking/PaymentStep';
 import { cn } from '@/lib/utils';
-
-// Mock vehicle data
-const mockVehicle = {
-  id: '1',
-  make: 'Toyota',
-  model: 'Camry',
-  year: 2024,
-  category: 'STANDARD',
-  dailyRate: 65,
-  images: ['https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800'],
-  seats: 5,
-  transmission: 'AUTOMATIC',
-  fuelType: 'GASOLINE',
-};
+import { api, Vehicle } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
 
 const steps = [
   { id: 1, title: 'Dates & Location', icon: Calendar },
@@ -104,6 +92,7 @@ export default function BookingPage() {
   const { vehicleId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<BookingData>({
@@ -112,7 +101,48 @@ export default function BookingPage() {
     startDate: searchParams.get('start') || '',
     endDate: searchParams.get('end') || '',
   });
-  const [vehicle] = useState(mockVehicle); // Would fetch from API
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+
+  // Fetch vehicle data
+  useEffect(() => {
+    async function fetchVehicle() {
+      if (!vehicleId) {
+        setError('No vehicle selected');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const vehicleData = await api.vehicles.get(vehicleId);
+        setVehicle(vehicleData);
+
+        // Pre-fill customer info if user is logged in
+        if (user) {
+          setBookingData((prev) => ({
+            ...prev,
+            customer: {
+              ...prev.customer,
+              firstName: user.firstName || '',
+              lastName: user.lastName || '',
+              email: user.email || '',
+              phone: user.phone || '',
+            },
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching vehicle:', err);
+        setError('Failed to load vehicle details');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchVehicle();
+  }, [vehicleId, user]);
 
   // Parse extras from URL
   useEffect(() => {
@@ -145,7 +175,8 @@ export default function BookingPage() {
 
   const calculateTotal = () => {
     const days = calculateDays();
-    let total = vehicle.dailyRate * days;
+    if (!vehicle) return 0;
+    let total = Number(vehicle.dailyRate) * days;
 
     if (bookingData.extras.insurance) total += 25 * days;
     if (bookingData.extras.gps) total += 10 * days;
@@ -174,9 +205,51 @@ export default function BookingPage() {
     }
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep < steps.length && canProceed()) {
-      setCurrentStep((prev) => prev + 1);
+      // When moving to payment step (step 5), create the booking first
+      if (currentStep === 4 && !bookingId) {
+        await createBooking();
+      } else {
+        setCurrentStep((prev) => prev + 1);
+      }
+    }
+  };
+
+  const createBooking = async () => {
+    if (!vehicle) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const booking = await api.bookings.create({
+        vehicleId: vehicle.id,
+        startDate: bookingData.startDate,
+        endDate: bookingData.endDate,
+        pickupLocation: bookingData.pickupLocation,
+        dropoffLocation: bookingData.dropoffLocation,
+        pickupTime: bookingData.pickupTime,
+        dropoffTime: bookingData.dropoffTime,
+        extras: bookingData.extras,
+        customer: {
+          firstName: bookingData.customer.firstName,
+          lastName: bookingData.customer.lastName,
+          email: bookingData.customer.email,
+          phone: bookingData.customer.phone,
+          address: bookingData.customer.address,
+          city: bookingData.customer.city,
+          zipCode: bookingData.customer.zipCode,
+        },
+      });
+
+      setBookingId(booking.id);
+      setCurrentStep(5);
+    } catch (err) {
+      console.error('Error creating booking:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create booking');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -186,11 +259,14 @@ export default function BookingPage() {
     }
   };
 
-  const handleSubmit = () => {
-    // Would submit to API
+  const handlePaymentSuccess = () => {
+    if (!vehicle || !bookingId) return;
+
+    // Navigate to confirmation with booking data
     navigate('/booking/confirmation', {
       state: {
         booking: bookingData,
+        bookingId,
         vehicle,
         total: calculateTotal(),
         days: calculateDays()
@@ -200,6 +276,45 @@ export default function BookingPage() {
 
   const days = calculateDays();
   const total = calculateTotal();
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-12 pt-32">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-gray-600">Loading vehicle details...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || !vehicle) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-12 pt-32">
+          <div className="text-center max-w-md">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Unable to Load Booking</h2>
+            <p className="text-gray-600 mb-6">{error || 'Vehicle not found'}</p>
+            <button
+              onClick={() => navigate('/vehicles')}
+              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              Browse Vehicles
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -271,7 +386,7 @@ export default function BookingPage() {
                       <ExtrasStep
                         data={bookingData}
                         onChange={updateBookingData}
-                        dailyRate={vehicle.dailyRate}
+                        dailyRate={Number(vehicle.dailyRate)}
                         days={days}
                       />
                     )}
@@ -287,13 +402,21 @@ export default function BookingPage() {
                         onChange={updateBookingData}
                       />
                     )}
-                    {currentStep === 5 && (
+                    {currentStep === 5 && bookingId && (
                       <PaymentStep
                         data={bookingData}
-                        vehicle={vehicle}
+                        vehicle={{
+                          make: vehicle.make,
+                          model: vehicle.model,
+                          year: vehicle.year,
+                          category: vehicle.category,
+                          dailyRate: Number(vehicle.dailyRate),
+                          images: vehicle.images,
+                        }}
                         total={total}
                         days={days}
-                        onSubmit={handleSubmit}
+                        bookingId={bookingId}
+                        onSubmit={handlePaymentSuccess}
                       />
                     )}
                   </motion.div>
@@ -318,16 +441,25 @@ export default function BookingPage() {
 
                     <button
                       onClick={nextStep}
-                      disabled={!canProceed()}
+                      disabled={!canProceed() || isSubmitting}
                       className={cn(
                         'flex items-center gap-2 px-8 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 shadow-lg shadow-primary/20 transform active:scale-95',
-                        !canProceed()
+                        (!canProceed() || isSubmitting)
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
                           : 'bg-primary text-white hover:bg-orange-600 hover:shadow-primary/30'
                       )}
                     >
-                      Continue
-                      <ArrowRight className="w-4 h-4" />
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Creating Booking...
+                        </>
+                      ) : (
+                        <>
+                          Continue
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
@@ -395,7 +527,7 @@ export default function BookingPage() {
                     <span className="text-gray-600 font-medium group-hover:text-gray-900 transition-colors">
                       Car Rental
                     </span>
-                    <span className="text-gray-900 font-semibold">${vehicle.dailyRate * days}</span>
+                    <span className="text-gray-900 font-semibold">${Number(vehicle.dailyRate) * days}</span>
                   </div>
 
                   {bookingData.extras.insurance && (

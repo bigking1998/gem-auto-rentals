@@ -21,6 +21,8 @@ const mockUser = {
   role: 'CUSTOMER' as const,
   emailVerified: false,
   avatarUrl: null,
+  resetToken: null,
+  resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -313,6 +315,11 @@ describe('Auth API', () => {
 
     it('should return success for existing email', async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+      vi.mocked(prisma.user.update).mockResolvedValue({
+        ...mockUser,
+        resetToken: 'test-token',
+        resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000),
+      });
 
       const response = await request(app)
         .post('/api/auth/forgot-password')
@@ -337,17 +344,65 @@ describe('Auth API', () => {
   });
 
   describe('POST /api/auth/reset-password', () => {
-    it('should return 501 (not implemented)', async () => {
+    it('should return 400 for invalid/non-existent token', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
       const response = await request(app)
         .post('/api/auth/reset-password')
         .send({
-          token: 'some-reset-token',
+          token: 'invalid-token',
           password: 'newSecurePassword123!',
         });
 
-      expect(response.status).toBe(501);
+      expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('not yet implemented');
+      expect(response.body.error).toContain('Invalid or expired');
+    });
+
+    it('should return 400 for expired token', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        ...mockUser,
+        resetToken: 'expired-token',
+        resetTokenExpiry: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
+      });
+
+      vi.mocked(prisma.user.update).mockResolvedValue(mockUser);
+
+      const response = await request(app)
+        .post('/api/auth/reset-password')
+        .send({
+          token: 'expired-token',
+          password: 'newSecurePassword123!',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('expired');
+    });
+
+    it('should reset password successfully with valid token', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        ...mockUser,
+        resetToken: 'valid-token',
+        resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+      });
+
+      vi.mocked(prisma.user.update).mockResolvedValue({
+        ...mockUser,
+        resetToken: null,
+        resetTokenExpiry: null,
+      });
+
+      const response = await request(app)
+        .post('/api/auth/reset-password')
+        .send({
+          token: 'valid-token',
+          password: 'newSecurePassword123!',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('reset successfully');
     });
 
     it('should return 400 for missing token', async () => {

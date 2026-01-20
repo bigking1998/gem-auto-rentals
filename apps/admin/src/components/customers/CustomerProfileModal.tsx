@@ -1,19 +1,15 @@
 import { useState } from 'react';
 import {
   X,
-  User,
   Mail,
   Phone,
   MapPin,
   Calendar,
-  CreditCard,
   FileText,
   Car,
   DollarSign,
   CheckCircle2,
-  XCircle,
   Clock,
-  AlertCircle,
   Shield,
   Star,
   Edit,
@@ -100,7 +96,7 @@ export function CustomerProfileModal({
   customer,
   onVerifyDocument,
   onDeleteCustomer,
-  isLoading = false,
+  isLoading: _isLoading = false,
 }: CustomerProfileModalProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'documents' | 'notes'>('overview');
   const [newNote, setNewNote] = useState('');

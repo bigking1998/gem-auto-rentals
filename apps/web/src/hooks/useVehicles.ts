@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useQuery, useMutation } from './useQuery';
+import { useQuery } from './useQuery';
 import { api, Vehicle, VehicleFiltersParams, PaginatedResponse } from '@/lib/api';
 import { cacheKeys, cacheTTL, apiCache } from '@/lib/cache';
 

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@gem/ui';
 
@@ -76,14 +76,6 @@ export default function AvailabilityCalendar({
       if (compareDate < min) return true;
     }
     if (isDateBooked(date)) return true;
-    return false;
-  };
-
-  const isDateSelected = (date: Date) => {
-    if (!selectedStart && !selectedEnd) return false;
-    const dateStr = date.toDateString();
-    if (selectedStart && dateStr === selectedStart.toDateString()) return true;
-    if (selectedEnd && dateStr === selectedEnd.toDateString()) return true;
     return false;
   };
 

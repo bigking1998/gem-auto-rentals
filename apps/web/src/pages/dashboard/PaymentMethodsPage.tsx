@@ -5,7 +5,6 @@ import {
   Plus,
   Trash2,
   Star,
-  Check,
   AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';

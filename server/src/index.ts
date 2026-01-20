@@ -15,6 +15,7 @@ import bookingRoutes from './routes/bookings.js';
 import customerRoutes from './routes/customers.js';
 import paymentRoutes from './routes/payments.js';
 import statsRoutes from './routes/stats.js';
+import documentRoutes from './routes/documents.js';
 
 // Load environment variables
 dotenv.config();
@@ -67,6 +68,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/documents', documentRoutes);
 
 // 404 handler
 app.use(notFound);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -15,15 +15,17 @@ import {
   Clock,
   FileText,
   DollarSign,
-  Download,
-  ArrowRight,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { BookingDetailModal } from '@/components/bookings/BookingDetailModal';
 import { PaymentTrackingModal } from '@/components/bookings/PaymentTrackingModal';
 import { generateRentalContract } from '@/lib/export';
+import { api, Booking as ApiBooking } from '@/lib/api';
+import { toast } from 'sonner';
 
-// Extended mock data with more details
+// UI Booking interface for display
 interface Payment {
   id: string;
   amount: number;
@@ -76,271 +78,42 @@ interface Booking {
   createdAt?: Date;
 }
 
-const initialBookings: Booking[] = [
-  {
-    id: 'BK001',
+// Transform API booking to UI booking format
+function transformBooking(apiBooking: ApiBooking): Booking {
+  const user = apiBooking.user;
+  const vehicle = apiBooking.vehicle;
+
+  return {
+    id: apiBooking.id,
     customer: {
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      phone: '+1 (555) 123-4567',
-      licenseNumber: 'DL-12345678',
-      address: '123 Main St, Miami, FL 33101',
+      name: user ? `${user.firstName} ${user.lastName}` : 'Unknown Customer',
+      email: user?.email || '',
+      phone: user?.phone,
     },
     vehicle: {
-      make: 'Toyota',
-      model: 'Camry',
-      year: 2024,
-      licensePlate: 'ABC-1234',
-      category: 'STANDARD',
-      dailyRate: 65,
-      vin: '1HGBH41JXMN109186',
+      make: vehicle?.make || 'Unknown',
+      model: vehicle?.model || 'Vehicle',
+      year: vehicle?.year || 0,
+      licensePlate: vehicle?.licensePlate,
+      category: vehicle?.category,
+      dailyRate: vehicle ? Number(vehicle.dailyRate) : 0,
+      vin: vehicle?.vin,
     },
-    startDate: new Date('2026-01-18'),
-    endDate: new Date('2026-01-22'),
-    status: 'CONFIRMED',
-    amount: 260,
-    pickupLocation: 'Miami Airport',
-    dropoffLocation: 'Miami Airport',
-    extras: {
-      insurance: true,
-      gps: false,
-    },
+    startDate: new Date(apiBooking.startDate),
+    endDate: new Date(apiBooking.endDate),
+    status: apiBooking.status,
+    amount: Number(apiBooking.totalAmount),
+    pickupLocation: apiBooking.pickupLocation,
+    dropoffLocation: apiBooking.dropoffLocation,
+    extras: apiBooking.extras as Booking['extras'],
     payment: {
-      status: 'PAID',
-      method: 'Credit Card',
-      transactionId: 'ch_1234567890',
-      paidAt: new Date('2026-01-15'),
-    },
-    payments: [
-      {
-        id: 'pay1',
-        amount: 260,
-        status: 'PAID',
-        method: 'CREDIT_CARD',
-        transactionId: 'ch_1234567890',
-        paidAt: new Date('2026-01-15'),
-      },
-    ],
-    createdAt: new Date('2026-01-14'),
-  },
-  {
-    id: 'BK002',
-    customer: {
-      name: 'Michael Chen',
-      email: 'michael@example.com',
-      phone: '+1 (555) 234-5678',
-      licenseNumber: 'DL-23456789',
-      address: '456 Oak Ave, Miami, FL 33102',
-    },
-    vehicle: {
-      make: 'BMW',
-      model: '5 Series',
-      year: 2024,
-      licensePlate: 'XYZ-5678',
-      category: 'LUXURY',
-      dailyRate: 150,
-      vin: 'WBAPH5C55BA238456',
-    },
-    startDate: new Date('2026-01-19'),
-    endDate: new Date('2026-01-25'),
-    status: 'PENDING',
-    amount: 900,
-    pickupLocation: 'Downtown Office',
-    extras: {
-      insurance: true,
-      gps: true,
-      additionalDriver: true,
-    },
-    payment: {
-      status: 'PENDING',
+      status: 'PENDING', // TODO: Add payment tracking to API
     },
     payments: [],
-    createdAt: new Date('2026-01-16'),
-  },
-  {
-    id: 'BK003',
-    customer: {
-      name: 'Emily Rodriguez',
-      email: 'emily@example.com',
-      phone: '+1 (555) 345-6789',
-      licenseNumber: 'DL-34567890',
-      address: '789 Beach Blvd, Miami Beach, FL 33139',
-    },
-    vehicle: {
-      make: 'Tesla',
-      model: 'Model 3',
-      year: 2024,
-      licensePlate: 'EV-0001',
-      category: 'PREMIUM',
-      dailyRate: 120,
-      vin: '5YJ3E1EA8PF123456',
-    },
-    startDate: new Date('2026-01-17'),
-    endDate: new Date('2026-01-20'),
-    status: 'ACTIVE',
-    amount: 360,
-    pickupLocation: 'Miami Beach',
-    dropoffLocation: 'Miami Airport',
-    extras: {
-      insurance: true,
-    },
-    payment: {
-      status: 'PAID',
-      method: 'Credit Card',
-      transactionId: 'ch_0987654321',
-      paidAt: new Date('2026-01-16'),
-    },
-    payments: [
-      {
-        id: 'pay2',
-        amount: 360,
-        status: 'PAID',
-        method: 'CREDIT_CARD',
-        transactionId: 'ch_0987654321',
-        paidAt: new Date('2026-01-16'),
-      },
-    ],
-    notes: 'Customer requested early morning pickup at 6 AM.',
-    createdAt: new Date('2026-01-15'),
-  },
-  {
-    id: 'BK004',
-    customer: {
-      name: 'David Thompson',
-      email: 'david@example.com',
-      phone: '+1 (555) 456-7890',
-    },
-    vehicle: {
-      make: 'Ford',
-      model: 'Explorer',
-      year: 2024,
-      licensePlate: 'SUV-9999',
-      category: 'SUV',
-      dailyRate: 95,
-      vin: '1FMSK8DH0PGA12345',
-    },
-    startDate: new Date('2026-01-20'),
-    endDate: new Date('2026-01-27'),
-    status: 'CONFIRMED',
-    amount: 665,
-    pickupLocation: 'Miami Airport',
-    extras: {
-      insurance: true,
-      childSeat: true,
-    },
-    payment: {
-      status: 'PAID',
-      method: 'Debit Card',
-      transactionId: 'ch_1122334455',
-      paidAt: new Date('2026-01-17'),
-    },
-    payments: [
-      {
-        id: 'pay3',
-        amount: 300,
-        status: 'PAID',
-        method: 'DEBIT_CARD',
-        transactionId: 'ch_1122334455',
-        paidAt: new Date('2026-01-17'),
-        notes: 'Deposit payment',
-      },
-      {
-        id: 'pay4',
-        amount: 365,
-        status: 'PAID',
-        method: 'DEBIT_CARD',
-        transactionId: 'ch_1122334456',
-        paidAt: new Date('2026-01-19'),
-        notes: 'Final payment',
-      },
-    ],
-    createdAt: new Date('2026-01-16'),
-  },
-  {
-    id: 'BK005',
-    customer: {
-      name: 'Lisa Wang',
-      email: 'lisa@example.com',
-      phone: '+1 (555) 567-8901',
-    },
-    vehicle: {
-      make: 'Honda',
-      model: 'Civic',
-      year: 2024,
-      licensePlate: 'ECO-1111',
-      category: 'ECONOMY',
-      dailyRate: 45,
-      vin: '19XFC2F59PE012345',
-    },
-    startDate: new Date('2026-01-10'),
-    endDate: new Date('2026-01-15'),
-    status: 'COMPLETED',
-    amount: 225,
-    pickupLocation: 'Downtown Office',
-    dropoffLocation: 'Downtown Office',
-    extras: {},
-    payment: {
-      status: 'PAID',
-      method: 'Credit Card',
-      transactionId: 'ch_5566778899',
-      paidAt: new Date('2026-01-08'),
-    },
-    payments: [
-      {
-        id: 'pay5',
-        amount: 225,
-        status: 'PAID',
-        method: 'CREDIT_CARD',
-        transactionId: 'ch_5566778899',
-        paidAt: new Date('2026-01-08'),
-      },
-    ],
-    createdAt: new Date('2026-01-07'),
-  },
-  {
-    id: 'BK006',
-    customer: {
-      name: 'James Wilson',
-      email: 'james@example.com',
-      phone: '+1 (555) 678-9012',
-    },
-    vehicle: {
-      make: 'Mercedes',
-      model: 'E-Class',
-      year: 2024,
-      licensePlate: 'LUX-2024',
-      category: 'LUXURY',
-      dailyRate: 175,
-      vin: 'WDDZF4JB5LA123456',
-    },
-    startDate: new Date('2026-01-05'),
-    endDate: new Date('2026-01-08'),
-    status: 'CANCELLED',
-    amount: 525,
-    pickupLocation: 'Miami Airport',
-    extras: {
-      insurance: true,
-      gps: true,
-    },
-    payment: {
-      status: 'REFUNDED',
-    },
-    payments: [
-      {
-        id: 'pay6',
-        amount: 525,
-        status: 'REFUNDED',
-        method: 'CREDIT_CARD',
-        transactionId: 'ch_9988776655',
-        paidAt: new Date('2026-01-03'),
-        refundedAt: new Date('2026-01-05'),
-        notes: 'Full refund due to cancellation',
-      },
-    ],
-    notes: 'Customer cancelled due to flight cancellation.',
-    createdAt: new Date('2026-01-03'),
-  },
-];
+    notes: apiBooking.notes,
+    createdAt: new Date(apiBooking.createdAt),
+  };
+}
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -359,17 +132,39 @@ const statusIcons: Record<string, typeof Clock> = {
 };
 
 export default function BookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // Payment tracking modal state
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentBooking, setPaymentBooking] = useState<Booking | null>(null);
+
+  // Fetch bookings from API
+  useEffect(() => {
+    async function fetchBookings() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await api.bookings.list({ limit: 100 });
+        const transformedBookings = response.items.map(transformBooking);
+        setBookings(transformedBookings);
+      } catch (err) {
+        console.error('Error fetching bookings:', err);
+        setError('Failed to load bookings. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchBookings();
+  }, []);
 
   const filteredBookings = bookings.filter((booking) => {
     const matchesSearch =
@@ -386,11 +181,16 @@ export default function BookingsPage() {
     setActiveDropdown(null);
   };
 
-  const handleStatusChange = (bookingId: string, newStatus: Booking['status']) => {
-    setIsLoading(true);
+  const handleStatusChange = async (bookingId: string, newStatus: Booking['status']) => {
+    setIsUpdating(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      if (newStatus === 'CANCELLED') {
+        await api.bookings.cancel(bookingId);
+      } else {
+        await api.bookings.updateStatus(bookingId, newStatus);
+      }
+
       setBookings((prev) =>
         prev.map((b) =>
           b.id === bookingId ? { ...b, status: newStatus } : b
@@ -404,8 +204,13 @@ export default function BookingsPage() {
         );
       }
 
-      setIsLoading(false);
-    }, 500);
+      toast.success(`Booking status updated to ${newStatus}`);
+    } catch (err) {
+      console.error('Error updating booking status:', err);
+      toast.error('Failed to update booking status');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleDeleteBooking = (bookingId: string) => {
@@ -544,6 +349,46 @@ export default function BookingsPage() {
     active: bookings.filter((b) => b.status === 'ACTIVE').length,
     completed: bookings.filter((b) => b.status === 'COMPLETED').length,
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
+          <p className="text-gray-500">Manage rental reservations</p>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
+          <p className="text-gray-500">Manage rental reservations</p>
+        </div>
+        <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load bookings</h3>
+          <p className="text-gray-500 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-orange-600 transition-all"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -887,7 +732,7 @@ export default function BookingsPage() {
         }}
         booking={selectedBooking}
         onStatusChange={handleStatusChange}
-        isLoading={isLoading}
+        isLoading={isUpdating}
       />
 
       {/* Payment Tracking Modal */}

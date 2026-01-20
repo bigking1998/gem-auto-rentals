@@ -5,13 +5,13 @@ import {
   X,
   CheckCircle,
   AlertCircle,
-  Camera,
   CreditCard,
   Eye,
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BookingData } from '@/pages/BookingPage';
+import { api, Document } from '@/lib/api';
 
 interface DocumentUploadStepProps {
   data: BookingData;
@@ -25,6 +25,8 @@ interface UploadedDocument {
   file: File;
   preview: string;
   status: 'uploading' | 'success' | 'error';
+  errorMessage?: string;
+  serverDocument?: Document;
 }
 
 export default function DocumentUploadStep({ data, onChange }: DocumentUploadStepProps) {
@@ -67,59 +69,101 @@ export default function DocumentUploadStep({ data, onChange }: DocumentUploadSte
     }
   };
 
-  const processFiles = (files: File[]) => {
-    files.forEach((file) => {
+  const processFiles = async (files: File[]) => {
+    for (const file of files) {
       if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
         alert('Please upload an image or PDF file');
-        return;
+        continue;
       }
 
       if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
-        return;
+        continue;
       }
 
+      // Create preview
+      const preview = await createPreview(file);
+
+      const tempId = Date.now().toString();
+      const newDoc: UploadedDocument = {
+        id: tempId,
+        name: file.name,
+        type: uploadType,
+        file,
+        preview,
+        status: 'uploading',
+      };
+
+      // Add to state and remove previous document of same type
+      setDocuments((prev) => [
+        ...prev.filter((d) => d.type !== uploadType),
+        newDoc,
+      ]);
+
+      // Upload to server
+      try {
+        const apiDocType = uploadType === 'license_front'
+          ? 'DRIVERS_LICENSE_FRONT'
+          : 'DRIVERS_LICENSE_BACK';
+
+        const serverDoc = await api.documents.upload(file, apiDocType);
+
+        // Update document state with success
+        setDocuments((prev) =>
+          prev.map((d) =>
+            d.id === tempId
+              ? {
+                  ...d,
+                  id: serverDoc.id,
+                  status: 'success' as const,
+                  serverDocument: serverDoc,
+                  preview: serverDoc.signedUrl || d.preview,
+                }
+              : d
+          )
+        );
+
+        // Update parent with document info
+        onChange({
+          documents: {
+            ...data.documents,
+            [uploadType]: {
+              id: serverDoc.id,
+              fileName: file.name,
+              uploaded: true,
+            },
+          },
+        });
+      } catch (error) {
+        console.error('Upload error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+
+        // Update document state with error
+        setDocuments((prev) =>
+          prev.map((d) =>
+            d.id === tempId
+              ? { ...d, status: 'error' as const, errorMessage }
+              : d
+          )
+        );
+      }
+    }
+  };
+
+  const createPreview = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const newDoc: UploadedDocument = {
-          id: Date.now().toString(),
-          name: file.name,
-          type: uploadType,
-          file,
-          preview: reader.result as string,
-          status: 'uploading',
-        };
-
-        setDocuments((prev) => [
-          ...prev.filter((d) => d.type !== uploadType),
-          newDoc,
-        ]);
-
-        // Simulate upload
-        setTimeout(() => {
-          setDocuments((prev) =>
-            prev.map((d) =>
-              d.id === newDoc.id ? { ...d, status: 'success' as const } : d
-            )
-          );
-
-          // Update parent with document info
-          onChange({
-            documents: {
-              ...data.documents,
-              [uploadType]: {
-                fileName: file.name,
-                uploaded: true,
-              },
-            },
-          });
-        }, 1500);
+        resolve(reader.result as string);
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const removeDocument = (id: string, type: 'license_front' | 'license_back') => {
+  const removeDocument = async (id: string, type: 'license_front' | 'license_back') => {
+    const doc = documents.find(d => d.id === id);
+
+    // Remove from local state first
     setDocuments((prev) => prev.filter((d) => d.id !== id));
     onChange({
       documents: {
@@ -127,6 +171,16 @@ export default function DocumentUploadStep({ data, onChange }: DocumentUploadSte
         [type]: undefined,
       },
     });
+
+    // Try to delete from server if it was uploaded
+    if (doc?.serverDocument) {
+      try {
+        await api.documents.delete(id);
+      } catch (error) {
+        console.error('Error deleting document from server:', error);
+        // Already removed from UI, so just log the error
+      }
+    }
   };
 
   const triggerFileInput = (type: 'license_front' | 'license_back') => {
@@ -150,10 +204,10 @@ export default function DocumentUploadStep({ data, onChange }: DocumentUploadSte
           <div>
             <h4 className="text-sm font-medium text-blue-900">Document Requirements</h4>
             <ul className="mt-2 text-sm text-blue-700 space-y-1">
-              <li>• Valid driver's license (front and back)</li>
-              <li>• Clear, legible photos or scans</li>
-              <li>• File formats: JPG, PNG, or PDF</li>
-              <li>• Maximum file size: 10MB per file</li>
+              <li>Valid driver's license (front and back)</li>
+              <li>Clear, legible photos or scans</li>
+              <li>File formats: JPG, PNG, or PDF</li>
+              <li>Maximum file size: 10MB per file</li>
             </ul>
           </div>
         </div>
@@ -168,7 +222,12 @@ export default function DocumentUploadStep({ data, onChange }: DocumentUploadSte
           </label>
 
           {!hasLicenseFront ? (
-            <div
+            <UploadArea
+              type="license_front"
+              label="Front of License"
+              isDragging={isDragging && uploadType === 'license_front'}
+              isUploading={documents.some(d => d.type === 'license_front' && d.status === 'uploading')}
+              error={documents.find(d => d.type === 'license_front' && d.status === 'error')?.errorMessage}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={(e) => {
@@ -176,28 +235,7 @@ export default function DocumentUploadStep({ data, onChange }: DocumentUploadSte
                 handleDrop(e);
               }}
               onClick={() => triggerFileInput('license_front')}
-              className={cn(
-                'relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all',
-                isDragging && uploadType === 'license_front'
-                  ? 'border-indigo-500 bg-indigo-50'
-                  : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
-              )}
-            >
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <CreditCard className="w-8 h-8 text-gray-400" />
-              </div>
-              <p className="text-gray-600 font-medium mb-1">Front of License</p>
-              <p className="text-sm text-gray-500 mb-3">
-                Drag and drop or click to upload
-              </p>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-                Select File
-              </button>
-            </div>
+            />
           ) : (
             <DocumentCard
               document={documents.find((d) => d.type === 'license_front')!}
@@ -214,7 +252,12 @@ export default function DocumentUploadStep({ data, onChange }: DocumentUploadSte
           </label>
 
           {!hasLicenseBack ? (
-            <div
+            <UploadArea
+              type="license_back"
+              label="Back of License"
+              isDragging={isDragging && uploadType === 'license_back'}
+              isUploading={documents.some(d => d.type === 'license_back' && d.status === 'uploading')}
+              error={documents.find(d => d.type === 'license_back' && d.status === 'error')?.errorMessage}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={(e) => {
@@ -222,28 +265,7 @@ export default function DocumentUploadStep({ data, onChange }: DocumentUploadSte
                 handleDrop(e);
               }}
               onClick={() => triggerFileInput('license_back')}
-              className={cn(
-                'relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all',
-                isDragging && uploadType === 'license_back'
-                  ? 'border-indigo-500 bg-indigo-50'
-                  : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
-              )}
-            >
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <CreditCard className="w-8 h-8 text-gray-400" />
-              </div>
-              <p className="text-gray-600 font-medium mb-1">Back of License</p>
-              <p className="text-sm text-gray-500 mb-3">
-                Drag and drop or click to upload
-              </p>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-                Select File
-              </button>
-            </div>
+            />
           ) : (
             <DocumentCard
               document={documents.find((d) => d.type === 'license_back')!}
@@ -359,6 +381,65 @@ export default function DocumentUploadStep({ data, onChange }: DocumentUploadSte
   );
 }
 
+// Upload Area Component
+interface UploadAreaProps {
+  type: 'license_front' | 'license_back';
+  label: string;
+  isDragging: boolean;
+  isUploading: boolean;
+  error?: string;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onClick: () => void;
+}
+
+function UploadArea({ label, isDragging, isUploading, error, onDragOver, onDragLeave, onDrop, onClick }: UploadAreaProps) {
+  return (
+    <div
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      onClick={onClick}
+      className={cn(
+        'relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all',
+        isDragging
+          ? 'border-indigo-500 bg-indigo-50'
+          : error
+          ? 'border-red-300 bg-red-50'
+          : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
+      )}
+    >
+      {isUploading ? (
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+          <p className="text-gray-600 font-medium">Uploading...</p>
+        </div>
+      ) : (
+        <>
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+            <CreditCard className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-gray-600 font-medium mb-1">{label}</p>
+          <p className="text-sm text-gray-500 mb-3">
+            Drag and drop or click to upload
+          </p>
+          {error && (
+            <p className="text-sm text-red-600 mb-3">{error}</p>
+          )}
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Upload className="w-4 h-4" />
+            Select File
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 // Document Card Component
 interface DocumentCardProps {
   document: UploadedDocument;
@@ -371,7 +452,7 @@ function DocumentCard({ document, onRemove, onPreview }: DocumentCardProps) {
     <div className="relative border border-gray-200 rounded-xl overflow-hidden bg-white">
       {/* Preview Image */}
       <div className="aspect-[4/3] bg-gray-100 relative">
-        {document.preview.startsWith('data:image') ? (
+        {document.preview.startsWith('data:image') || document.preview.startsWith('http') ? (
           <img
             src={document.preview}
             alt={document.name}
@@ -394,6 +475,13 @@ function DocumentCard({ document, onRemove, onPreview }: DocumentCardProps) {
         {document.status === 'success' && (
           <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full">
             <CheckCircle className="w-4 h-4" />
+          </div>
+        )}
+
+        {/* Error Badge */}
+        {document.status === 'error' && (
+          <div className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full">
+            <AlertCircle className="w-4 h-4" />
           </div>
         )}
 

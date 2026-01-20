@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Car,
   Calendar,
   User,
   FileText,
@@ -12,7 +11,6 @@ import {
   ChevronRight,
   Menu,
   X,
-  Bell,
   HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';

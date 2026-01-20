@@ -10,7 +10,6 @@ import {
   Plus,
   Receipt,
   Calendar,
-  ArrowRight,
   Banknote,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';

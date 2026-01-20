@@ -1,59 +1,95 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
   Mail,
-  Phone,
-  MapPin,
   Calendar,
   Camera,
   Check,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
 
 interface UserProfile {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  dateOfBirth: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  createdAt: string;
 }
 
 export default function ProfilePage() {
+  const { user } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<UserProfile>({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    dateOfBirth: '1990-05-15',
-    address: '123 Main Street',
-    city: 'New York',
-    state: 'NY',
-    zipCode: '10001',
-    country: 'United States',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    createdAt: user?.createdAt || new Date().toISOString(),
   });
 
   const [editedProfile, setEditedProfile] = useState<UserProfile>(profile);
 
+  // Fetch profile from API
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const data = await api.profile.get();
+        const profileData: UserProfile = {
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          createdAt: data.createdAt || new Date().toISOString(),
+        };
+        setProfile(profileData);
+        setEditedProfile(profileData);
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchProfile();
+  }, [user?.id]);
+
   const handleSave = async () => {
+    if (!user?.id) return;
+
     setIsSaving(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setProfile(editedProfile);
-    setIsEditing(false);
-    setIsSaving(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    setError(null);
+
+    try {
+      await api.profile.update({
+        firstName: editedProfile.firstName,
+        lastName: editedProfile.lastName,
+        phone: editedProfile.phone,
+      });
+
+      setProfile(editedProfile);
+      setIsEditing(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -88,6 +124,25 @@ export default function ProfilePage() {
         </motion.div>
       )}
 
+      {/* Error Message */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200"
+        >
+          <AlertCircle className="w-5 h-5" />
+          {error}
+        </motion.div>
+      )}
+
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        </div>
+      ) : (
+      <>
       {/* Profile Card */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* Avatar Section */}
@@ -180,27 +235,6 @@ export default function ProfilePage() {
                   </p>
                 )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Date of Birth
-                </label>
-                {isEditing ? (
-                  <input
-                    type="date"
-                    value={editedProfile.dateOfBirth}
-                    onChange={(e) => updateField('dateOfBirth', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                ) : (
-                  <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">
-                    {new Date(profile.dateOfBirth).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </p>
-                )}
-              </div>
             </div>
           </div>
 
@@ -250,112 +284,16 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Address */}
-          <div className="pt-4 border-t border-gray-100">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-              <MapPin className="w-5 h-5 text-indigo-600" />
-              Address
-            </h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Street Address
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedProfile.address}
-                    onChange={(e) => updateField('address', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                ) : (
-                  <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">
-                    {profile.address}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  City
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedProfile.city}
-                    onChange={(e) => updateField('city', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                ) : (
-                  <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">
-                    {profile.city}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  State
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedProfile.state}
-                    onChange={(e) => updateField('state', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                ) : (
-                  <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">
-                    {profile.state}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  ZIP Code
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedProfile.zipCode}
-                    onChange={(e) => updateField('zipCode', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                ) : (
-                  <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">
-                    {profile.zipCode}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Country
-                </label>
-                {isEditing ? (
-                  <select
-                    value={editedProfile.country}
-                    onChange={(e) => updateField('country', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  >
-                    <option>United States</option>
-                    <option>Canada</option>
-                    <option>United Kingdom</option>
-                    <option>Germany</option>
-                    <option>France</option>
-                  </select>
-                ) : (
-                  <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">
-                    {profile.country}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Account Info */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Calendar className="w-4 h-4" />
-            Member since December 2024
+            Member since {new Date(profile.createdAt).toLocaleDateString('en-US', {
+              month: 'long',
+              year: 'numeric',
+            })}
           </div>
         </div>
       </div>
@@ -375,6 +313,8 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

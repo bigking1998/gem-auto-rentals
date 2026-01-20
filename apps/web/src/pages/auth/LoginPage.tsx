@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Car, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Car, ArrowRight, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, error: authError, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -13,7 +16,10 @@ export default function LoginPage() {
     password: '',
     rememberMe: false,
   });
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+
+  // Get redirect path from location state, default to dashboard
+  const from = (location.state as { from?: string })?.from || '/dashboard';
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -36,16 +42,22 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearError();
+    setErrors({});
 
     if (!validateForm()) return;
 
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-
-    // Navigate to dashboard on success
-    navigate('/dashboard');
+    try {
+      await login(formData.email, formData.password);
+      // Navigate to the intended destination or dashboard on success
+      navigate(from, { replace: true });
+    } catch (error) {
+      // Error is already set in the auth store
+      setErrors({ general: authError || 'Login failed. Please check your credentials.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -77,6 +89,14 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Error Alert */}
+            {(errors.general || authError) && (
+              <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <p className="text-sm">{errors.general || authError}</p>
+              </div>
+            )}
+
             {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">

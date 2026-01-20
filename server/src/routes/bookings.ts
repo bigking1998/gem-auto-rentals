@@ -1,10 +1,28 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import multer from 'multer';
 import prisma from '../lib/prisma.js';
 import { authenticate, staffOnly } from '../middleware/auth.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../middleware/errorHandler.js';
+import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getSignedUrl } from '../lib/supabase.js';
 
 const router = Router();
+
+// Configure multer for contract uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedMimes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only PDF, JPEG, and PNG are allowed.'));
+    }
+  },
+});
 
 // Validation schemas
 const createBookingSchema = z.object({
@@ -453,6 +471,188 @@ router.delete('/:id', authenticate, staffOnly, async (req, res, next) => {
     res.json({
       success: true,
       message: 'Booking deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/bookings/:id/contract - Upload signed contract
+router.post('/:id/contract', authenticate, upload.single('contract'), async (req, res, next) => {
+  try {
+    if (!isStorageConfigured()) {
+      throw BadRequestError('Storage is not configured. Please contact support.');
+    }
+
+    const { id } = req.params;
+
+    // Get booking
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      select: { id: true, userId: true, status: true, contractUrl: true },
+    });
+
+    if (!booking) {
+      throw NotFoundError('Booking not found');
+    }
+
+    // Check permissions - owner or staff can upload contract
+    const isStaff = ['ADMIN', 'MANAGER', 'SUPPORT'].includes(req.user!.role);
+    const isOwner = booking.userId === req.user!.id;
+
+    if (!isStaff && !isOwner) {
+      throw ForbiddenError('You can only upload contracts for your own bookings');
+    }
+
+    if (!req.file) {
+      throw BadRequestError('No contract file provided');
+    }
+
+    // Delete old contract if exists
+    if (booking.contractUrl) {
+      const urlParts = booking.contractUrl.split('/contracts/');
+      if (urlParts.length > 1) {
+        await deleteFile(BUCKETS.CONTRACTS, urlParts[1].split('?')[0]);
+      }
+    }
+
+    // Generate unique file path
+    const timestamp = Date.now();
+    const extension = req.file.originalname.split('.').pop() || 'pdf';
+    const filePath = `${id}/${timestamp}-contract.${extension}`;
+
+    // Upload to Supabase
+    const result = await uploadFile(
+      BUCKETS.CONTRACTS,
+      filePath,
+      req.file.buffer,
+      req.file.mimetype
+    );
+
+    if ('error' in result) {
+      throw BadRequestError(result.error);
+    }
+
+    // Update booking with contract URL (store the path, not signed URL)
+    const updatedBooking = await prisma.booking.update({
+      where: { id },
+      data: {
+        contractUrl: filePath,
+        contractSigned: true,
+      },
+      include: {
+        vehicle: {
+          select: {
+            id: true,
+            make: true,
+            model: true,
+            year: true,
+          },
+        },
+      },
+    });
+
+    // Get a signed URL for immediate access
+    const signedUrl = await getSignedUrl(filePath, 3600, BUCKETS.CONTRACTS);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        ...updatedBooking,
+        contractSignedUrl: signedUrl,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/bookings/:id/contract - Download contract
+router.get('/:id/contract', authenticate, async (req, res, next) => {
+  try {
+    if (!isStorageConfigured()) {
+      throw BadRequestError('Storage is not configured. Please contact support.');
+    }
+
+    const { id } = req.params;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      select: { id: true, userId: true, contractUrl: true },
+    });
+
+    if (!booking) {
+      throw NotFoundError('Booking not found');
+    }
+
+    // Check permissions
+    const isStaff = ['ADMIN', 'MANAGER', 'SUPPORT'].includes(req.user!.role);
+    const isOwner = booking.userId === req.user!.id;
+
+    if (!isStaff && !isOwner) {
+      throw ForbiddenError('You can only access contracts for your own bookings');
+    }
+
+    if (!booking.contractUrl) {
+      throw NotFoundError('No contract uploaded for this booking');
+    }
+
+    // Get signed URL for download
+    const signedUrl = await getSignedUrl(booking.contractUrl, 300, BUCKETS.CONTRACTS);
+
+    if (!signedUrl) {
+      throw BadRequestError('Failed to generate download URL');
+    }
+
+    res.json({
+      success: true,
+      data: {
+        downloadUrl: signedUrl,
+        bookingId: id,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/bookings/:id/contract - Delete contract (Staff only)
+router.delete('/:id/contract', authenticate, staffOnly, async (req, res, next) => {
+  try {
+    if (!isStorageConfigured()) {
+      throw BadRequestError('Storage is not configured. Please contact support.');
+    }
+
+    const { id } = req.params;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      select: { id: true, contractUrl: true },
+    });
+
+    if (!booking) {
+      throw NotFoundError('Booking not found');
+    }
+
+    if (!booking.contractUrl) {
+      throw BadRequestError('No contract to delete');
+    }
+
+    // Delete from storage
+    await deleteFile(BUCKETS.CONTRACTS, booking.contractUrl);
+
+    // Update booking
+    const updatedBooking = await prisma.booking.update({
+      where: { id },
+      data: {
+        contractUrl: null,
+        contractSigned: false,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: updatedBooking,
     });
   } catch (error) {
     next(error);

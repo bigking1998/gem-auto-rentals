@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 import { BadRequestError, ConflictError, UnauthorizedError } from '../middleware/errorHandler.js';
+import { sendPasswordResetEmail } from '../lib/email.js';
 
 const router = Router();
 
@@ -29,9 +31,8 @@ function generateToken(userId: string, role: string): string {
     throw new Error('JWT_SECRET not configured');
   }
 
-  return jwt.sign({ userId, role }, secret, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
+  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  return jwt.sign({ userId, role }, secret, { expiresIn } as jwt.SignOptions);
 }
 
 // POST /api/auth/register
@@ -187,9 +188,30 @@ router.post('/forgot-password', async (req, res, next) => {
 
     // Always return success to prevent email enumeration
     if (user) {
-      // TODO: Generate reset token and send email
-      // const resetToken = crypto.randomBytes(32).toString('hex');
-      // await sendPasswordResetEmail(user.email, resetToken);
+      // Generate a secure reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      // Save token to database
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetToken,
+          resetTokenExpiry,
+        },
+      });
+
+      // Send password reset email
+      const emailResult = await sendPasswordResetEmail(
+        user.email,
+        user.firstName,
+        resetToken
+      );
+
+      if (!emailResult.success) {
+        console.error('Failed to send password reset email:', emailResult.error);
+        // Don't expose email failures to user for security
+      }
     }
 
     res.json({
@@ -211,11 +233,44 @@ router.post('/reset-password', async (req, res, next) => {
       })
       .parse(req.body);
 
-    // TODO: Verify token and update password
-    // For now, return not implemented
-    res.status(501).json({
-      success: false,
-      error: 'Password reset not yet implemented',
+    // Find user by reset token
+    const user = await prisma.user.findUnique({
+      where: { resetToken: token },
+    });
+
+    if (!user) {
+      throw BadRequestError('Invalid or expired reset token');
+    }
+
+    // Check if token has expired
+    if (!user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
+      // Clear expired token
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetToken: null,
+          resetTokenExpiry: null,
+        },
+      });
+      throw BadRequestError('Reset token has expired. Please request a new password reset.');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Update password and clear reset token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Password has been reset successfully. You can now log in with your new password.',
     });
   } catch (error) {
     next(error);

@@ -8,7 +8,8 @@ import {
 import { CreditCard, Lock, Check, Shield, Calendar, MapPin, User, AlertCircle, Loader2 } from 'lucide-react';
 import type { BookingData } from '@/pages/BookingPage';
 import { cn } from '@/lib/utils';
-import { getStripe, stripeAppearance, createPaymentIntent } from '@/lib/stripe';
+import { getStripe, stripeAppearance } from '@/lib/stripe';
+import { api } from '@/lib/api';
 
 interface PaymentStepProps {
   data: BookingData;
@@ -22,6 +23,7 @@ interface PaymentStepProps {
   };
   total: number;
   days: number;
+  bookingId: string;
   onSubmit: () => void;
 }
 
@@ -45,7 +47,7 @@ const cardElementOptions = {
 };
 
 // Inner payment form component that uses Stripe hooks
-function PaymentForm({ data, vehicle, total, days, onSubmit }: PaymentStepProps) {
+function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: PaymentStepProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -84,14 +86,8 @@ function PaymentForm({ data, vehicle, total, days, onSubmit }: PaymentStepProps)
     setPaymentError(null);
 
     try {
-      // Create payment intent on the backend
-      const { clientSecret } = await createPaymentIntent(total, {
-        vehicleId: data.vehicleId,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        customerEmail: data.customer.email,
-        customerName: `${data.customer.firstName} ${data.customer.lastName}`,
-      });
+      // Create payment intent on the backend using the booking ID
+      const { clientSecret } = await api.payments.createIntent(bookingId);
 
       // Confirm the payment with Stripe
       const cardElement = elements.getElement(CardElement);
@@ -119,6 +115,8 @@ function PaymentForm({ data, vehicle, total, days, onSubmit }: PaymentStepProps)
       if (error) {
         setPaymentError(error.message || 'Payment failed. Please try again.');
       } else if (paymentIntent.status === 'succeeded') {
+        // Confirm the payment on our backend
+        await api.payments.confirm(paymentIntent.id);
         onSubmit();
       } else {
         setPaymentError('Payment was not completed. Please try again.');
