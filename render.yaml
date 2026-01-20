@@ -4,9 +4,11 @@ services:
     env: node
     plan: free
     region: oregon 
-    buildCommand: pnpm install && pnpm run build --filter=server
+    buildCommand: pnpm install && pnpm run db:generate && pnpm run build --filter=server
     startCommand: pnpm run start --filter=server
     envVars:
+      - key: NPM_CONFIG_PRODUCTION
+        value: false
       - key: NODE_ENV
         value: production
       - key: WEB_URL
