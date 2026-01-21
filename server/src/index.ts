@@ -23,14 +23,26 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Debug: Log Database URL (Masked) to verify Render Config
+// Network Diagnostics on Startup
+import { exec } from 'child_process';
+const runDiag = (host, port, label) => {
+  console.log(`DIAG: Testing ${label} (${host}:${port})...`);
+  exec(`nc -z -v -w 5 ${host} ${port}`, (err, stdout, stderr) => {
+    if (err) console.log(`DIAG: ${label} FALIED:`, stderr || err.message);
+    else console.log(`DIAG: ${label} SUCCESS:`, stdout || 'Connection Open');
+  });
+};
+
 if (process.env.DATABASE_URL) {
-  const url = process.env.DATABASE_URL;
-  const masked = url.replace(/:([^:@]+)@/, ':****@');
-  console.log('DEBUG: Configured DATABASE_URL:', masked);
-} else {
-  console.log('DEBUG: DATABASE_URL is undefined');
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    runDiag(url.hostname, url.port || 5432, 'DATABASE_URL');
+  } catch (e) { console.log('DIAG: Invalid DB URL'); }
 }
+// Also test known Supabase host directly
+runDiag('db.szvnxiozrxmsudtcsddx.supabase.co', 5432, 'DIRECT_HOST_5432');
+runDiag('aws-0-us-east-2.pooler.supabase.com', 6543, 'POOLER_HOST_6543');
+
 
 
 // Trust proxy - required for rate limiting behind reverse proxies (Render, etc.)
