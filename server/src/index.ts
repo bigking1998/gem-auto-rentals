@@ -23,6 +23,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy - required for rate limiting behind reverse proxies (Render, etc.)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
@@ -32,6 +35,9 @@ app.use(
     origin: [
       process.env.WEB_URL || 'http://localhost:5173',
       process.env.ADMIN_URL || 'http://localhost:5174',
+      'https://gemrentalcars.com',
+      'https://www.gemrentalcars.com',
+      'https://gem-auto-rentals.vercel.app',
     ],
     credentials: true,
   })
