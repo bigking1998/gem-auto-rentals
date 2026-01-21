@@ -45,11 +45,30 @@ export default function LoginPage() {
         return;
       }
 
+      // Clear any stale persisted auth state before setting new credentials
+      // This prevents showing cached user data from a previous session
+      localStorage.removeItem('admin-auth-storage');
+
       // Store the token
       tokenManager.setToken(token);
 
-      // Initialize the auth store with the new token
-      await useAuthStore.getState().initialize();
+      // Set user data directly from the SSO exchange response (more reliable than re-fetching)
+      useAuthStore.setState({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone || null,
+          role: user.role,
+          avatarUrl: null,
+          emailVerified: user.emailVerified,
+          createdAt: user.createdAt,
+        },
+        isAuthenticated: true,
+        isLoading: false,
+        isInitialized: true,
+      });
 
       setSsoLoading(false);
 
