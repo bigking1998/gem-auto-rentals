@@ -4,10 +4,29 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Car, ArrowRight, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
-import { tokenManager } from '@/lib/api';
+import { api } from '@/lib/api';
 
 // Admin dashboard URL - configurable via environment variable
 const ADMIN_DASHBOARD_URL = import.meta.env.VITE_ADMIN_URL || 'https://gem-auto-rentals-admin.onrender.com';
+
+// Trusted domains for admin dashboard redirect (prevents open redirect attacks)
+const TRUSTED_ADMIN_DOMAINS = [
+  'gem-auto-rentals-admin.onrender.com',
+  'admin.gemrentalcars.com',
+  'localhost',
+];
+
+// Validate that the admin URL points to a trusted domain
+function isValidAdminUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return TRUSTED_ADMIN_DOMAINS.some(domain =>
+      parsed.hostname === domain || parsed.hostname.endsWith('.' + domain)
+    );
+  } catch {
+    return false;
+  }
+}
 
 // Roles that have access to admin dashboard
 const ADMIN_ROLES = ['ADMIN', 'MANAGER', 'SUPPORT'];
@@ -73,12 +92,45 @@ export default function LoginPage() {
       // Get the user from the store after login
       const user = useAuthStore.getState().user;
 
-      // Check if user has admin role - redirect to admin dashboard with token
+      // Check if user has admin role - redirect to admin dashboard with SSO code
       if (user && ADMIN_ROLES.includes(user.role)) {
-        const token = tokenManager.getToken();
-        if (token) {
-          // Redirect to admin dashboard with token for seamless SSO
-          window.location.href = `${ADMIN_DASHBOARD_URL}/login?token=${encodeURIComponent(token)}`;
+        // Validate admin URL before redirecting (prevents open redirect)
+        if (!isValidAdminUrl(ADMIN_DASHBOARD_URL)) {
+          console.error('Invalid admin dashboard URL configured', {
+            url: ADMIN_DASHBOARD_URL,
+            origin: 'web-login-sso-redirect',
+          });
+          setErrors({
+            general: 'Admin dashboard URL is misconfigured. Please contact support.',
+          });
+          return;
+        }
+
+        try {
+          // Generate a short-lived SSO code (more secure than passing token in URL)
+          const { code } = await api.auth.generateSsoCode();
+
+          // Redirect to admin dashboard with the code (not the token)
+          // The admin dashboard will exchange this code for a token server-side
+          window.location.href = `${ADMIN_DASHBOARD_URL}/login?code=${encodeURIComponent(code)}`;
+          return;
+        } catch (ssoError) {
+          // SSO code generation failed - clear partial session and show error
+          // Log without PII (no email)
+          console.warn('SSO code generation failed for admin user', {
+            role: user.role,
+            userId: user.id,
+            error: ssoError instanceof Error ? ssoError.message : 'Unknown error',
+            origin: 'web-login-sso-redirect',
+          });
+
+          // Clear the partially established session to avoid inconsistent state
+          await useAuthStore.getState().logout();
+
+          setErrors({
+            general: `Unable to redirect to admin dashboard. Please try again or log in directly at the admin portal.`,
+          });
+          setIsLoading(false);
           return;
         }
       }

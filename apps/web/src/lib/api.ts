@@ -299,6 +299,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ token, password }),
       }),
+
+    // Generate a short-lived SSO code for admin dashboard redirect
+    generateSsoCode: (): Promise<{ code: string; expiresIn: number }> =>
+      request('/auth/sso-code', { method: 'POST' }),
   },
 
   // Payments

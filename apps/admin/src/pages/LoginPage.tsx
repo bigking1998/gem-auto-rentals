@@ -18,42 +18,50 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Handle SSO token from URL
+  // Handle SSO code from URL (secure - code is exchanged for token server-side)
   useEffect(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      handleSsoToken(token);
+    const code = searchParams.get('code');
+    if (code) {
+      // Clear code from URL immediately
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('code');
+      window.history.replaceState({}, '', `${window.location.pathname}${newSearchParams.toString() ? '?' + newSearchParams.toString() : ''}`);
+      handleSsoCode(code);
     }
   }, [searchParams]);
 
-  const handleSsoToken = async (token: string) => {
+  const handleSsoCode = async (code: string) => {
     setSsoLoading(true);
     setSsoError(null);
 
     try {
-      // Temporarily store the token to make the API call
-      tokenManager.setToken(token);
-
-      // Validate the token by fetching user profile
-      const user = await api.auth.me();
+      // Exchange the short-lived code for a token (server-side validation)
+      const { user, token } = await api.auth.exchangeSsoCode(code);
 
       // Check if user has admin privileges
       if (!ADMIN_ROLES.includes(user.role)) {
-        tokenManager.removeToken();
         setSsoError('Access denied. Admin privileges required.');
         setSsoLoading(false);
         return;
       }
 
-      // Token is valid and user has admin role - reinitialize the auth store
+      // Store the token
+      tokenManager.setToken(token);
+
+      // Initialize the auth store with the new token
       await useAuthStore.getState().initialize();
+
+      setSsoLoading(false);
 
       // Redirect to dashboard
       navigate('/', { replace: true });
     } catch (err) {
-      // Token is invalid
-      tokenManager.removeToken();
-      setSsoError('Invalid or expired session. Please log in again.');
+      // Code exchange failed (expired, already used, or invalid)
+      console.warn('SSO code exchange failed', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        origin: 'admin-login-sso',
+      });
+      setSsoError('SSO login failed. The link may have expired. Please log in manually.');
       setSsoLoading(false);
     }
   };

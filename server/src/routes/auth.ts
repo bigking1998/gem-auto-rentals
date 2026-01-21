@@ -10,6 +10,28 @@ import { sendPasswordResetEmail } from '../lib/email.js';
 
 const router = Router();
 
+// SSO code storage (in-memory, codes expire after 30 seconds)
+// In production with multiple server instances, use Redis instead
+interface SsoCode {
+  userId: string;
+  role: string;
+  createdAt: number;
+  used: boolean;
+}
+
+const ssoCodeStore = new Map<string, SsoCode>();
+const SSO_CODE_EXPIRY_MS = 30 * 1000; // 30 seconds
+
+// Cleanup expired SSO codes periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [code, data] of ssoCodeStore.entries()) {
+    if (now - data.createdAt > SSO_CODE_EXPIRY_MS || data.used) {
+      ssoCodeStore.delete(code);
+    }
+  }
+}, 60 * 1000); // Cleanup every minute
+
 // Validation schemas
 const registerSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -214,6 +236,107 @@ router.put('/change-password', authenticate, async (req, res, next) => {
     res.json({
       success: true,
       message: 'Password changed successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/auth/sso-code - Generate a short-lived SSO code for admin dashboard redirect
+// This is used instead of passing tokens via URL for security
+router.post('/sso-code', authenticate, async (req, res, next) => {
+  try {
+    const user = req.user!;
+
+    // Only allow admin roles to generate SSO codes
+    const ADMIN_ROLES = ['ADMIN', 'MANAGER', 'SUPPORT'];
+    if (!ADMIN_ROLES.includes(user.role)) {
+      throw UnauthorizedError('Only admin users can generate SSO codes');
+    }
+
+    // Generate a secure random code
+    const code = crypto.randomBytes(32).toString('hex');
+
+    // Store the code with user info
+    ssoCodeStore.set(code, {
+      userId: user.id,
+      role: user.role,
+      createdAt: Date.now(),
+      used: false,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        code,
+        expiresIn: SSO_CODE_EXPIRY_MS / 1000, // seconds
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/auth/sso-exchange - Exchange an SSO code for a token
+// Admin dashboard calls this to get a valid token from a code
+router.post('/sso-exchange', async (req, res, next) => {
+  try {
+    const { code } = z.object({ code: z.string().min(1, 'Code is required') }).parse(req.body);
+
+    // Look up the code
+    const ssoData = ssoCodeStore.get(code);
+
+    if (!ssoData) {
+      throw UnauthorizedError('Invalid or expired SSO code');
+    }
+
+    // Check if code has expired
+    if (Date.now() - ssoData.createdAt > SSO_CODE_EXPIRY_MS) {
+      ssoCodeStore.delete(code);
+      throw UnauthorizedError('SSO code has expired');
+    }
+
+    // Check if code has already been used (prevent replay attacks)
+    if (ssoData.used) {
+      ssoCodeStore.delete(code);
+      throw UnauthorizedError('SSO code has already been used');
+    }
+
+    // Mark code as used
+    ssoData.used = true;
+
+    // Get fresh user data
+    const user = await prisma.user.findUnique({
+      where: { id: ssoData.userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        emailVerified: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      ssoCodeStore.delete(code);
+      throw UnauthorizedError('User not found');
+    }
+
+    // Generate a new token for the admin dashboard
+    const token = generateToken(user.id, user.role);
+
+    // Clean up the used code
+    ssoCodeStore.delete(code);
+
+    res.json({
+      success: true,
+      data: {
+        user,
+        token,
+      },
     });
   } catch (error) {
     next(error);

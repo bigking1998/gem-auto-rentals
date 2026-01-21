@@ -221,6 +221,13 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify({ currentPassword, newPassword }),
       }),
+
+    // Exchange SSO code for token (used for seamless login from customer site)
+    exchangeSsoCode: (code: string): Promise<{ user: User; token: string }> =>
+      request('/auth/sso-exchange', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      }),
   },
 
   // Vehicles
