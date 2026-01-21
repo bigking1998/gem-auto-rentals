@@ -19,6 +19,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -119,6 +120,7 @@ const formatTimeAgo = (date: Date) => {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -449,7 +451,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
                   {/* Logout */}
                   <div className="p-2 border-t border-gray-100">
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left group">
+                    <button
+                      onClick={async () => {
+                        setSettingsOpen(false);
+                        await logout();
+                        navigate('/login');
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left group"
+                    >
                       <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
                         <LogOut className="w-4 h-4 text-red-600" />
                       </div>
@@ -464,9 +473,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
           {/* User Avatar */}
           <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-sm font-semibold">
-              JD
+              {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '??'}
             </div>
-            <span className="hidden lg:block text-sm font-medium text-gray-700">John Doe</span>
+            <span className="hidden lg:block text-sm font-medium text-gray-700">
+              {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
+            </span>
           </button>
         </div>
       </div>
