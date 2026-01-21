@@ -4,20 +4,36 @@ services:
     env: node
     plan: free
     region: oregon 
-    buildCommand: pnpm install && pnpm run db:generate && pnpm run build --filter=server
-    startCommand: pnpm run start --filter=server
+    buildCommand: pnpm install && pnpm run db:generate && pnpm --filter server run build
+    startCommand: node server/dist/index.js
     envVars:
       - key: NPM_CONFIG_PRODUCTION
         value: false
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 10000
       - key: WEB_URL
         value: https://gemrentalcars.com
+      - key: ADMIN_URL
+        value: https://admin.gemrentalcars.com
       - key: DATABASE_URL
         sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
       - key: SUPABASE_URL
         sync: false
-      - key: SUPABASE_ANON_KEY
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        value: "Gem Auto Rentals <noreply@gemrentalcars.com>"
       - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
         sync: false
