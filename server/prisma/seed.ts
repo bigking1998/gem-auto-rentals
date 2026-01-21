@@ -1,26 +1,79 @@
+/**
+ * Database Seed Script
+ *
+ * This script seeds the database with initial data including an admin user.
+ *
+ * SECURITY NOTES:
+ * - In production, you MUST set SEED_ADMIN_PASSWORD environment variable
+ * - In production, you MUST set SEED_ADMIN_EMAIL environment variable
+ * - Test data (sample customers, vehicles, bookings) is only created in development
+ *
+ * Environment Variables:
+ * - SEED_ADMIN_EMAIL: Email for the admin user (required in production)
+ * - SEED_ADMIN_PASSWORD: Password for the admin user (required in production)
+ * - NODE_ENV: Set to 'production' to enforce security requirements
+ */
+
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 async function main() {
-  console.log('Seeding database...');
+  console.log(`Seeding database... (${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode)`);
+
+  // Get admin credentials from environment or use defaults for development
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const adminPasswordRaw = process.env.SEED_ADMIN_PASSWORD;
+
+  // In production, require environment variables
+  if (isProduction) {
+    if (!adminEmail) {
+      throw new Error('SEED_ADMIN_EMAIL environment variable is required in production');
+    }
+    if (!adminPasswordRaw) {
+      throw new Error('SEED_ADMIN_PASSWORD environment variable is required in production');
+    }
+    if (adminPasswordRaw.length < 12) {
+      throw new Error('SEED_ADMIN_PASSWORD must be at least 12 characters in production');
+    }
+  }
+
+  // Use environment variables or development defaults
+  const finalAdminEmail = adminEmail || 'admin@gemautorentals.com';
+  const finalAdminPassword = adminPasswordRaw || 'admin123';
+
+  if (!isProduction && !adminPasswordRaw) {
+    console.warn('⚠️  WARNING: Using default development password. Set SEED_ADMIN_PASSWORD for production.');
+  }
 
   // Create admin user
-  const adminPassword = await bcrypt.hash('admin123', 12);
+  const adminPassword = await bcrypt.hash(finalAdminPassword, 12);
   const admin = await prisma.user.upsert({
-    where: { email: 'biggkingg1998@gmail.com' },
+    where: { email: finalAdminEmail },
     update: { role: 'ADMIN' },
     create: {
-      email: 'biggkingg1998@gmail.com',
+      email: finalAdminEmail,
       password: adminPassword,
-      firstName: 'Manny',
-      lastName: 'Admin',
+      firstName: 'Admin',
+      lastName: 'User',
       role: 'ADMIN',
       emailVerified: true,
     },
   });
-  console.log('Created admin user:', admin.email);
+  console.log('Created/updated admin user:', admin.email);
+
+  // Skip test data in production
+  if (isProduction) {
+    console.log('Skipping test data in production mode.');
+    console.log('Seeding complete!');
+    return;
+  }
+
+  // ============ DEVELOPMENT ONLY: Test Data ============
+  console.log('Creating test data (development only)...');
 
   // Create test customer
   const customerPassword = await bcrypt.hash('customer123', 12);
@@ -37,7 +90,7 @@ async function main() {
       emailVerified: true,
     },
   });
-  console.log('Created customer:', customer.email);
+  console.log('Created test customer:', customer.email);
 
   // Create sample vehicles
   const vehicles = [
