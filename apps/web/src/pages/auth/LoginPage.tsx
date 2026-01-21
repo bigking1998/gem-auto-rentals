@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Car, ArrowRight, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/lib/api';
+
+// Session storage key for preserving return URL across page loads
+const RETURN_URL_KEY = 'gem_auth_return_url';
 
 // Admin dashboard URL - configurable via environment variable
 const ADMIN_DASHBOARD_URL = import.meta.env.VITE_ADMIN_URL || 'https://gem-auto-rentals-admin.onrender.com';
@@ -44,9 +47,9 @@ export default function LoginPage() {
   });
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
-  // Get redirect path from URL query param, location state, or default to dashboard
+  // Get redirect path from URL query param, location state, sessionStorage backup, or default to dashboard
   const searchParams = new URLSearchParams(location.search);
-  const returnUrl = searchParams.get('returnUrl');
+  const returnUrlParam = searchParams.get('returnUrl');
 
   // Validate returnUrl to prevent open redirect attacks
   const isValidReturnUrl = (url: string | null): boolean => {
@@ -55,9 +58,34 @@ export default function LoginPage() {
     return url.startsWith('/') && !url.startsWith('//') && !url.includes('://');
   };
 
-  const from = (isValidReturnUrl(returnUrl) ? returnUrl : null)
-    || (location.state as { from?: string })?.from
-    || '/dashboard';
+  // Try to get returnUrl from: query param > sessionStorage > location state > default
+  const getReturnUrl = (): string => {
+    // First try query param
+    if (isValidReturnUrl(returnUrlParam)) {
+      return returnUrlParam!;
+    }
+    // Then try sessionStorage (backup in case URL was modified)
+    const storedUrl = sessionStorage.getItem(RETURN_URL_KEY);
+    if (isValidReturnUrl(storedUrl)) {
+      return storedUrl!;
+    }
+    // Then try location state
+    const stateFrom = (location.state as { from?: string })?.from;
+    if (stateFrom) {
+      return stateFrom;
+    }
+    // Default to dashboard
+    return '/dashboard';
+  };
+
+  const from = getReturnUrl();
+
+  // Store valid returnUrl in sessionStorage as backup
+  useEffect(() => {
+    if (isValidReturnUrl(returnUrlParam)) {
+      sessionStorage.setItem(RETURN_URL_KEY, returnUrlParam!);
+    }
+  }, [returnUrlParam]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -136,6 +164,8 @@ export default function LoginPage() {
       }
 
       // Regular user - navigate to the intended destination or dashboard
+      // Clear the stored return URL since we're about to use it
+      sessionStorage.removeItem(RETURN_URL_KEY);
       navigate(from, { replace: true });
     } catch (error) {
       // Error is already set in the auth store

@@ -1,7 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import PageLoader from './components/ui/PageLoader';
+import { useAuthStore } from './stores/authStore';
 
 // Eager load the home page for fast initial load
 import HomePage from './pages/HomePage';
@@ -26,6 +27,13 @@ const DocumentsPage = lazy(() => import('./pages/dashboard/DocumentsPage'));
 const PaymentMethodsPage = lazy(() => import('./pages/dashboard/PaymentMethodsPage'));
 
 function App() {
+  const initialize = useAuthStore((state) => state.initialize);
+
+  // Initialize auth state on app load
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
   return (
     <>
       <Suspense fallback={<PageLoader />}>

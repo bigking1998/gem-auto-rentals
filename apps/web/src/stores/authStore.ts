@@ -109,6 +109,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             user,
             isAuthenticated: true,
             isLoading: false,
+            isInitialized: true,
           });
         } catch (error) {
           const message = error instanceof ApiError
@@ -146,6 +147,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             user,
             isAuthenticated: true,
             isLoading: false,
+            isInitialized: true,
           });
         } catch (error) {
           const message = error instanceof ApiError
