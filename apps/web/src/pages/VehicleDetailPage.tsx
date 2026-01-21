@@ -38,7 +38,7 @@ const extras = [
 export default function VehicleDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isInitialized } = useAuthStore();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
@@ -84,8 +84,10 @@ export default function VehicleDetailPage() {
     if (selectedExtras.length > 0) params.set('extras', selectedExtras.join(','));
     const bookingUrl = `/booking?${params.toString()}`;
 
-    // If not authenticated, redirect to login with return URL
-    if (!isAuthenticated) {
+    // If not authenticated (or auth not initialized yet), redirect to login with return URL
+    // We check isInitialized to avoid race condition where persisted state says "authenticated"
+    // but the token hasn't been validated yet
+    if (!isInitialized || !isAuthenticated) {
       const loginParams = new URLSearchParams();
       loginParams.set('returnUrl', bookingUrl);
       navigate(`/login?${loginParams.toString()}`);

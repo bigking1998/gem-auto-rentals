@@ -85,12 +85,15 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               tokenManager.removeToken();
               set({ user: null, isAuthenticated: false });
             }
+          } else {
+            // No token - clear any stale persisted auth state
+            set({ user: null, isAuthenticated: false });
           }
 
           set({ isLoading: false, isInitialized: true });
         } catch (error) {
           console.error('Auth initialization error:', error);
-          set({ isLoading: false, isInitialized: true });
+          set({ isLoading: false, isInitialized: true, user: null, isAuthenticated: false });
         }
       },
 
