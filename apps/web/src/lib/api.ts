@@ -100,12 +100,16 @@ export interface Vehicle {
   images: string[];
   features: string[];
   seats: number;
+  doors: number;
   transmission: 'AUTOMATIC' | 'MANUAL';
   fuelType: 'GASOLINE' | 'DIESEL' | 'ELECTRIC' | 'HYBRID';
   mileage: number;
+  color?: string;
+  description?: string;
+  location?: string;
   licensePlate: string;
   vin: string;
-  averageRating?: number;
+  averageRating?: number | null;
   reviewCount?: number;
   createdAt: string;
   updatedAt: string;

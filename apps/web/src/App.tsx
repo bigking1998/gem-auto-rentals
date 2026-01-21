@@ -34,7 +34,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/vehicles" element={<VehiclesPage />} />
           <Route path="/vehicles/:id" element={<VehicleDetailPage />} />
-          <Route path="/booking/:vehicleId" element={<BookingPage />} />
+          <Route path="/booking" element={<BookingPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
 
           {/* Auth Routes */}

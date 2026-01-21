@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -16,73 +16,16 @@ import {
   UserPlus,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@gem/ui';
 import AvailabilityCalendar from '@/components/vehicles/AvailabilityCalendar';
-
-// Mock vehicle data (same as before for now)
-const mockVehicle = {
-  id: '1',
-  make: 'Toyota',
-  model: 'Camry',
-  year: 2024,
-  category: 'STANDARD',
-  dailyRate: 65,
-  status: 'AVAILABLE',
-  seats: 5,
-  doors: 4,
-  transmission: 'AUTOMATIC',
-  fuelType: 'GASOLINE',
-  mileage: 5000,
-  color: 'Silver',
-  description:
-    'The 2024 Toyota Camry is a reliable and comfortable mid-size sedan, perfect for business trips or family outings. With excellent fuel economy and a spacious interior, it offers the perfect balance of comfort and efficiency.',
-  features: [
-    'Bluetooth',
-    'Backup Camera',
-    'Apple CarPlay',
-    'Android Auto',
-    'Cruise Control',
-    'Keyless Entry',
-    'USB Ports',
-    'Climate Control',
-  ],
-  images: [
-    'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=1200',
-    'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=1200',
-    'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=1200',
-    'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=1200',
-  ],
-  location: 'Main Office - Downtown',
-  averageRating: 4.8,
-  reviewCount: 124,
-  reviews: [
-    {
-      id: '1',
-      user: { firstName: 'John', lastName: 'D.' },
-      rating: 5,
-      comment: 'Excellent car! Very clean and drove perfectly. Would definitely rent again.',
-      createdAt: '2024-01-10',
-    },
-    {
-      id: '2',
-      user: { firstName: 'Sarah', lastName: 'M.' },
-      rating: 4,
-      comment: 'Great vehicle for the price. Comfortable for long drives.',
-      createdAt: '2024-01-05',
-    },
-    {
-      id: '3',
-      user: { firstName: 'Michael', lastName: 'R.' },
-      rating: 5,
-      comment: 'Perfect condition, smooth pickup and dropoff process.',
-      createdAt: '2023-12-28',
-    },
-  ],
-};
+import { api, Vehicle } from '@/lib/api';
+import { BOOKING_VEHICLE_KEY } from './BookingPage';
 
 const extras = [
   { id: 'insurance', name: 'Full Insurance', price: 25, icon: Shield, description: 'Complete coverage for peace of mind' },
@@ -92,17 +35,54 @@ const extras = [
 ];
 
 export default function VehicleDetailPage() {
-  useParams(); // Keep hook execution if needed, or remove if not. Let's just remove the variable destructuring to fix lint.
-  // Actually, better to just remove the line if unused. 
-  // const { id } = useParams(); -> remove
-
+  const { id } = useParams();
   const navigate = useNavigate();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const vehicle = mockVehicle; // Would fetch from API
+  // Fetch vehicle data from API
+  useEffect(() => {
+    async function fetchVehicle() {
+      if (!id) {
+        setError('No vehicle ID provided');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const vehicleData = await api.vehicles.get(id);
+        setVehicle(vehicleData);
+      } catch (err) {
+        console.error('Error fetching vehicle:', err);
+        setError('Failed to load vehicle details');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchVehicle();
+  }, [id]);
+
+  // Handle booking navigation
+  const handleBookNow = () => {
+    if (!vehicle || days <= 0) return;
+
+    // Store vehicle in sessionStorage for booking page
+    sessionStorage.setItem(BOOKING_VEHICLE_KEY, JSON.stringify(vehicle));
+
+    // Navigate to booking page with dates and extras
+    const params = new URLSearchParams();
+    if (startDate) params.set('start', startDate);
+    if (endDate) params.set('end', endDate);
+    if (selectedExtras.length > 0) params.set('extras', selectedExtras.join(','));
+
+    navigate(`/booking?${params.toString()}`);
+  };
 
   const toggleExtra = (extraId: string) => {
     setSelectedExtras((prev) =>
@@ -119,12 +99,52 @@ export default function VehicleDetailPage() {
   };
 
   const days = calculateDays();
-  const basePrice = vehicle.dailyRate * days;
+  const dailyRate = vehicle ? Number(vehicle.dailyRate) : 0;
+  const basePrice = dailyRate * days;
   const extrasPrice = selectedExtras.reduce((sum, extraId) => {
     const extra = extras.find((e) => e.id === extraId);
     return sum + (extra ? extra.price * days : 0);
   }, 0);
   const totalPrice = basePrice + extrasPrice;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-12 pt-32">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-gray-600">Loading vehicle details...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !vehicle) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-12 pt-32">
+          <div className="text-center max-w-md">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Vehicle Not Found</h2>
+            <p className="text-gray-600 mb-6">{error || 'The vehicle you are looking for does not exist.'}</p>
+            <button
+              onClick={() => navigate('/vehicles')}
+              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              Browse Vehicles
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const nextImage = () => {
     setActiveImageIndex((prev) => (prev + 1) % vehicle.images.length);
@@ -251,15 +271,15 @@ export default function VehicleDetailPage() {
                             key={i}
                             className={cn(
                               'w-4 h-4',
-                              i < Math.floor(vehicle.averageRating)
+                              i < Math.floor(vehicle.averageRating ?? 0)
                                 ? 'text-primary fill-primary'
                                 : 'text-gray-200 fill-gray-200'
                             )}
                           />
                         ))}
                       </div>
-                      <span className="font-bold text-gray-900">{vehicle.averageRating}</span>
-                      <span className="text-gray-500 text-sm">({vehicle.reviewCount} reviews)</span>
+                      <span className="font-bold text-gray-900">{vehicle.averageRating?.toFixed(1) ?? 'New'}</span>
+                      <span className="text-gray-500 text-sm">({vehicle.reviewCount ?? 0} reviews)</span>
                     </div>
                   </div>
 
@@ -320,39 +340,19 @@ export default function VehicleDetailPage() {
               {/* Reviews */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
-                <div className="grid gap-6">
-                  {vehicle.reviews.map((review) => (
-                    <div key={review.id} className="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-primary to-orange-600 rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-orange-100">
-                            {review.user.firstName[0]}
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">
-                              {review.user.firstName} {review.user.lastName}
-                            </p>
-                            <p className="text-sm text-gray-500">{review.createdAt}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={cn(
-                                'w-4 h-4',
-                                i < review.rating
-                                  ? 'text-primary fill-primary'
-                                  : 'text-gray-100 fill-gray-100'
-                              )}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-gray-600 leading-relaxed pl-[52px]">{review.comment}</p>
-                    </div>
-                  ))}
-                </div>
+                {(vehicle.reviewCount ?? 0) > 0 ? (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Star className="w-5 h-5 text-primary fill-primary" />
+                    <span className="font-bold text-gray-900">{vehicle.averageRating?.toFixed(1) ?? 'N/A'}</span>
+                    <span>({vehicle.reviewCount} reviews)</span>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Star className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                    <p className="text-gray-500">No reviews yet</p>
+                    <p className="text-sm text-gray-400">Be the first to review this vehicle!</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -503,18 +503,18 @@ export default function VehicleDetailPage() {
                       </div>
                     )}
 
-                    <Link
-                      to={days > 0 ? `/booking/${vehicle.id}?start=${startDate}&end=${endDate}&extras=${selectedExtras.join(',')}` : '#'}
+                    <button
+                      onClick={handleBookNow}
+                      disabled={days <= 0}
                       className={cn(
                         'block w-full py-4 text-center text-lg font-bold rounded-xl transition-all shadow-lg transform active:scale-[0.98]',
                         days > 0
                           ? 'bg-primary text-white hover:bg-orange-600 shadow-orange-200 hover:shadow-orange-300'
                           : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       )}
-                      onClick={(e) => !days && e.preventDefault()}
                     >
                       {days > 0 ? 'Book Now' : 'Select Dates'}
-                    </Link>
+                    </button>
 
                     <div className="flex items-center justify-center gap-2 mt-4 text-xs text-gray-500">
                       <Shield className="w-3.5 h-3.5" />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ArrowLeft, ArrowRight, Calendar, Package, User, FileText, CreditCard, Loader2, AlertCircle } from 'lucide-react';
 import Header from '@/components/layout/Header';
@@ -12,6 +12,9 @@ import PaymentStep from '@/components/booking/PaymentStep';
 import { cn } from '@/lib/utils';
 import { api, Vehicle } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
+
+// Session storage key for booking data
+export const BOOKING_VEHICLE_KEY = 'gem_booking_vehicle';
 
 const steps = [
   { id: 1, title: 'Dates & Location', icon: Calendar },
@@ -89,7 +92,6 @@ const initialBookingData: BookingData = {
 };
 
 export default function BookingPage() {
-  const { vehicleId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -97,7 +99,6 @@ export default function BookingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<BookingData>({
     ...initialBookingData,
-    vehicleId: vehicleId || '',
     startDate: searchParams.get('start') || '',
     endDate: searchParams.get('end') || '',
   });
@@ -107,18 +108,23 @@ export default function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
 
-  // Fetch vehicle data
+  // Load vehicle from sessionStorage
   useEffect(() => {
-    async function fetchVehicle() {
-      if (!vehicleId) {
-        setError('No vehicle selected');
-        setIsLoading(false);
-        return;
-      }
-
+    function loadVehicle() {
       try {
-        const vehicleData = await api.vehicles.get(vehicleId);
+        const storedVehicle = sessionStorage.getItem(BOOKING_VEHICLE_KEY);
+        if (!storedVehicle) {
+          setError('No vehicle selected. Please select a vehicle first.');
+          setIsLoading(false);
+          return;
+        }
+
+        const vehicleData: Vehicle = JSON.parse(storedVehicle);
         setVehicle(vehicleData);
+        setBookingData((prev) => ({
+          ...prev,
+          vehicleId: vehicleData.id,
+        }));
 
         // Pre-fill customer info if user is logged in
         if (user) {
@@ -134,15 +140,15 @@ export default function BookingPage() {
           }));
         }
       } catch (err) {
-        console.error('Error fetching vehicle:', err);
+        console.error('Error loading vehicle:', err);
         setError('Failed to load vehicle details');
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchVehicle();
-  }, [vehicleId, user]);
+    loadVehicle();
+  }, [user]);
 
   // Parse extras from URL
   useEffect(() => {
