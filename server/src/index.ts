@@ -27,7 +27,22 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // Security middleware
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        connectSrc: ["'self'", "https://api.stripe.com", "https://maps.googleapis.com", "https://*.supabase.co"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com", "https://maps.googleapis.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: ["'self'", "data:", "https://*.stripe.com", "https://maps.gstatic.com", "https://*.supabase.co"],
+        frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 // CORS configuration
 app.use(
