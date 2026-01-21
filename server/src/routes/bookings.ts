@@ -341,7 +341,7 @@ router.patch('/:id', authenticate, async (req, res, next) => {
     }
 
     // Recalculate total if dates or extras changed
-    let totalAmount = existing.totalAmount;
+    let totalAmount = Number(existing.totalAmount);
     if (data.startDate || data.endDate || data.extras) {
       const startDate = data.startDate || existing.startDate;
       const endDate = data.endDate || existing.endDate;
