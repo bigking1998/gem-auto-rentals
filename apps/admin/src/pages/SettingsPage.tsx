@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
 
 // Mock billing data
 const mockPaymentMethods = [
@@ -105,6 +106,29 @@ export default function SettingsPage() {
   const validTabs = ['profile', 'notifications', 'security', 'billing', 'company', 'integrations'];
   const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Get user from auth store
+  const { user } = useAuthStore();
+
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+  });
+
+  // Initialize profile form when user loads
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+      });
+    }
+  }, [user]);
 
   // Password change state
   const [passwordForm, setPasswordForm] = useState({
@@ -214,7 +238,7 @@ export default function SettingsPage() {
 
               <div className="flex items-center gap-6 mb-8">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-2xl font-semibold shadow-lg shadow-orange-200">
-                  JD
+                  {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '??'}
                 </div>
                 <div>
                   <button className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 text-sm font-medium">
@@ -231,7 +255,8 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="John"
+                    value={profileForm.firstName}
+                    onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   />
                 </div>
@@ -241,7 +266,8 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="Doe"
+                    value={profileForm.lastName}
+                    onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   />
                 </div>
@@ -251,7 +277,8 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="email"
-                    defaultValue="john.doe@gemauto.com"
+                    value={profileForm.email}
+                    onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   />
                 </div>
@@ -261,7 +288,8 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="tel"
-                    defaultValue="+1 (555) 123-4567"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   />
                 </div>

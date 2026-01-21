@@ -13,6 +13,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -41,6 +42,7 @@ const supportNavItems = [
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
   const location = useLocation();
+  const { user } = useAuthStore();
 
   const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => {
     const isActive = location.pathname === item.href;
@@ -134,11 +136,15 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold">
-              JD
+              {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '??'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">John Doe</p>
-              <p className="text-xs text-sidebar-foreground/60 truncate">Admin</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">
+                {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
+              </p>
+              <p className="text-xs text-sidebar-foreground/60 truncate">
+                {user?.role || 'Unknown'}
+              </p>
             </div>
           </div>
         </div>
