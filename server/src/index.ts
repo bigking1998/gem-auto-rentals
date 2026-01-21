@@ -23,6 +23,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Debug: Log Database URL (Masked) to verify Render Config
+if (process.env.DATABASE_URL) {
+  const url = process.env.DATABASE_URL;
+  const masked = url.replace(/:([^:@]+)@/, ':****@');
+  console.log('DEBUG: Configured DATABASE_URL:', masked);
+} else {
+  console.log('DEBUG: DATABASE_URL is undefined');
+}
+
+
 // Trust proxy - required for rate limiting behind reverse proxies (Render, etc.)
 app.set('trust proxy', 1);
 
