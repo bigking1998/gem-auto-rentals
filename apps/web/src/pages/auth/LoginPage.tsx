@@ -4,6 +4,13 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Car, ArrowRight, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
+import { tokenManager } from '@/lib/api';
+
+// Admin dashboard URL - configurable via environment variable
+const ADMIN_DASHBOARD_URL = import.meta.env.VITE_ADMIN_URL || 'https://gem-auto-rentals-admin.onrender.com';
+
+// Roles that have access to admin dashboard
+const ADMIN_ROLES = ['ADMIN', 'MANAGER', 'SUPPORT'];
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -62,7 +69,21 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(formData.email, formData.password);
-      // Navigate to the intended destination or dashboard on success
+
+      // Get the user from the store after login
+      const user = useAuthStore.getState().user;
+
+      // Check if user has admin role - redirect to admin dashboard with token
+      if (user && ADMIN_ROLES.includes(user.role)) {
+        const token = tokenManager.getToken();
+        if (token) {
+          // Redirect to admin dashboard with token for seamless SSO
+          window.location.href = `${ADMIN_DASHBOARD_URL}/login?token=${encodeURIComponent(token)}`;
+          return;
+        }
+      }
+
+      // Regular user - navigate to the intended destination or dashboard
       navigate(from, { replace: true });
     } catch (error) {
       // Error is already set in the auth store

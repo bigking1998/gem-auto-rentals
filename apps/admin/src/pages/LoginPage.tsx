@@ -1,24 +1,84 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Car, Mail, Lock, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
+import { tokenManager, api } from '@/lib/api';
+
+// Allowed roles for admin dashboard access
+const ADMIN_ROLES = ['ADMIN', 'MANAGER', 'SUPPORT'];
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [ssoLoading, setSsoLoading] = useState(false);
+  const [ssoError, setSsoError] = useState<string | null>(null);
   const { login, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Handle SSO token from URL
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      handleSsoToken(token);
+    }
+  }, [searchParams]);
+
+  const handleSsoToken = async (token: string) => {
+    setSsoLoading(true);
+    setSsoError(null);
+
+    try {
+      // Temporarily store the token to make the API call
+      tokenManager.setToken(token);
+
+      // Validate the token by fetching user profile
+      const user = await api.auth.me();
+
+      // Check if user has admin privileges
+      if (!ADMIN_ROLES.includes(user.role)) {
+        tokenManager.removeToken();
+        setSsoError('Access denied. Admin privileges required.');
+        setSsoLoading(false);
+        return;
+      }
+
+      // Token is valid and user has admin role - reinitialize the auth store
+      await useAuthStore.getState().initialize();
+
+      // Redirect to dashboard
+      navigate('/', { replace: true });
+    } catch (err) {
+      // Token is invalid
+      tokenManager.removeToken();
+      setSsoError('Invalid or expired session. Please log in again.');
+      setSsoLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
+    setSsoError(null);
     const success = await login(email, password);
     if (success) {
       navigate('/');
     }
   };
+
+  // Show loading state while processing SSO token
+  if (ssoLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-orange-500 mx-auto mb-4" />
+          <p className="text-gray-600 font-medium">Signing you in...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4">
@@ -38,7 +98,7 @@ export default function LoginPage() {
           </div>
 
           {/* Error Message */}
-          {error && (
+          {(error || ssoError) && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -47,7 +107,7 @@ export default function LoginPage() {
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-red-800">Authentication Error</p>
-                <p className="text-sm text-red-600">{error}</p>
+                <p className="text-sm text-red-600">{error || ssoError}</p>
               </div>
             </motion.div>
           )}
