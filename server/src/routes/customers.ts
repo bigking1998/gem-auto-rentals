@@ -315,6 +315,56 @@ router.put('/:id/profile', authenticate, async (req, res, next) => {
   }
 });
 
+// PATCH /api/customers/:id/role - Admin only - Change user role
+router.patch('/:id/role', authenticate, adminOnly, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = z.object({
+      role: z.enum(['CUSTOMER', 'SUPPORT', 'MANAGER', 'ADMIN']),
+    }).parse(req.body);
+
+    // Prevent changing own role
+    if (id === req.user!.id) {
+      throw BadRequestError('You cannot change your own role');
+    }
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true },
+    });
+
+    if (!existingUser) {
+      throw NotFoundError('User not found');
+    }
+
+    const customer = await prisma.user.update({
+      where: { id },
+      data: { role },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        emailVerified: true,
+        avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: customer,
+      message: `User role changed to ${role}`,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // DELETE /api/customers/:id - Admin only
 router.delete('/:id', authenticate, adminOnly, async (req, res, next) => {
   try {

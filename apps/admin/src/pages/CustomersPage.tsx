@@ -18,18 +18,31 @@ import {
   ArrowRight,
   Loader2,
   AlertCircle,
+  Shield,
+  ShieldCheck,
+  UserCog,
+  ChevronRight,
 } from 'lucide-react';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import { api, Customer as ApiCustomer } from '@/lib/api';
 import { toast } from 'sonner';
 
 // UI Customer interface
+type Role = 'CUSTOMER' | 'SUPPORT' | 'MANAGER' | 'ADMIN';
+
+const validRoles: Role[] = ['CUSTOMER', 'SUPPORT', 'MANAGER', 'ADMIN'];
+
+function isValidRole(role: string): role is Role {
+  return validRoles.includes(role as Role);
+}
+
 interface Customer {
   id: string;
   name: string;
   email: string;
   phone?: string;
   verified: boolean;
+  role: Role;
   totalBookings: number;
   totalSpent: number;
   createdAt: Date;
@@ -37,17 +50,33 @@ interface Customer {
 
 // Transform API customer to UI format
 function transformCustomer(apiCustomer: ApiCustomer): Customer {
+  const role = isValidRole(apiCustomer.role) ? apiCustomer.role : 'CUSTOMER';
   return {
     id: apiCustomer.id,
     name: `${apiCustomer.firstName} ${apiCustomer.lastName}`,
     email: apiCustomer.email,
     phone: apiCustomer.phone,
     verified: apiCustomer.emailVerified,
+    role,
     totalBookings: apiCustomer._count?.bookings || 0,
     totalSpent: 0, // TODO: Add totalSpent to API response
     createdAt: new Date(apiCustomer.createdAt),
   };
 }
+
+const roleLabels: Record<Role, string> = {
+  CUSTOMER: 'Customer',
+  SUPPORT: 'Support',
+  MANAGER: 'Manager',
+  ADMIN: 'Admin',
+};
+
+const roleColors: Record<Role, { bg: string; text: string; icon: typeof Users }> = {
+  CUSTOMER: { bg: 'bg-gray-100', text: 'text-gray-600', icon: Users },
+  SUPPORT: { bg: 'bg-blue-100', text: 'text-blue-600', icon: UserCog },
+  MANAGER: { bg: 'bg-purple-100', text: 'text-purple-600', icon: Shield },
+  ADMIN: { bg: 'bg-orange-100', text: 'text-orange-600', icon: ShieldCheck },
+};
 
 export default function CustomersPage() {
   const navigate = useNavigate();
@@ -57,6 +86,9 @@ export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'pending'>('all');
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [roleSubmenuOpen, setRoleSubmenuOpen] = useState<string | null>(null);
+  const [submenuPosition, setSubmenuPosition] = useState<'left' | 'right'>('right');
+  const [changingRole, setChangingRole] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCustomers();
@@ -103,6 +135,25 @@ export default function CustomersPage() {
     toast.error('Customer deletion is not yet implemented');
     console.log('Would delete customer:', customerId);
     setActiveDropdown(null);
+  };
+
+  const handleRoleChange = async (customerId: string, newRole: Role) => {
+    setChangingRole(customerId);
+    try {
+      await api.customers.changeRole(customerId, newRole);
+      // Update customer in local state
+      setCustomers(prev =>
+        prev.map(c => c.id === customerId ? { ...c, role: newRole } : c)
+      );
+      toast.success(`Role changed to ${roleLabels[newRole]}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to change role';
+      toast.error(errorMessage);
+    } finally {
+      setChangingRole(null);
+      setRoleSubmenuOpen(null);
+      setActiveDropdown(null);
+    }
   };
 
   // Stats
@@ -279,7 +330,7 @@ export default function CustomersPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 group-hover:text-primary transition-colors">{customer.name}</h3>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-wrap">
                     {customer.verified ? (
                       <span className="flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full font-medium">
                         <CheckCircle className="w-3 h-3" />
@@ -289,6 +340,15 @@ export default function CustomersPage() {
                       <span className="flex items-center gap-1 text-xs text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full font-medium">
                         <XCircle className="w-3 h-3" />
                         Pending
+                      </span>
+                    )}
+                    {customer.role !== 'CUSTOMER' && (
+                      <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[customer.role].bg} ${roleColors[customer.role].text}`}>
+                        {(() => {
+                          const RoleIcon = roleColors[customer.role].icon;
+                          return <RoleIcon className="w-3 h-3" />;
+                        })()}
+                        {roleLabels[customer.role]}
                       </span>
                     )}
                   </div>
@@ -346,6 +406,65 @@ export default function CustomersPage() {
                         <Mail className="w-4 h-4" />
                         Send Email
                       </button>
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (roleSubmenuOpen !== customer.id) {
+                              // Check if we need to flip the menu
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const spaceRight = window.innerWidth - rect.right;
+                              // Menu width is w-40 (160px) + some padding. Let's say 180px safe zone.
+                              setSubmenuPosition(spaceRight < 180 ? 'left' : 'right');
+                              setRoleSubmenuOpen(customer.id);
+                            } else {
+                              setRoleSubmenuOpen(null);
+                            }
+                          }}
+                          className="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          <span className="flex items-center gap-2">
+                            <Shield className="w-4 h-4" />
+                            Change Role
+                          </span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                        {roleSubmenuOpen === customer.id && (
+                          <div
+                            className={`absolute top-0 w-40 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-30 ${submenuPosition === 'left' ? 'right-full mr-1' : 'left-full ml-1'
+                              }`}
+                          >
+                            {(Object.keys(roleLabels) as Role[]).map((role) => (
+                              <button
+                                key={role}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (role !== customer.role) {
+                                    handleRoleChange(customer.id, role);
+                                  }
+                                }}
+                                disabled={changingRole === customer.id || role === customer.role}
+                                className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors ${role === customer.role
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : 'text-gray-700 hover:bg-gray-50'
+                                  }`}
+                              >
+                                {(() => {
+                                  if (changingRole === customer.id) {
+                                    return <Loader2 className="w-4 h-4 animate-spin text-primary" />;
+                                  }
+                                  const RoleIcon = roleColors[role].icon;
+                                  return <RoleIcon className={`w-4 h-4 ${role === customer.role ? 'text-gray-400' : roleColors[role].text}`} />;
+                                })()}
+                                <span>{roleLabels[role]}</span>
+                                {role === customer.role && (
+                                  <CheckCircle className="w-3 h-3 ml-auto text-green-500" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <div className="border-t border-gray-100 my-1" />
                       <button
                         onClick={(e) => {

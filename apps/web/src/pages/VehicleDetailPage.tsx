@@ -26,6 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@gem/ui';
 import AvailabilityCalendar from '@/components/vehicles/AvailabilityCalendar';
 import { api, Vehicle } from '@/lib/api';
 import { BOOKING_VEHICLE_KEY } from './BookingPage';
+import { useAuthStore } from '@/stores/authStore';
 
 const extras = [
   { id: 'insurance', name: 'Full Insurance', price: 25, icon: Shield, description: 'Complete coverage for peace of mind' },
@@ -37,6 +38,7 @@ const extras = [
 export default function VehicleDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
@@ -75,13 +77,23 @@ export default function VehicleDetailPage() {
     // Store vehicle in sessionStorage for booking page
     sessionStorage.setItem(BOOKING_VEHICLE_KEY, JSON.stringify(vehicle));
 
-    // Navigate to booking page with dates and extras
+    // Build booking URL with dates and extras
     const params = new URLSearchParams();
     if (startDate) params.set('start', startDate);
     if (endDate) params.set('end', endDate);
     if (selectedExtras.length > 0) params.set('extras', selectedExtras.join(','));
+    const bookingUrl = `/booking?${params.toString()}`;
 
-    navigate(`/booking?${params.toString()}`);
+    // If not authenticated, redirect to login with return URL
+    if (!isAuthenticated) {
+      const loginParams = new URLSearchParams();
+      loginParams.set('returnUrl', bookingUrl);
+      navigate(`/login?${loginParams.toString()}`);
+      return;
+    }
+
+    // User is authenticated, proceed to booking
+    navigate(bookingUrl);
   };
 
   const toggleExtra = (extraId: string) => {

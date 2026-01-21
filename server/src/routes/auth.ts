@@ -177,6 +177,49 @@ router.get('/me', authenticate, async (req, res, next) => {
   }
 });
 
+// PUT /api/auth/change-password
+router.put('/change-password', authenticate, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = z
+      .object({
+        currentPassword: z.string().min(1, 'Current password is required'),
+        newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+      })
+      .parse(req.body);
+
+    // Get user with password
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+    });
+
+    if (!user) {
+      throw BadRequestError('User not found');
+    }
+
+    // Verify current password
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      throw UnauthorizedError('Current password is incorrect');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // POST /api/auth/forgot-password
 router.post('/forgot-password', async (req, res, next) => {
   try {

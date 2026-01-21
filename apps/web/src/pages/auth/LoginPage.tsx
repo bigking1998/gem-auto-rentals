@@ -18,8 +18,20 @@ export default function LoginPage() {
   });
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
-  // Get redirect path from location state, default to dashboard
-  const from = (location.state as { from?: string })?.from || '/dashboard';
+  // Get redirect path from URL query param, location state, or default to dashboard
+  const searchParams = new URLSearchParams(location.search);
+  const returnUrl = searchParams.get('returnUrl');
+
+  // Validate returnUrl to prevent open redirect attacks
+  const isValidReturnUrl = (url: string | null): boolean => {
+    if (!url) return false;
+    // Must be a relative path starting with '/' and not starting with '//' (protocol-relative URL)
+    return url.startsWith('/') && !url.startsWith('//') && !url.includes('://');
+  };
+
+  const from = (isValidReturnUrl(returnUrl) ? returnUrl : null)
+    || (location.state as { from?: string })?.from
+    || '/dashboard';
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};

@@ -215,6 +215,12 @@ export const api = {
 
     me: (): Promise<User> =>
       request('/auth/me'),
+
+    changePassword: (currentPassword: string, newPassword: string): Promise<{ message: string }> =>
+      request('/auth/change-password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      }),
   },
 
   // Vehicles
@@ -385,6 +391,12 @@ export const api = {
 
     deleteAvatar: (id: string): Promise<Customer> =>
       request(`/customers/${id}/avatar`, { method: 'DELETE' }),
+
+    changeRole: (id: string, role: User['role']): Promise<Customer> =>
+      request(`/customers/${id}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      }),
   },
 
   // Stats
