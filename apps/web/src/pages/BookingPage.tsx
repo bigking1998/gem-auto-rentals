@@ -60,6 +60,7 @@ export interface BookingData {
       uploaded: boolean;
     };
   };
+  password?: string;
 }
 
 const initialBookingData: BookingData = {
@@ -213,6 +214,51 @@ export default function BookingPage() {
 
   const nextStep = async () => {
     if (currentStep < steps.length && canProceed()) {
+      // When moving from Customer Info (3) to Documents (4), register the user if needed
+      if (currentStep === 3) {
+        // Check if already logged in
+        if (!user) {
+          if (!bookingData.password) {
+            setError('Please create a password to continue');
+            return;
+          }
+
+          setIsSubmitting(true);
+          try {
+            // Register the user
+            const authResponse = await api.auth.register({
+              email: bookingData.customer.email,
+              password: bookingData.password,
+              firstName: bookingData.customer.firstName,
+              lastName: bookingData.customer.lastName,
+              phone: bookingData.customer.phone,
+            });
+
+            // Login successful (token is set in localStorage by api.auth.register usually? No, returns it)
+            // We need to set it manually if api.auth.register doesn't
+            if (authResponse.token) {
+              const { tokenManager } = await import('@/lib/api');
+              tokenManager.setToken(authResponse.token);
+              useAuthStore.getState().setUser(authResponse.user);
+            }
+          } catch (err: any) {
+            // If user already exists, try to login? 
+            // For now, show error
+            console.error(err);
+            if (err.message && err.message.includes('already exists')) {
+              setError('Account already exists. Please Log In first.');
+              setIsSubmitting(false);
+              return;
+            }
+            setError(err.message || 'Registration failed');
+            setIsSubmitting(false);
+            return;
+          } finally {
+            setIsSubmitting(false);
+          }
+        }
+      }
+
       // When moving to payment step (step 5), create the booking first
       if (currentStep === 4 && !bookingId) {
         await createBooking();
