@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 3000;
 
 // Network Diagnostics on Startup
 import { exec } from 'child_process';
-const runDiag = (host, port, label) => {
+const runDiag = (host: string, port: string | number, label: string) => {
   console.log(`DIAG: Testing ${label} (${host}:${port})...`);
   exec(`nc -z -v -w 5 ${host} ${port}`, (err, stdout, stderr) => {
     if (err) console.log(`DIAG: ${label} FALIED:`, stderr || err.message);
