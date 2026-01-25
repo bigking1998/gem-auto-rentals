@@ -1,11 +1,29 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import multer from 'multer';
 import prisma from '../lib/prisma.js';
 import { authenticate, authorize } from '../middleware/auth.js';
-import { NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../middleware/errorHandler.js';
 import { ActivityLogger } from '../lib/activityLogger.js';
+import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getPublicUrl } from '../lib/supabase.js';
 
 const router = Router();
+
+// Configure multer for file uploads (memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB limit
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, SVG, and WebP are allowed.'));
+    }
+  },
+});
 
 // Validation schemas
 const updatePreferencesSchema = z.object({
@@ -181,6 +199,109 @@ router.put('/company', authenticate, authorize('ADMIN'), async (req, res, next) 
     res.json({
       success: true,
       data: settings,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/settings/company/logo - Upload company logo
+router.post('/company/logo', authenticate, authorize('ADMIN'), upload.single('logo'), async (req, res, next) => {
+  try {
+    if (!isStorageConfigured()) {
+      throw BadRequestError('Storage is not configured. Please contact support.');
+    }
+
+    if (!req.file) {
+      throw BadRequestError('No logo file provided');
+    }
+
+    // Get existing company settings
+    let settings = await prisma.companySettings.findFirst();
+
+    if (!settings) {
+      settings = await prisma.companySettings.create({
+        data: {},
+      });
+    }
+
+    // Delete old logo if exists
+    if (settings.companyLogo && settings.companyLogo.includes('/logos/')) {
+      const urlParts = settings.companyLogo.split('/logos/');
+      if (urlParts.length > 1) {
+        await deleteFile(BUCKETS.LOGOS, urlParts[1]);
+      }
+    }
+
+    // Generate unique file path
+    const timestamp = Date.now();
+    const extension = req.file.originalname.split('.').pop() || 'png';
+    const filePath = `company/${timestamp}.${extension}`;
+
+    // Upload to Supabase
+    const result = await uploadFile(
+      BUCKETS.LOGOS,
+      filePath,
+      req.file.buffer,
+      req.file.mimetype
+    );
+
+    if ('error' in result) {
+      throw BadRequestError(result.error);
+    }
+
+    // Get public URL
+    const logoUrl = getPublicUrl(BUCKETS.LOGOS, filePath);
+
+    if (!logoUrl) {
+      throw BadRequestError('Failed to generate logo URL');
+    }
+
+    // Update company settings with new logo
+    settings = await prisma.companySettings.update({
+      where: { id: settings.id },
+      data: { companyLogo: logoUrl },
+    });
+
+    // Log activity
+    await ActivityLogger.settingsUpdate(req.user!.id, 'Company Settings', ['companyLogo']);
+
+    res.status(201).json({
+      success: true,
+      data: { logoUrl },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/settings/company/logo - Delete company logo
+router.delete('/company/logo', authenticate, authorize('ADMIN'), async (req, res, next) => {
+  try {
+    // Get existing company settings
+    const settings = await prisma.companySettings.findFirst();
+
+    if (!settings) {
+      throw NotFoundError('Company settings not found');
+    }
+
+    // Delete logo from storage if exists
+    if (settings.companyLogo && settings.companyLogo.includes('/logos/')) {
+      const urlParts = settings.companyLogo.split('/logos/');
+      if (urlParts.length > 1) {
+        await deleteFile(BUCKETS.LOGOS, urlParts[1]);
+      }
+    }
+
+    // Update company settings to remove logo
+    await prisma.companySettings.update({
+      where: { id: settings.id },
+      data: { companyLogo: null },
+    });
+
+    res.json({
+      success: true,
+      message: 'Logo deleted successfully',
     });
   } catch (error) {
     next(error);

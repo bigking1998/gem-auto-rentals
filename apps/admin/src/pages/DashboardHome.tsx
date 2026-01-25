@@ -28,6 +28,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { api } from '@/lib/api';
+import { CreateBookingModal } from '@/components/bookings/CreateBookingModal';
 
 interface DashboardStats {
   activeRentals: number;
@@ -150,6 +151,7 @@ export default function DashboardHome() {
   });
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
   const [alerts, setAlerts] = useState<{ id: number; type: string; message: string; action: string; route: string }[]>([]);
+  const [isCreateBookingModalOpen, setIsCreateBookingModalOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -210,6 +212,10 @@ export default function DashboardHome() {
   };
 
   const handleQuickAction = (action: typeof quickActions[0]) => {
+    if (action.id === 'new-booking') {
+      setIsCreateBookingModalOpen(true);
+      return;
+    }
     if (action.route) {
       navigate(action.route, { state: { action: action.id } });
     }
@@ -558,6 +564,13 @@ export default function DashboardHome() {
           </div>
         </div>
       </motion.div>
+
+      {/* Create Booking Modal */}
+      <CreateBookingModal
+        isOpen={isCreateBookingModalOpen}
+        onClose={() => setIsCreateBookingModalOpen(false)}
+        onSuccess={fetchDashboardData}
+      />
     </div>
   );
 }

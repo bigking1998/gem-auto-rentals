@@ -21,6 +21,7 @@ model User {
   role               Role       @default(CUSTOMER)
   emailVerified      Boolean    @default(false)
   avatarUrl          String?
+  stripeCustomerId   String?    @unique
   resetToken         String?    @unique
   resetTokenExpiry   DateTime?
   createdAt          DateTime   @default(now())

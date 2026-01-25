@@ -24,6 +24,7 @@ import preferencesRoutes from './routes/preferences.js';
 import notificationRoutes from './routes/notifications.js';
 import invoiceRoutes from './routes/invoices.js';
 import integrationRoutes from './routes/integrations.js';
+import billingRoutes from './routes/billing.js';
 import trashRoutes from './routes/trash.js';
 
 // Load environment variables
@@ -107,6 +108,7 @@ app.use('/api/settings', preferencesRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/integrations', integrationRoutes);
+app.use('/api/billing', billingRoutes);
 app.use('/api/trash', trashRoutes);
 
 // 404 handler

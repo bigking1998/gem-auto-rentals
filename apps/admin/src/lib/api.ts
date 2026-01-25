@@ -464,6 +464,25 @@ export interface TrashListResponse {
   };
 }
 
+// ============ Billing Types ============
+export interface PaymentMethod {
+  id: string;
+  brand: string;
+  last4: string;
+  expMonth: number;
+  expYear: number;
+  isDefault: boolean;
+}
+
+export interface BillingPlan {
+  id: string;
+  name: string;
+  price: number;
+  interval: 'month' | 'year';
+  features: string[];
+  isCurrent: boolean;
+}
+
 // ============ Conversation Types ============
 export type ConversationStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 export type Priority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
@@ -875,6 +894,31 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
+
+    uploadLogo: async (file: File): Promise<{ logoUrl: string }> => {
+      const formData = new FormData();
+      formData.append('logo', file);
+
+      const token = tokenManager.getToken();
+      const response = await fetch(`${API_BASE_URL}/settings/company/logo`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new ApiError(
+          response.status,
+          response.statusText,
+          json.error || json.message || 'Logo upload failed'
+        );
+      }
+      return json.data;
+    },
+
+    deleteLogo: (): Promise<{ message: string }> =>
+      request('/settings/company/logo', { method: 'DELETE' }),
   },
 
   // Integrations
@@ -902,6 +946,36 @@ export const api = {
 
     test: (provider: IntegrationProvider): Promise<{ success: boolean; message: string }> =>
       request(`/integrations/${provider}/test`, { method: 'POST' }),
+  },
+
+  // ============ Billing / Payment Methods ============
+  billing: {
+    getPaymentMethods: (): Promise<PaymentMethod[]> =>
+      request('/billing/payment-methods'),
+
+    createSetupIntent: (): Promise<{ clientSecret: string }> =>
+      request('/billing/setup-intent', { method: 'POST' }),
+
+    addPaymentMethod: (paymentMethodId: string): Promise<PaymentMethod> =>
+      request('/billing/payment-methods', {
+        method: 'POST',
+        body: JSON.stringify({ paymentMethodId }),
+      }),
+
+    deletePaymentMethod: (paymentMethodId: string): Promise<{ message: string }> =>
+      request(`/billing/payment-methods/${paymentMethodId}`, { method: 'DELETE' }),
+
+    setDefaultPaymentMethod: (paymentMethodId: string): Promise<{ message: string }> =>
+      request(`/billing/payment-methods/${paymentMethodId}/default`, { method: 'POST' }),
+
+    getPlan: (): Promise<BillingPlan> =>
+      request('/billing/plan'),
+
+    upgradePlan: (planId: string): Promise<{ checkoutUrl?: string; message: string }> =>
+      request('/billing/upgrade', {
+        method: 'POST',
+        body: JSON.stringify({ planId }),
+      }),
   },
 
   // ============ Trash / Recycle Bin ============

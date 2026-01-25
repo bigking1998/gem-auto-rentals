@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { CalendarRange, ShieldCheck, Star, Car } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function HeroSection() {
   return (
@@ -61,18 +62,20 @@ export default function HeroSection() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <button
+            <Link
+              to="/vehicles"
               className="inline-flex items-center justify-center bg-primary hover:bg-orange-600 text-white font-bold h-14 px-8 text-lg shadow-xl shadow-orange-500/20 rounded-xl transition-all"
             >
               <Car className="mr-2 h-5 w-5" />
               Browse Vehicles
-            </button>
-            <button
+            </Link>
+            <Link
+              to="/vehicles"
               className="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 text-white border border-white/30 h-14 px-8 text-lg backdrop-blur-sm rounded-xl transition-all"
             >
               <CalendarRange className="mr-2 h-5 w-5" />
               Book Now
-            </button>
+            </Link>
           </motion.div>
 
           {/* Trust Indicators */}

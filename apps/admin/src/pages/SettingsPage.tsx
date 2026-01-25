@@ -26,14 +26,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api, PaymentMethod } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-
-// Mock billing data
-const mockPaymentMethods = [
-  { id: '1', type: 'visa', last4: '4242', expiry: '12/26', isDefault: true },
-  { id: '2', type: 'mastercard', last4: '8888', expiry: '09/25', isDefault: false },
-];
+import { AddPaymentMethodModal } from '@/components/settings/AddPaymentMethodModal';
+import { DeletePaymentMethodModal } from '@/components/settings/DeletePaymentMethodModal';
+import { UpgradePlanModal } from '@/components/settings/UpgradePlanModal';
 
 const mockInvoices = [
   { id: 'INV-001', date: new Date('2026-01-01'), amount: 299, status: 'paid' },
@@ -115,6 +112,21 @@ export default function SettingsPage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
+  // Logo upload state
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+
+  // Payment methods state
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(false);
+  const [isAddPaymentModalOpen, setIsAddPaymentModalOpen] = useState(false);
+  const [isDeletePaymentModalOpen, setIsDeletePaymentModalOpen] = useState(false);
+  const [paymentMethodToDelete, setPaymentMethodToDelete] = useState<PaymentMethod | null>(null);
+
+  // Upgrade plan modal state
+  const [isUpgradePlanModalOpen, setIsUpgradePlanModalOpen] = useState(false);
+
   // Profile form state
   const [profileForm, setProfileForm] = useState({
     firstName: '',
@@ -134,6 +146,40 @@ export default function SettingsPage() {
       });
     }
   }, [user]);
+
+  // Fetch company settings for logo
+  useEffect(() => {
+    const fetchCompanySettings = async () => {
+      try {
+        const settings = await api.company.get();
+        if (settings.logo) {
+          setCompanyLogo(settings.logo);
+        }
+      } catch (error) {
+        console.error('Failed to fetch company settings:', error);
+      }
+    };
+    fetchCompanySettings();
+  }, []);
+
+  // Fetch payment methods when billing tab is active
+  const fetchPaymentMethods = async () => {
+    setIsLoadingPaymentMethods(true);
+    try {
+      const methods = await api.billing.getPaymentMethods();
+      setPaymentMethods(methods);
+    } catch (error) {
+      console.error('Failed to fetch payment methods:', error);
+    } finally {
+      setIsLoadingPaymentMethods(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'billing') {
+      fetchPaymentMethods();
+    }
+  }, [activeTab]);
 
   // Password change state
   const [passwordForm, setPasswordForm] = useState({
@@ -217,6 +263,43 @@ export default function SettingsPage() {
       // Reset the input so the same file can be selected again
       if (avatarInputRef.current) {
         avatarInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeletePaymentMethod = (method: PaymentMethod) => {
+    setPaymentMethodToDelete(method);
+    setIsDeletePaymentModalOpen(true);
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'].includes(file.type)) {
+      toast.error('Please select a valid image file (JPG, PNG, SVG, or WebP)');
+      return;
+    }
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be less than 2MB');
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const result = await api.company.uploadLogo(file);
+      setCompanyLogo(result.logoUrl);
+      toast.success('Logo updated successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload logo');
+    } finally {
+      setIsUploadingLogo(false);
+      // Reset the input so the same file can be selected again
+      if (logoInputRef.current) {
+        logoInputRef.current.value = '';
       }
     }
   };
@@ -497,7 +580,10 @@ export default function SettingsPage() {
                       <Check className="w-4 h-4" /> Advanced analytics
                     </span>
                   </div>
-                  <button className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors">
+                  <button
+                    onClick={() => setIsUpgradePlanModalOpen(true)}
+                    className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors"
+                  >
                     Upgrade Plan
                   </button>
                 </div>
@@ -507,48 +593,75 @@ export default function SettingsPage() {
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-primary border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors">
+                  <button
+                    onClick={() => setIsAddPaymentModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-primary border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors"
+                  >
                     <Plus className="w-4 h-4" />
                     Add Method
                   </button>
                 </div>
 
                 <div className="space-y-3">
-                  {mockPaymentMethods.map((method) => (
-                    <div
-                      key={method.id}
-                      className={cn(
-                        'flex items-center justify-between p-4 rounded-xl border transition-colors',
-                        method.isDefault
-                          ? 'bg-orange-50 border-orange-200'
-                          : 'bg-gray-50 border-gray-200'
-                      )}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-8 bg-white rounded-lg border border-gray-200 flex items-center justify-center">
-                          {method.type === 'visa' ? (
-                            <span className="text-blue-600 font-bold text-sm">VISA</span>
-                          ) : (
-                            <span className="text-red-500 font-bold text-xs">MC</span>
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            •••• •••• •••• {method.last4}
-                          </p>
-                          <p className="text-sm text-gray-500">Expires {method.expiry}</p>
-                        </div>
-                        {method.isDefault && (
-                          <span className="px-2 py-0.5 bg-orange-100 text-primary text-xs font-medium rounded-full">
-                            Default
-                          </span>
-                        )}
-                      </div>
-                      <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4" />
+                  {isLoadingPaymentMethods ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                    </div>
+                  ) : paymentMethods.length === 0 ? (
+                    <div className="text-center py-8">
+                      <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500">No payment methods added yet</p>
+                      <button
+                        onClick={() => setIsAddPaymentModalOpen(true)}
+                        className="mt-3 text-sm text-primary hover:text-orange-600"
+                      >
+                        Add your first payment method
                       </button>
                     </div>
-                  ))}
+                  ) : (
+                    paymentMethods.map((method) => (
+                      <div
+                        key={method.id}
+                        className={cn(
+                          'flex items-center justify-between p-4 rounded-xl border transition-colors',
+                          method.isDefault
+                            ? 'bg-orange-50 border-orange-200'
+                            : 'bg-gray-50 border-gray-200'
+                        )}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-8 bg-white rounded-lg border border-gray-200 flex items-center justify-center">
+                            {method.brand.toLowerCase() === 'visa' ? (
+                              <span className="text-blue-600 font-bold text-sm">VISA</span>
+                            ) : method.brand.toLowerCase() === 'mastercard' ? (
+                              <span className="text-red-500 font-bold text-xs">MC</span>
+                            ) : method.brand.toLowerCase() === 'amex' ? (
+                              <span className="text-blue-500 font-bold text-xs">AMEX</span>
+                            ) : (
+                              <CreditCard className="w-5 h-5 text-gray-400" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              •••• •••• •••• {method.last4}
+                            </p>
+                            <p className="text-sm text-gray-500">Expires {method.expMonth}/{method.expYear}</p>
+                          </div>
+                          {method.isDefault && (
+                            <span className="px-2 py-0.5 bg-orange-100 text-primary text-xs font-medium rounded-full">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleDeletePaymentMethod(method)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -600,13 +713,41 @@ export default function SettingsPage() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-6">Company Profile</h2>
 
                 <div className="flex items-start gap-6 mb-8">
-                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-orange-200">
-                    GA
-                  </div>
+                  {companyLogo ? (
+                    <img
+                      src={companyLogo}
+                      alt="Company Logo"
+                      className="w-24 h-24 rounded-2xl object-contain bg-white border border-gray-200 shadow-lg shadow-orange-200"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-orange-200">
+                      GA
+                    </div>
+                  )}
                   <div>
-                    <button className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 text-sm font-medium">
-                      <Upload className="w-4 h-4" />
-                      Upload Logo
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/svg+xml,image/webp"
+                      className="hidden"
+                      onChange={handleLogoChange}
+                    />
+                    <button
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={isUploadingLogo}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUploadingLogo ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          Upload Logo
+                        </>
+                      )}
                     </button>
                     <p className="text-sm text-gray-500 mt-2">PNG, JPG or SVG. Max size 2MB.</p>
                   </div>
@@ -881,6 +1022,29 @@ export default function SettingsPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Payment Method Modals */}
+      <AddPaymentMethodModal
+        isOpen={isAddPaymentModalOpen}
+        onClose={() => setIsAddPaymentModalOpen(false)}
+        onSuccess={fetchPaymentMethods}
+      />
+      <DeletePaymentMethodModal
+        isOpen={isDeletePaymentModalOpen}
+        onClose={() => {
+          setIsDeletePaymentModalOpen(false);
+          setPaymentMethodToDelete(null);
+        }}
+        onSuccess={fetchPaymentMethods}
+        paymentMethod={paymentMethodToDelete}
+      />
+
+      {/* Upgrade Plan Modal */}
+      <UpgradePlanModal
+        isOpen={isUpgradePlanModalOpen}
+        onClose={() => setIsUpgradePlanModalOpen(false)}
+        currentPlan="professional"
+      />
     </div>
   );
 }
