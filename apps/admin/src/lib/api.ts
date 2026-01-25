@@ -146,7 +146,9 @@ async function requestWithPagination<T>(
   }
 
   // Return both items and data for compatibility with different page patterns
-  return { items: json.data, data: json.data, pagination: json.pagination };
+  // Handle both array responses and { items: [...] } wrapped responses
+  const items = Array.isArray(json.data) ? json.data : (json.data as { items?: T }).items ?? json.data;
+  return { items: items as T, data: json.data, pagination: json.pagination };
 }
 
 // ============ Auth Types ============
