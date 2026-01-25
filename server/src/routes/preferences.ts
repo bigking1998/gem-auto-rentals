@@ -276,7 +276,7 @@ router.post('/company/logo', authenticate, authorize('ADMIN'), upload.single('lo
 });
 
 // DELETE /api/settings/company/logo - Delete company logo
-router.delete('/company/logo', authenticate, authorize('ADMIN'), async (req, res, next) => {
+router.delete('/company/logo', authenticate, authorize('ADMIN'), async (_req, res, next) => {
   try {
     // Get existing company settings
     const settings = await prisma.companySettings.findFirst();

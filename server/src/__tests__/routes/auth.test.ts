@@ -21,6 +21,7 @@ const mockUser = {
   role: 'CUSTOMER' as const,
   emailVerified: false,
   avatarUrl: null,
+  stripeCustomerId: null,
   resetToken: null,
   resetTokenExpiry: null,
   createdAt: new Date(),

@@ -10,7 +10,7 @@ const router = Router();
 
 // Initialize Stripe
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' }) : null;
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' }) : null;
 
 // Helper to check if Stripe is configured
 function requireStripe(): Stripe {
@@ -219,7 +219,7 @@ router.post('/setup-intent', authenticate, async (req, res, next) => {
 });
 
 // GET /api/billing/plan - Get current subscription plan
-router.get('/plan', authenticate, authorize('ADMIN', 'MANAGER'), async (req, res, next) => {
+router.get('/plan', authenticate, authorize('ADMIN', 'MANAGER'), async (_req, res, next) => {
   try {
     // For now, return mock plan data
     // In production, this would fetch from Stripe subscriptions
