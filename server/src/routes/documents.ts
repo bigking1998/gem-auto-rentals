@@ -263,21 +263,13 @@ router.delete('/:id', authenticate, async (req, res, next) => {
       throw BadRequestError('Cannot delete a verified document');
     }
 
-    // Delete from Supabase Storage
-    if (isStorageConfigured()) {
-      const { error } = await supabase!.storage
-        .from(DOCUMENTS_BUCKET)
-        .remove([document.fileUrl]);
-
-      if (error) {
-        console.error('Error deleting file from storage:', error);
-        // Continue with database deletion even if storage deletion fails
-      }
-    }
-
-    // Delete from database
-    await prisma.document.delete({
+    // Soft delete - file will be deleted on permanent deletion from trash
+    await prisma.document.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+        deletedBy: req.user!.id,
+      },
     });
 
     res.json({

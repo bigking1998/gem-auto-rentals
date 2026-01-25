@@ -656,16 +656,19 @@ router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res, next) =
       throw NotFoundError('Conversation not found');
     }
 
-    // Soft delete by closing or hard delete
-    // For now, we'll just close it
+    // Soft delete with deletedBy tracking
     await prisma.conversation.update({
       where: { id },
-      data: { status: 'CLOSED' },
+      data: {
+        status: 'CLOSED',
+        deletedAt: new Date(),
+        deletedBy: req.user!.id,
+      },
     });
 
     res.json({
       success: true,
-      message: 'Conversation closed successfully',
+      message: 'Conversation deleted successfully',
     });
   } catch (error) {
     next(error);
