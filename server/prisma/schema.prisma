@@ -26,6 +26,10 @@ model User {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
+  // Soft delete fields
+  deletedAt          DateTime?
+  deletedBy          String?
+
   // Core relations
   bookings      Booking[]
   documents     Document[]
@@ -42,6 +46,8 @@ model User {
   customerConversations Conversation[] @relation("CustomerConversations")
   assignedConversations Conversation[] @relation("AssignedConversations")
   sentMessages          Message[]
+
+  @@index([deletedAt])
 }
 
 enum Role {
@@ -75,9 +81,15 @@ model Vehicle {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
+  // Soft delete fields
+  deletedAt    DateTime?
+  deletedBy    String?
+
   bookings     Booking[]
   reviews      Review[]
   maintenance  MaintenanceRecord[]
+
+  @@index([deletedAt])
 }
 
 enum VehicleCategory {
@@ -127,6 +139,10 @@ model Booking {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  // Soft delete fields
+  deletedAt       DateTime?
+  deletedBy       String?
+
   user            User          @relation(fields: [userId], references: [id])
   vehicle         Vehicle       @relation(fields: [vehicleId], references: [id])
   payment         Payment?
@@ -139,6 +155,7 @@ model Booking {
   @@index([vehicleId])
   @@index([status])
   @@index([startDate, endDate])
+  @@index([deletedAt])
 }
 
 enum BookingStatus {
@@ -201,12 +218,17 @@ model Document {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
+  // Soft delete fields
+  deletedAt   DateTime?
+  deletedBy   String?
+
   user        User           @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([bookingId])
   @@index([type])
   @@index([status])
+  @@index([deletedAt])
 }
 
 enum DocumentType {
@@ -234,11 +256,16 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Soft delete fields
+  deletedAt DateTime?
+  deletedBy String?
+
   user      User     @relation(fields: [userId], references: [id])
   vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
 
   @@unique([userId, vehicleId])
   @@index([vehicleId])
+  @@index([deletedAt])
 }
 
 // Maintenance records for vehicles
@@ -254,9 +281,14 @@ model MaintenanceRecord {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Soft delete fields
+  deletedAt   DateTime?
+  deletedBy   String?
+
   vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
 
   @@index([vehicleId])
+  @@index([deletedAt])
 }
 
 // =============================================
@@ -291,6 +323,10 @@ model Conversation {
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
+  // Soft delete fields
+  deletedAt     DateTime?
+  deletedBy     String?
+
   // Relations
   messages      Message[]
 
@@ -298,6 +334,7 @@ model Conversation {
   @@index([assignedToId])
   @@index([status])
   @@index([lastMessageAt])
+  @@index([deletedAt])
 }
 
 model Message {
@@ -453,18 +490,22 @@ enum ActivityAction {
   USER_CREATE
   USER_UPDATE
   USER_DELETE
+  USER_RESTORE
   ROLE_CHANGE
 
   // Vehicles
   VEHICLE_CREATE
   VEHICLE_UPDATE
   VEHICLE_DELETE
+  VEHICLE_RESTORE
   VEHICLE_STATUS_CHANGE
 
   // Bookings
   BOOKING_CREATE
   BOOKING_UPDATE
   BOOKING_CANCEL
+  BOOKING_DELETE
+  BOOKING_RESTORE
   BOOKING_STATUS_CHANGE
   CONTRACT_UPLOAD
 
@@ -476,10 +517,28 @@ enum ActivityAction {
   DOCUMENT_UPLOAD
   DOCUMENT_VERIFY
   DOCUMENT_REJECT
+  DOCUMENT_DELETE
+  DOCUMENT_RESTORE
 
   // Messages
   CONVERSATION_CREATE
+  CONVERSATION_DELETE
+  CONVERSATION_RESTORE
   MESSAGE_SEND
+
+  // Invoices
+  INVOICE_CREATE
+  INVOICE_UPDATE
+  INVOICE_DELETE
+  INVOICE_RESTORE
+
+  // Reviews
+  REVIEW_DELETE
+  REVIEW_RESTORE
+
+  // Maintenance
+  MAINTENANCE_DELETE
+  MAINTENANCE_RESTORE
 
   // Settings
   SETTINGS_UPDATE
@@ -596,10 +655,15 @@ model Invoice {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  // Soft delete fields
+  deletedAt       DateTime?
+  deletedBy       String?
+
   @@index([customerId])
   @@index([bookingId])
   @@index([status])
   @@index([invoiceNumber])
+  @@index([deletedAt])
 }
 
 enum InvoiceStatus {

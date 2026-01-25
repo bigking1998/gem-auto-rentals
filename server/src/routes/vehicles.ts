@@ -264,8 +264,13 @@ router.delete('/:id', authenticate, staffOnly, async (req, res, next) => {
       throw BadRequestError('Cannot delete vehicle with active bookings');
     }
 
-    await prisma.vehicle.delete({
+    // Soft delete with deletedBy tracking
+    await prisma.vehicle.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+        deletedBy: req.user!.id,
+      },
     });
 
     res.json({

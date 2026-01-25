@@ -387,8 +387,13 @@ router.delete('/:id', authenticate, adminOnly, async (req, res, next) => {
       throw BadRequestError('Cannot delete customer with active bookings');
     }
 
-    await prisma.user.delete({
+    // Soft delete with deletedBy tracking
+    await prisma.user.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+        deletedBy: req.user!.id,
+      },
     });
 
     res.json({
