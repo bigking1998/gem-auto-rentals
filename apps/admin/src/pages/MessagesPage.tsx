@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   Mail,
@@ -17,9 +17,12 @@ import {
   AlertCircle,
   CheckCircle2,
   Circle,
+  Plus,
+  X,
+  User,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
-import { api, Conversation, ConversationStatus, ApiError } from '@/lib/api';
+import { api, Conversation, ConversationStatus, ApiError, Customer, Priority } from '@/lib/api';
 
 const statusColors: Record<ConversationStatus, string> = {
   OPEN: 'bg-purple-100 text-purple-800',
@@ -53,6 +56,17 @@ export default function MessagesPage() {
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // New conversation modal state
+  const [showNewConversation, setShowNewConversation] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [newSubject, setNewSubject] = useState('');
+  const [newMessage, setNewMessage] = useState('');
+  const [newPriority, setNewPriority] = useState<Priority>('NORMAL');
+  const [isCreating, setIsCreating] = useState(false);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
@@ -93,10 +107,65 @@ export default function MessagesPage() {
     }
   }, []);
 
+  // Fetch customers for new conversation modal
+  const fetchCustomers = useCallback(async () => {
+    setIsLoadingCustomers(true);
+    try {
+      const { items } = await api.customers.list({ search: customerSearch || undefined, limit: 20 });
+      setCustomers(items);
+    } catch (err) {
+      console.error('Failed to fetch customers:', err);
+    } finally {
+      setIsLoadingCustomers(false);
+    }
+  }, [customerSearch]);
+
+  // Create new conversation
+  const handleCreateConversation = async () => {
+    if (!selectedCustomer || !newMessage.trim()) return;
+
+    setIsCreating(true);
+    try {
+      const conversation = await api.conversations.create({
+        customerId: selectedCustomer.id,
+        subject: newSubject || undefined,
+        priority: newPriority,
+        initialMessage: newMessage,
+      });
+
+      // Close modal and reset form
+      setShowNewConversation(false);
+      setSelectedCustomer(null);
+      setNewSubject('');
+      setNewMessage('');
+      setNewPriority('NORMAL');
+      setCustomerSearch('');
+
+      // Refresh conversations and select the new one
+      await fetchConversations();
+      await fetchConversationDetail(conversation.id);
+    } catch (err) {
+      console.error('Failed to create conversation:', err);
+      setError(err instanceof ApiError ? err.message : 'Failed to create conversation');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   // Load conversations on mount and when filters change
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
+
+  // Fetch customers when modal opens or search changes
+  useEffect(() => {
+    if (showNewConversation) {
+      const timer = setTimeout(() => {
+        fetchCustomers();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [showNewConversation, customerSearch, fetchCustomers]);
 
   // Debounce search
   useEffect(() => {
@@ -180,13 +249,22 @@ export default function MessagesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
           <p className="text-gray-500">Manage customer communications</p>
         </div>
-        <button
-          onClick={() => fetchConversations()}
-          disabled={isLoading}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={cn('w-5 h-5 text-gray-600', isLoading && 'animate-spin')} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowNewConversation(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-200"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:inline">New Conversation</span>
+          </button>
+          <button
+            onClick={() => fetchConversations()}
+            disabled={isLoading}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={cn('w-5 h-5 text-gray-600', isLoading && 'animate-spin')} />
+          </button>
+        </div>
       </motion.div>
 
       {error && (
@@ -505,6 +583,192 @@ export default function MessagesPage() {
           </motion.div>
         )}
       </div>
+
+      {/* New Conversation Modal */}
+      <AnimatePresence>
+        {showNewConversation && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowNewConversation(false)}
+              className="fixed inset-0 bg-black/50 z-50"
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                  <h2 className="text-xl font-semibold text-gray-900">New Conversation</h2>
+                  <button
+                    onClick={() => setShowNewConversation(false)}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-4 space-y-4 max-h-[calc(90vh-140px)] overflow-y-auto">
+                  {/* Customer Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Customer *
+                    </label>
+                    {selectedCustomer ? (
+                      <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-sm font-medium">
+                            {selectedCustomer.firstName?.[0]}{selectedCustomer.lastName?.[0]}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {selectedCustomer.firstName} {selectedCustomer.lastName}
+                            </p>
+                            <p className="text-sm text-gray-500">{selectedCustomer.email}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setSelectedCustomer(null)}
+                          className="p-1 rounded-lg hover:bg-orange-100"
+                        >
+                          <X className="w-4 h-4 text-orange-600" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search customers by name or email..."
+                            value={customerSearch}
+                            onChange={(e) => setCustomerSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                          />
+                        </div>
+                        <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100">
+                          {isLoadingCustomers ? (
+                            <div className="p-4 text-center">
+                              <Loader2 className="w-5 h-5 text-primary animate-spin mx-auto" />
+                            </div>
+                          ) : customers.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500 text-sm">
+                              No customers found
+                            </div>
+                          ) : (
+                            customers.filter(c => c.role === 'CUSTOMER').map((customer) => (
+                              <button
+                                key={customer.id}
+                                onClick={() => setSelectedCustomer(customer)}
+                                className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left"
+                              >
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-medium">
+                                  {customer.firstName?.[0]}{customer.lastName?.[0]}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900 text-sm">
+                                    {customer.firstName} {customer.lastName}
+                                  </p>
+                                  <p className="text-xs text-gray-500">{customer.email}</p>
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Subject */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Subject (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Booking inquiry, Support request..."
+                      value={newSubject}
+                      onChange={(e) => setNewSubject(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  {/* Priority */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Priority
+                    </label>
+                    <div className="flex gap-2">
+                      {(['LOW', 'NORMAL', 'HIGH', 'URGENT'] as Priority[]).map((priority) => (
+                        <button
+                          key={priority}
+                          onClick={() => setNewPriority(priority)}
+                          className={cn(
+                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                            newPriority === priority
+                              ? priority === 'LOW' ? 'bg-gray-200 text-gray-800'
+                                : priority === 'NORMAL' ? 'bg-blue-100 text-blue-800'
+                                : priority === 'HIGH' ? 'bg-orange-100 text-orange-800'
+                                : 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          )}
+                        >
+                          {priority}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Initial Message */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Message *
+                    </label>
+                    <textarea
+                      placeholder="Type your message to the customer..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      rows={4}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-100 bg-gray-50">
+                  <button
+                    onClick={() => setShowNewConversation(false)}
+                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateConversation}
+                    disabled={!selectedCustomer || !newMessage.trim() || isCreating}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                  >
+                    {isCreating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    Start Conversation
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
