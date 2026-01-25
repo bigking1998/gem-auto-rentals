@@ -26,6 +26,7 @@ interface AuthState {
   fetchProfile: () => Promise<void>;
   initialize: () => Promise<void>;
   clearError: () => void;
+  updateAvatar: (avatarUrl: string | null) => void;
 }
 
 // Allowed roles for admin dashboard access
@@ -65,7 +66,7 @@ export const useAuthStore = create<AuthState>()(
                   lastName: apiUser.lastName,
                   phone: apiUser.phone || null,
                   role: apiUser.role,
-                  avatarUrl: null,
+                  avatarUrl: apiUser.avatarUrl || null,
                   emailVerified: apiUser.emailVerified,
                   createdAt: apiUser.createdAt,
                 };
@@ -111,7 +112,7 @@ export const useAuthStore = create<AuthState>()(
             lastName: response.user.lastName,
             phone: response.user.phone || null,
             role: response.user.role,
-            avatarUrl: null,
+            avatarUrl: response.user.avatarUrl || null,
             emailVerified: response.user.emailVerified,
             createdAt: response.user.createdAt,
           };
@@ -166,7 +167,7 @@ export const useAuthStore = create<AuthState>()(
             lastName: apiUser.lastName,
             phone: apiUser.phone || null,
             role: apiUser.role,
-            avatarUrl: null,
+            avatarUrl: apiUser.avatarUrl || null,
             emailVerified: apiUser.emailVerified,
             createdAt: apiUser.createdAt,
           };
@@ -179,6 +180,10 @@ export const useAuthStore = create<AuthState>()(
           }
         }
       },
+
+      updateAvatar: (avatarUrl: string | null) => set((state) => ({
+        user: state.user ? { ...state.user, avatarUrl } : null,
+      })),
 
       clearError: () => set({ error: null }),
     }),

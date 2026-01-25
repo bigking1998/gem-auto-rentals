@@ -7,72 +7,72 @@ Add soft delete (recycle bin) functionality to the Gem Auto Rentals CRM. Records
 
 ## Phase 1: Database Schema
 
-- [ ] Add `deletedAt` and `deletedBy` fields to User model
-- [ ] Add `deletedAt` and `deletedBy` fields to Vehicle model
-- [ ] Add `deletedAt` and `deletedBy` fields to Booking model
-- [ ] Add `deletedAt` and `deletedBy` fields to Document model
-- [ ] Add `deletedAt` and `deletedBy` fields to Conversation model
-- [ ] Add `deletedAt` and `deletedBy` fields to Invoice model
-- [ ] Add `deletedAt` and `deletedBy` fields to Review model
-- [ ] Add `deletedAt` and `deletedBy` fields to MaintenanceRecord model
-- [ ] Add `@@index([deletedAt])` to each soft-deletable model
-- [ ] Add restore actions to ActivityAction enum (USER_RESTORE, VEHICLE_RESTORE, etc.)
-- [ ] Run database migration
+- [x] Add `deletedAt` and `deletedBy` fields to User model
+- [x] Add `deletedAt` and `deletedBy` fields to Vehicle model
+- [x] Add `deletedAt` and `deletedBy` fields to Booking model
+- [x] Add `deletedAt` and `deletedBy` fields to Document model
+- [x] Add `deletedAt` and `deletedBy` fields to Conversation model
+- [x] Add `deletedAt` and `deletedBy` fields to Invoice model
+- [x] Add `deletedAt` and `deletedBy` fields to Review model
+- [x] Add `deletedAt` and `deletedBy` fields to MaintenanceRecord model
+- [x] Add `@@index([deletedAt])` to each soft-deletable model
+- [x] Add restore actions to ActivityAction enum (USER_RESTORE, VEHICLE_RESTORE, etc.)
+- [x] Run database migration
 
 ## Phase 2: Prisma Soft Delete Middleware
 
-- [ ] Create `server/src/lib/softDelete.ts` middleware file
-- [ ] Implement query filtering (auto-exclude deletedAt != null)
-- [ ] Implement delete interception (convert delete to update)
-- [ ] Implement deleteMany interception
-- [ ] Add `includeDeleted` flag support for bypassing filter
-- [ ] Add `findDeleted()` helper method
-- [ ] Add `restore()` helper method
-- [ ] Add `hardDelete()` helper method
-- [ ] Update `server/src/lib/prisma.ts` to apply middleware
+- [x] Create `server/src/lib/softDelete.ts` middleware file
+- [x] Implement query filtering (auto-exclude deletedAt != null)
+- [x] Implement delete interception (convert delete to update)
+- [x] Implement deleteMany interception
+- [x] Add `includeDeleted` flag support for bypassing filter
+- [x] Add `findDeleted()` helper method
+- [x] Add `restore()` helper method
+- [x] Add `hardDelete()` helper method
+- [x] Update `server/src/lib/prisma.ts` to apply middleware
 
 ## Phase 3: Trash API Routes
 
-- [ ] Create `server/src/routes/trash.ts` route file
-- [ ] Implement `GET /api/trash` - summary counts by entity type
-- [ ] Implement `GET /api/trash/:entityType` - list deleted items (paginated)
-- [ ] Implement `POST /api/trash/:entityType/:id/restore` - restore single item
-- [ ] Implement `DELETE /api/trash/:entityType/:id/permanent` - hard delete
-- [ ] Implement `POST /api/trash/empty` - empty all trash (admin only)
-- [ ] Register trash routes in `server/src/index.ts`
+- [x] Create `server/src/routes/trash.ts` route file
+- [x] Implement `GET /api/trash` - summary counts by entity type
+- [x] Implement `GET /api/trash/:entityType` - list deleted items (paginated)
+- [x] Implement `POST /api/trash/:entityType/:id/restore` - restore single item
+- [x] Implement `DELETE /api/trash/:entityType/:id/permanent` - hard delete
+- [x] Implement `POST /api/trash/empty` - empty all trash (admin only)
+- [x] Register trash routes in `server/src/index.ts`
 
 ## Phase 4: Update Existing DELETE Endpoints
 
-- [ ] Update `vehicles.ts` DELETE endpoint - set deletedBy
-- [ ] Update `customers.ts` DELETE endpoint - set deletedBy
-- [ ] Update `bookings.ts` DELETE endpoint - set deletedBy
-- [ ] Update `documents.ts` DELETE endpoint - set deletedBy
-- [ ] Update `conversations.ts` DELETE endpoint - set deletedBy
-- [ ] Update `invoices.ts` DELETE endpoint (if exists) - set deletedBy
-- [ ] Add activity logging for soft delete and restore actions
+- [x] Update `vehicles.ts` DELETE endpoint - set deletedBy
+- [x] Update `customers.ts` DELETE endpoint - set deletedBy
+- [x] Update `bookings.ts` DELETE endpoint - set deletedBy
+- [x] Update `documents.ts` DELETE endpoint - set deletedBy
+- [x] Update `conversations.ts` DELETE endpoint - set deletedBy
+- [x] Update `invoices.ts` DELETE endpoint (if exists) - set deletedBy
+- [x] Add activity logging for soft delete and restore actions
 
 ## Phase 5: Admin Dashboard UI
 
-- [ ] Create `apps/admin/src/pages/TrashPage.tsx` component
-- [ ] Add entity type tabs (Users, Vehicles, Bookings, etc.)
-- [ ] Add summary counts display
-- [ ] Add search within deleted items
-- [ ] Add restore button with confirmation
-- [ ] Add permanent delete button with confirmation
-- [ ] Add "Empty Trash" button (admin only)
-- [ ] Display deletion date and who deleted
-- [ ] Add trash API methods to `apps/admin/src/lib/api.ts`
-- [ ] Add route in `apps/admin/src/App.tsx`
-- [ ] Add navigation item in `DashboardLayout.tsx`
+- [x] Create `apps/admin/src/pages/TrashPage.tsx` component
+- [x] Add entity type tabs (Users, Vehicles, Bookings, etc.)
+- [x] Add summary counts display
+- [x] Add search within deleted items
+- [x] Add restore button with confirmation
+- [x] Add permanent delete button with confirmation
+- [x] Add "Empty Trash" button (admin only)
+- [x] Display deletion date and who deleted
+- [x] Add trash API methods to `apps/admin/src/lib/api.ts`
+- [x] Add route in `apps/admin/src/App.tsx`
+- [x] Add navigation item in `Sidebar.tsx`
 
 ## Phase 6: Scheduled Cleanup Job
 
-- [ ] Create `server/src/jobs/cleanupDeletedRecords.ts`
-- [ ] Implement retention period logic (SOFT_DELETE_RETENTION_DAYS env var)
-- [ ] Handle deletion in dependency order (children first)
-- [ ] Clean up associated Supabase Storage files
-- [ ] Add npm script for manual cleanup
-- [ ] Document cron setup for automated cleanup
+- [x] Create `server/src/jobs/cleanupDeletedRecords.ts`
+- [x] Implement retention period logic (SOFT_DELETE_RETENTION_DAYS env var)
+- [x] Handle deletion in dependency order (children first)
+- [x] Clean up associated Supabase Storage files
+- [x] Add npm script for manual cleanup
+- [x] Document cron setup for automated cleanup
 
 ## Phase 7: Testing & Verification
 
@@ -111,15 +111,39 @@ Add soft delete (recycle bin) functionality to the Gem Auto Rentals CRM. Records
 - `server/src/index.ts` - Register routes
 - `apps/admin/src/pages/TrashPage.tsx` - New UI (create)
 - `apps/admin/src/lib/api.ts` - Add trash methods
+- `server/src/jobs/cleanupDeletedRecords.ts` - Cleanup job
+
+## Usage
+
+### Manual Cleanup
+```bash
+# Dry run (preview without deleting)
+npm run cleanup:deleted:dry
+
+# Actual cleanup
+npm run cleanup:deleted
+```
+
+### Environment Variables
+```
+SOFT_DELETE_RETENTION_DAYS=30  # Days before permanent deletion (default: 30)
+DRY_RUN=true                   # Preview mode without actual deletion
+```
+
+### Cron Setup (Production)
+Add to crontab for daily cleanup at 3 AM:
+```
+0 3 * * * cd /path/to/server && npm run cleanup:deleted >> /var/log/cleanup.log 2>&1
+```
 
 ---
 
 ---RALPH_STATUS---
-STATUS: NOT_STARTED
-LOOPS_COMPLETED: 0
-BACKEND_STATUS: PENDING
-FRONTEND_STATUS: PENDING
-DATABASE_MIGRATION: PENDING
+STATUS: TESTING
+LOOPS_COMPLETED: 6
+BACKEND_STATUS: COMPLETE
+FRONTEND_STATUS: COMPLETE
+DATABASE_MIGRATION: COMPLETE
 EXIT_SIGNAL: false
-RECOMMENDATION: Start with Phase 1 - Add soft delete fields to Prisma schema
+RECOMMENDATION: Run tests and verify all soft delete functionality works correctly
 ---END_RALPH_STATUS---

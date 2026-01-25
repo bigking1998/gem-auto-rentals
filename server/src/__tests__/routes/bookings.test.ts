@@ -25,6 +25,8 @@ const mockUser = {
   resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
+  deletedBy: null,
 };
 
 const mockAdminUser = {
@@ -41,6 +43,8 @@ const mockAdminUser = {
   resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
+  deletedBy: null,
 };
 
 const mockVehicle = {

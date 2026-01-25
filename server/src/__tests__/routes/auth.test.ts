@@ -25,6 +25,8 @@ const mockUser = {
   resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
+  deletedBy: null,
 };
 
 describe('Auth API', () => {

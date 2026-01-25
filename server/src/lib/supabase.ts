@@ -28,6 +28,7 @@ export const BUCKETS = {
   VEHICLES: 'vehicles',    // Public - vehicle images
   AVATARS: 'avatars',      // Public - user profile pictures
   CONTRACTS: 'contracts',  // Private - rental agreements
+  LOGOS: 'logos',          // Public - company logos
 } as const;
 
 export type BucketName = typeof BUCKETS[keyof typeof BUCKETS];

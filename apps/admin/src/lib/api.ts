@@ -742,6 +742,31 @@ export const api = {
 
     getBookings: (id: string, params?: { page?: number; limit?: number }) =>
       requestWithPagination<Booking[]>(`/customers/${id}/bookings`, { params }),
+
+    uploadAvatar: async (id: string, file: File): Promise<{ avatarUrl: string }> => {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const token = tokenManager.getToken();
+      const response = await fetch(`${API_BASE_URL}/customers/${id}/avatar`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new ApiError(
+          response.status,
+          response.statusText,
+          json.error || json.message || 'Avatar upload failed'
+        );
+      }
+      return json.data;
+    },
+
+    deleteAvatar: (id: string): Promise<{ message: string }> =>
+      request(`/customers/${id}/avatar`, { method: 'DELETE' }),
   },
 
   // Conversations (Messages)

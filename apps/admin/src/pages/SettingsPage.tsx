@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -24,6 +24,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
@@ -108,7 +109,11 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Get user from auth store
-  const { user } = useAuthStore();
+  const { user, updateAvatar } = useAuthStore();
+
+  // Avatar upload state
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -184,6 +189,38 @@ export default function SettingsPage() {
     }
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+      toast.error('Please select a valid image file (JPG, PNG, or GIF)');
+      return;
+    }
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be less than 2MB');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const result = await api.customers.uploadAvatar(user.id, file);
+      updateAvatar(result.avatarUrl);
+      toast.success('Avatar updated successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset the input so the same file can be selected again
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -237,12 +274,38 @@ export default function SettingsPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-6">Profile Settings</h2>
 
               <div className="flex items-center gap-6 mb-8">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-2xl font-semibold shadow-lg shadow-orange-200">
-                  {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '??'}
-                </div>
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt="Avatar"
+                    className="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-orange-200"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-2xl font-semibold shadow-lg shadow-orange-200">
+                    {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '??'}
+                  </div>
+                )}
                 <div>
-                  <button className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 text-sm font-medium">
-                    Change Avatar
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                    className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isUploadingAvatar ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      'Change Avatar'
+                    )}
                   </button>
                   <p className="text-sm text-gray-500 mt-2">JPG, GIF or PNG. Max size 2MB.</p>
                 </div>

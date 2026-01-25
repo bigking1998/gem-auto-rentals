@@ -34,6 +34,8 @@ const mockVehicle = {
   location: 'Main Office',
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
+  deletedBy: null,
 };
 
 const mockAdminUser = {
@@ -50,6 +52,8 @@ const mockAdminUser = {
   resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
+  deletedBy: null,
 };
 
 const mockCustomerUser = {
@@ -66,6 +70,8 @@ const mockCustomerUser = {
   resetTokenExpiry: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
+  deletedBy: null,
 };
 
 // Helper to get admin token
