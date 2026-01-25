@@ -845,6 +845,29 @@ export const api = {
     test: (provider: IntegrationProvider): Promise<{ success: boolean; message: string }> =>
       request(`/integrations/${provider}/test`, { method: 'POST' }),
   },
+
+  // ============ Trash / Recycle Bin ============
+  trash: {
+    getSummary: (): Promise<TrashSummary> => request('/trash'),
+
+    list: (
+      entityType: TrashEntityType,
+      params?: { search?: string; page?: number; pageSize?: number }
+    ): Promise<TrashListResponse> =>
+      request(`/trash/${entityType}`, { params }),
+
+    restore: (entityType: TrashEntityType, id: string): Promise<{ message: string }> =>
+      request(`/trash/${entityType}/${id}/restore`, { method: 'POST' }),
+
+    permanentDelete: (entityType: TrashEntityType, id: string): Promise<{ message: string }> =>
+      request(`/trash/${entityType}/${id}/permanent`, { method: 'DELETE' }),
+
+    emptyAll: (entityType?: TrashEntityType): Promise<{ deletedCounts: Record<string, number>; total: number }> =>
+      request('/trash/empty', {
+        method: 'POST',
+        body: JSON.stringify({ entityType }),
+      }),
+  },
 };
 
 // ============ Token Management ============
