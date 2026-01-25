@@ -38,6 +38,7 @@ const toolsNavItems = [
 
 const supportNavItems = [
   { label: 'Security', icon: Shield, href: '/security' },
+  { label: 'Recycle Bin', icon: Trash2, href: '/trash' },
   { label: 'Help', icon: HelpCircle, href: '/help' },
 ];
 
