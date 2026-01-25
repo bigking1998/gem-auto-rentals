@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Search, Filter, ChevronDown, Loader2, MoreHorizontal, Mail, Phone, Calendar, DollarSign, User } from 'lucide-react';
+import { Users, Search, Filter, ChevronDown, Loader2, MoreHorizontal, Mail, Phone, Calendar, User } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { api, Customer, ApiError } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
