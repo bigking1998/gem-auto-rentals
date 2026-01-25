@@ -19,7 +19,6 @@ import {
   Circle,
   Plus,
   X,
-  User,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { api, Conversation, ConversationStatus, ApiError, Customer, Priority } from '@/lib/api';
