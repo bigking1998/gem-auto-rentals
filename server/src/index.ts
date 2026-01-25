@@ -63,6 +63,8 @@ app.use(
       'https://gemrentalcars.com',
       'https://www.gemrentalcars.com',
       'https://gem-auto-rentals.vercel.app',
+      'https://gemadminportal.vercel.app',
+      'https://admin-sepia-five-87.vercel.app',
     ],
     credentials: true,
   })
