@@ -16,6 +16,14 @@ import customerRoutes from './routes/customers.js';
 import paymentRoutes from './routes/payments.js';
 import statsRoutes from './routes/stats.js';
 import documentRoutes from './routes/documents.js';
+// CRM Feature routes
+import sessionRoutes from './routes/sessions.js';
+import activityRoutes from './routes/activity.js';
+import conversationRoutes from './routes/conversations.js';
+import preferencesRoutes from './routes/preferences.js';
+import notificationRoutes from './routes/notifications.js';
+import invoiceRoutes from './routes/invoices.js';
+import integrationRoutes from './routes/integrations.js';
 
 // Load environment variables
 dotenv.config();
@@ -90,6 +98,14 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/documents', documentRoutes);
+// CRM Feature routes
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/activity', activityRoutes);
+app.use('/api/conversations', conversationRoutes);
+app.use('/api/settings', preferencesRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/integrations', integrationRoutes);
 
 // 404 handler
 app.use(notFound);

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -17,9 +17,13 @@ import {
   Calendar,
   Shield,
   HelpCircle,
+  Loader2,
+  Mail,
+  FileText,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
+import { api, Notification as ApiNotification, NotificationType } from '@/lib/api';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -28,55 +32,34 @@ interface HeaderProps {
 
 interface Notification {
   id: string;
-  type: 'booking' | 'payment' | 'alert' | 'system';
+  type: 'booking' | 'payment' | 'alert' | 'system' | 'message' | 'document';
   title: string;
   message: string;
   time: Date;
   read: boolean;
+  actionUrl?: string;
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'booking',
-    title: 'New Booking',
-    message: 'Sarah Johnson booked a Tesla Model 3 for 3 days',
-    time: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'payment',
-    title: 'Payment Received',
-    message: 'Payment of $450 received from Michael Chen',
-    time: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'alert',
-    title: 'Maintenance Due',
-    message: 'BMW X5 (ABC-1234) is due for scheduled maintenance',
-    time: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    read: false,
-  },
-  {
-    id: '4',
-    type: 'system',
-    title: 'System Update',
-    message: 'New features have been added to the dashboard',
-    time: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'booking',
-    title: 'Booking Extended',
-    message: 'David Lee extended rental by 2 additional days',
-    time: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    read: true,
-  },
-];
+// Map API notification types to local types
+const mapNotificationType = (type: NotificationType): Notification['type'] => {
+  if (type.startsWith('BOOKING_')) return 'booking';
+  if (type.startsWith('PAYMENT_') || type.startsWith('INVOICE_')) return 'payment';
+  if (type.startsWith('DOCUMENT_')) return 'document';
+  if (type === 'NEW_MESSAGE') return 'message';
+  if (type === 'SYSTEM_ALERT') return 'alert';
+  return 'system';
+};
+
+// Transform API notification to local format
+const transformNotification = (apiNotif: ApiNotification): Notification => ({
+  id: apiNotif.id,
+  type: mapNotificationType(apiNotif.type),
+  title: apiNotif.title,
+  message: apiNotif.message,
+  time: new Date(apiNotif.createdAt),
+  read: !!apiNotif.readAt,
+  actionUrl: apiNotif.actionUrl,
+});
 
 const getNotificationIcon = (type: Notification['type']) => {
   switch (type) {
@@ -86,6 +69,10 @@ const getNotificationIcon = (type: Notification['type']) => {
       return CreditCard;
     case 'alert':
       return AlertCircle;
+    case 'message':
+      return Mail;
+    case 'document':
+      return FileText;
     case 'system':
       return Car;
     default:
@@ -101,6 +88,10 @@ const getNotificationColor = (type: Notification['type']) => {
       return 'bg-green-100 text-green-600';
     case 'alert':
       return 'bg-red-100 text-red-600';
+    case 'message':
+      return 'bg-blue-100 text-blue-600';
+    case 'document':
+      return 'bg-indigo-100 text-indigo-600';
     case 'system':
       return 'bg-purple-100 text-purple-600';
     default:
@@ -124,7 +115,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     // Initialize from localStorage
     if (typeof window !== 'undefined') {
@@ -149,6 +141,31 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  // Fetch notifications from API
+  const fetchNotifications = useCallback(async () => {
+    setIsLoadingNotifications(true);
+    try {
+      const { items } = await api.notifications.list({ limit: 20 });
+      setNotifications(items.map(transformNotification));
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  }, []);
+
+  // Fetch notifications on mount and when dropdown opens
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Refresh notifications when dropdown opens
+  useEffect(() => {
+    if (notificationsOpen) {
+      fetchNotifications();
+    }
+  }, [notificationsOpen, fetchNotifications]);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -164,18 +181,46 @@ export default function Header({ onMenuClick }: HeaderProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
+    // Optimistic update
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+    try {
+      await api.notifications.markAsRead(id);
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+      // Revert on error
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: false } : n))
+      );
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    // Optimistic update
+    const previousNotifications = notifications;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      await api.notifications.markAllAsRead();
+    } catch (err) {
+      console.error('Failed to mark all notifications as read:', err);
+      // Revert on error
+      setNotifications(previousNotifications);
+    }
   };
 
-  const removeNotification = (id: string) => {
+  const removeNotification = async (id: string) => {
+    // Optimistic update
+    const previousNotifications = notifications;
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await api.notifications.delete(id);
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+      // Revert on error
+      setNotifications(previousNotifications);
+    }
   };
 
   return (
@@ -265,7 +310,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
                   {/* Notifications List */}
                   <div className="max-h-96 overflow-y-auto">
-                    {notifications.length === 0 ? (
+                    {isLoadingNotifications ? (
+                      <div className="p-8 text-center">
+                        <Loader2 className="w-8 h-8 text-gray-400 mx-auto mb-2 animate-spin" />
+                        <p className="text-gray-500 text-sm">Loading notifications...</p>
+                      </div>
+                    ) : notifications.length === 0 ? (
                       <div className="p-8 text-center">
                         <Bell className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                         <p className="text-gray-500 text-sm">No notifications</p>

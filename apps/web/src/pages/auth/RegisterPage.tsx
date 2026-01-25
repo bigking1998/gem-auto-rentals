@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+
+// Session storage key for preserving return URL across page loads
+const RETURN_URL_KEY = 'gem_auth_return_url';
 import {
   Mail,
   Lock,
@@ -48,6 +51,7 @@ const passwordRequirements = [
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { register, error: authError, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -62,6 +66,37 @@ export default function RegisterPage() {
     agreeToTerms: false,
   });
   const [errors, setErrors] = useState<FormErrors>({});
+
+  // Get redirect path from URL query param, sessionStorage backup, or default to dashboard
+  const searchParams = new URLSearchParams(location.search);
+  const returnUrlParam = searchParams.get('returnUrl');
+
+  // Validate returnUrl to prevent open redirect attacks
+  const isValidReturnUrl = (url: string | null): boolean => {
+    if (!url) return false;
+    return url.startsWith('/') && !url.startsWith('//') && !url.includes('://');
+  };
+
+  // Try to get returnUrl from: query param > sessionStorage > default
+  const getReturnUrl = (): string => {
+    if (isValidReturnUrl(returnUrlParam)) {
+      return returnUrlParam!;
+    }
+    const storedUrl = sessionStorage.getItem(RETURN_URL_KEY);
+    if (isValidReturnUrl(storedUrl)) {
+      return storedUrl!;
+    }
+    return '/dashboard';
+  };
+
+  const returnUrl = getReturnUrl();
+
+  // Store valid returnUrl in sessionStorage as backup
+  useEffect(() => {
+    if (isValidReturnUrl(returnUrlParam)) {
+      sessionStorage.setItem(RETURN_URL_KEY, returnUrlParam!);
+    }
+  }, [returnUrlParam]);
 
   const validateForm = () => {
     const newErrors: FormErrors = {};
@@ -120,8 +155,10 @@ export default function RegisterPage() {
         phone: formData.phone,
         password: formData.password,
       });
-      // Navigate to dashboard on success
-      navigate('/dashboard');
+      // Clear the stored return URL since we're about to use it
+      sessionStorage.removeItem(RETURN_URL_KEY);
+      // Navigate to the intended destination or dashboard
+      navigate(returnUrl, { replace: true });
     } catch (error) {
       setErrors({ general: authError || 'Registration failed. Please try again.' });
     } finally {

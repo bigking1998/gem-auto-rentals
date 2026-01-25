@@ -84,13 +84,13 @@ export default function VehicleDetailPage() {
     if (selectedExtras.length > 0) params.set('extras', selectedExtras.join(','));
     const bookingUrl = `/booking?${params.toString()}`;
 
-    // If not authenticated (or auth not initialized yet), redirect to login with return URL
+    // If not authenticated (or auth not initialized yet), redirect to signup with return URL
     // We check isInitialized to avoid race condition where persisted state says "authenticated"
     // but the token hasn't been validated yet
     if (!isInitialized || !isAuthenticated) {
-      const loginParams = new URLSearchParams();
-      loginParams.set('returnUrl', bookingUrl);
-      navigate(`/login?${loginParams.toString()}`);
+      const signupParams = new URLSearchParams();
+      signupParams.set('returnUrl', bookingUrl);
+      navigate(`/signup?${signupParams.toString()}`);
       return;
     }
 

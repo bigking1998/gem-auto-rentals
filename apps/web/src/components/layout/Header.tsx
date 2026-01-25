@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, Car } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, Car, User, LogOut, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthStore } from '@/stores/authStore';
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -11,9 +12,16 @@ const navLinks = [
   { label: 'FAQ', href: '/#faq' },
 ];
 
-export default function Header() {
+interface HeaderProps {
+  variant?: 'default' | 'booking';
+}
+
+export default function Header({ variant = 'default' }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuthStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +30,11 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pt-6 px-4 sm:px-6 lg:px-8 transition-all duration-300">
@@ -57,14 +70,80 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Auth Buttons */}
+          {/* Auth Buttons / User Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-primary hover:bg-orange-50 px-4 py-2 rounded-lg transition-colors">
-              Log in
-            </Link>
-            <Link to="/signup" className="text-sm font-bold bg-primary hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all">
-              Sign up
-            </Link>
+            {isAuthenticated && user ? (
+              variant === 'booking' ? (
+                // Booking page - show "Select Different Car" button
+                <Link
+                  to="/vehicles"
+                  className="text-sm font-bold bg-primary hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all"
+                >
+                  Select Different Car
+                </Link>
+              ) : (
+                // Default - show user dropdown menu
+                <div className="relative">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-primary px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                    <span>{user.firstName}</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {isUserMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
+                      >
+                        <Link
+                          to="/dashboard/bookings"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          My Dashboard
+                        </Link>
+                        <Link
+                          to="/dashboard/profile"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Profile
+                        </Link>
+                        <hr className="my-2 border-gray-100" />
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            handleLogout();
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            ) : (
+              // Not authenticated - show login/signup
+              <>
+                <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-primary hover:bg-orange-50 px-4 py-2 rounded-lg transition-colors">
+                  Log in
+                </Link>
+                <Link to="/signup" className="text-sm font-bold bg-primary hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all">
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -98,12 +177,45 @@ export default function Header() {
                 </a>
               ))}
               <div className="pt-4 border-t border-gray-100 flex flex-col space-y-3">
-                <Link to="/login" className="w-full text-center text-gray-700 hover:bg-gray-50 hover:text-primary font-medium py-3 rounded-lg border border-gray-200 block" onClick={() => setIsMobileMenuOpen(false)}>
-                  Log in
-                </Link>
-                <Link to="/signup" className="w-full text-center bg-primary hover:bg-orange-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-orange-200 block" onClick={() => setIsMobileMenuOpen(false)}>
-                  Sign up
-                </Link>
+                {isAuthenticated && user ? (
+                  variant === 'booking' ? (
+                    <Link
+                      to="/vehicles"
+                      className="w-full text-center bg-primary hover:bg-orange-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-orange-200 block"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Select Different Car
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        to="/dashboard/bookings"
+                        className="w-full text-center text-gray-700 hover:bg-gray-50 hover:text-primary font-medium py-3 rounded-lg border border-gray-200 block"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        My Dashboard
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full text-center text-red-600 hover:bg-red-50 font-medium py-3 rounded-lg border border-red-200 block"
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  )
+                ) : (
+                  <>
+                    <Link to="/login" className="w-full text-center text-gray-700 hover:bg-gray-50 hover:text-primary font-medium py-3 rounded-lg border border-gray-200 block" onClick={() => setIsMobileMenuOpen(false)}>
+                      Log in
+                    </Link>
+                    <Link to="/signup" className="w-full text-center bg-primary hover:bg-orange-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-orange-200 block" onClick={() => setIsMobileMenuOpen(false)}>
+                      Sign up
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </motion.div>

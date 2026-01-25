@@ -1,19 +1,11 @@
 /**
- * Admin API client for the Gem Auto Rentals backend
+ * API client for the Gem Auto Rentals Admin Dashboard
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
-}
-
-// Backend response wrapper type
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
-  message?: string;
 }
 
 export class ApiError extends Error {
@@ -25,6 +17,20 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+// Backend response wrapper type
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+  message?: string;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 async function request<T>(
@@ -55,7 +61,7 @@ async function request<T>(
   };
 
   // Add auth token if available
-  const token = localStorage.getItem('admin_auth_token');
+  const token = tokenManager.getToken();
   if (token) {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
@@ -88,8 +94,62 @@ async function request<T>(
   return json.data;
 }
 
-// ============ Types ============
+// Separate function that includes pagination info - returns items for compatibility with pages
+async function requestWithPagination<T>(
+  endpoint: string,
+  options: RequestOptions = {}
+): Promise<{ items: T; data: T; pagination: ApiResponse<T>['pagination'] }> {
+  const { params, ...fetchOptions } = options;
 
+  let url = `${API_BASE_URL}${endpoint}`;
+  if (params) {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value));
+      }
+    });
+    const queryString = searchParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+  }
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...fetchOptions.headers,
+  };
+
+  const token = tokenManager.getToken();
+  if (token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, { ...fetchOptions, headers });
+  const text = await response.text();
+
+  if (!text) {
+    if (!response.ok) {
+      throw new ApiError(response.status, response.statusText, 'Empty response from server');
+    }
+    return { items: {} as T, data: {} as T, pagination: undefined };
+  }
+
+  const json = JSON.parse(text) as ApiResponse<T>;
+
+  if (!response.ok || !json.success) {
+    throw new ApiError(
+      response.status,
+      response.statusText,
+      json.error || json.message || `API Error: ${response.status} ${response.statusText}`
+    );
+  }
+
+  // Return both items and data for compatibility with different page patterns
+  return { items: json.data, data: json.data, pagination: json.pagination };
+}
+
+// ============ Auth Types ============
 export interface User {
   id: string;
   email: string;
@@ -100,33 +160,135 @@ export interface User {
   emailVerified: boolean;
   avatarUrl?: string;
   createdAt: string;
-  updatedAt?: string;
+  updatedAt: string;
 }
 
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
+// ============ Session Types ============
+export interface Session {
+  id: string;
+  userId: string;
+  token: string;
+  userAgent?: string;
+  ipAddress?: string;
+  device?: string;
+  browser?: string;
+  os?: string;
+  location?: string;
+  isActive: boolean;
+  isCurrent?: boolean;
+  lastActiveAt: string;
+  expiresAt: string;
+  revokedAt?: string;
+  revokedReason?: string;
+  createdAt: string;
+}
+
+// ============ Activity Types ============
+export type ActivityAction =
+  | 'USER_LOGIN'
+  | 'USER_LOGOUT'
+  | 'USER_REGISTER'
+  | 'PASSWORD_RESET_REQUEST'
+  | 'PASSWORD_RESET_COMPLETE'
+  | 'PROFILE_UPDATE'
+  | 'BOOKING_CREATED'
+  | 'BOOKING_CONFIRMED'
+  | 'BOOKING_CANCELLED'
+  | 'BOOKING_COMPLETED'
+  | 'PAYMENT_INITIATED'
+  | 'PAYMENT_COMPLETED'
+  | 'PAYMENT_FAILED'
+  | 'DOCUMENT_UPLOADED'
+  | 'DOCUMENT_VERIFIED'
+  | 'DOCUMENT_REJECTED'
+  | 'VEHICLE_CREATED'
+  | 'VEHICLE_UPDATED'
+  | 'VEHICLE_DELETED'
+  | 'CUSTOMER_CREATED'
+  | 'CUSTOMER_UPDATED'
+  | 'SETTINGS_UPDATED'
+  | 'SESSION_REVOKED'
+  | 'LOGIN_FAILED'
+  | 'API_ERROR';
+
+export type ActivityStatus = 'SUCCESS' | 'FAILURE' | 'PENDING';
+
+export interface ActivityLog {
+  id: string;
+  userId?: string;
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  action: ActivityAction;
+  entityType?: string;
+  entityId?: string;
+  description: string;
+  metadata?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  status: ActivityStatus;
+  errorMessage?: string;
+  createdAt: string;
+}
+
+export interface ActivityStats {
+  totalActivities: number;
+  byAction: Record<string, number>;
+  byStatus: Record<string, number>;
+  recentFailures: number;
+}
+
+// ============ Vehicle Types ============
 export interface Vehicle {
   id: string;
   make: string;
   model: string;
   year: number;
   category: 'ECONOMY' | 'STANDARD' | 'PREMIUM' | 'LUXURY' | 'SUV' | 'VAN';
-  dailyRate: number | string;
+  dailyRate: number;
   status: 'AVAILABLE' | 'RENTED' | 'MAINTENANCE' | 'RETIRED';
   images: string[];
   features: string[];
-  description?: string;
   seats: number;
   doors: number;
   transmission: 'AUTOMATIC' | 'MANUAL';
   fuelType: 'GASOLINE' | 'DIESEL' | 'ELECTRIC' | 'HYBRID';
   mileage: number;
   color?: string;
+  description?: string;
+  location?: string;
   licensePlate: string;
   vin: string;
-  location?: string;
+  averageRating?: number | null;
+  reviewCount?: number;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface VehicleFiltersParams {
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  transmission?: string;
+  fuelType?: string;
+  seats?: number;
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+// ============ Booking Types ============
 export interface Booking {
   id: string;
   userId: string;
@@ -134,33 +296,62 @@ export interface Booking {
   startDate: string;
   endDate: string;
   status: 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-  totalAmount: number | string;
-  dailyRate: number | string;
-  extras?: Record<string, unknown>;
+  totalAmount: number;
+  extras?: {
+    insurance?: boolean;
+    gps?: boolean;
+    childSeat?: boolean;
+    additionalDriver?: boolean;
+  };
   pickupLocation: string;
   dropoffLocation: string;
-  notes?: string;
-  contractSigned: boolean;
-  contractUrl?: string;
+  vehicle?: Vehicle;
+  user?: User;
   createdAt: string;
   updatedAt: string;
-  user?: User;
-  vehicle?: Vehicle;
 }
 
+// ============ Customer Types ============
 export interface Customer extends User {
-  _count?: {
-    bookings: number;
-    documents: number;
-  };
+  bookings?: Booking[];
+  totalBookings?: number;
+  totalSpent?: number;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
+// ============ Stats Types ============
+export interface RevenueStats {
+  data: { date: string; revenue: number; bookings: number }[];
+  totals: {
+    revenue: number;
+    bookings: number;
+  };
+  averageOrderValue: number;
+  growthRate: number;
+}
+
+export interface FleetStats {
+  totalVehicles: number;
+  availableVehicles: number;
+  rentedVehicles: number;
+  maintenanceVehicles: number;
+  utilizationRate: number;
+  byCategory: Record<string, number>;
+}
+
+export interface BookingStats {
+  totalBookings: number;
+  pendingBookings: number;
+  activeBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  byStatus: Record<string, number>;
+  trends: { date: string; count: number }[];
+}
+
+export interface CustomerStats {
   total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  new: number;
+  active: number;
 }
 
 export interface DashboardStats {
@@ -170,41 +361,167 @@ export interface DashboardStats {
     pendingBookings: number;
     availableVehicles: number;
     totalCustomers: number;
-    totalBookings: number;
   };
-  recentBookings: Booking[];
+  recentBookings: Array<Booking & { user?: User; vehicle?: Vehicle }>;
 }
 
-export interface RevenueStats {
-  period: string;
-  data: Array<{
-    date: string;
-    revenue: number;
-    bookings: number;
-  }>;
-  totals: {
-    revenue: number;
-    bookings: number;
-    averageBookingValue: number;
+// ============ User Preferences Types ============
+export interface UserPreferences {
+  id: string;
+  userId: string;
+  theme: 'LIGHT' | 'DARK' | 'SYSTEM';
+  language: string;
+  timezone: string;
+  dateFormat: string;
+  emailBookingConfirm: boolean;
+  emailBookingReminder: boolean;
+  emailPaymentReceipt: boolean;
+  emailMarketing: boolean;
+  smsBookingReminder: boolean;
+  smsPaymentAlert: boolean;
+  dashboardLayout?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============ Company Settings Types ============
+export interface CompanySettings {
+  id: string;
+  name: string;
+  legalName?: string;
+  taxId?: string;
+  email: string;
+  phone: string;
+  website?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country: string;
+  logo?: string;
+  currency: string;
+  timezone: string;
+  businessHours?: Record<string, { open: string; close: string; closed: boolean }>;
+  bookingTerms?: string;
+  cancellationPolicy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============ Integration Types ============
+export type IntegrationProvider =
+  | 'STRIPE'
+  | 'PAYPAL'
+  | 'MAILCHIMP'
+  | 'TWILIO'
+  | 'GOOGLE_CALENDAR'
+  | 'QUICKBOOKS'
+  | 'ZAPIER';
+
+export interface Integration {
+  id: string;
+  provider: IntegrationProvider;
+  isEnabled: boolean;
+  isConnected: boolean;
+  connectedAt?: string;
+  lastSyncAt?: string;
+  lastError?: string;
+  config?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============ Conversation Types ============
+export type ConversationStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+export type Priority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+export type MessageSender = 'CUSTOMER' | 'ADMIN' | 'SYSTEM';
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId?: string;
+  sender?: User;
+  senderType: MessageSender;
+  content: string;
+  isRead: boolean;
+  readAt?: string;
+  createdAt: string;
+  attachments?: MessageAttachment[];
+}
+
+export interface MessageAttachment {
+  id: string;
+  messageId: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+export interface Conversation {
+  id: string;
+  customerId: string;
+  customer?: User;
+  subject?: string;
+  status: ConversationStatus;
+  priority: Priority;
+  assignedToId?: string;
+  assignedTo?: User;
+  bookingId?: string;
+  booking?: Booking;
+  lastMessageAt: string;
+  createdAt: string;
+  updatedAt: string;
+  messages?: Message[];
+  _count?: {
+    messages: number;
   };
 }
 
-export interface FleetStats {
-  totalVehicles: number;
-  available: number;
-  rented: number;
-  maintenance: number;
-  retired: number;
-  byCategory: Record<string, number>;
-  utilizationRate: number;
+// ============ Notification Types ============
+export type NotificationType =
+  | 'BOOKING_CONFIRMED'
+  | 'BOOKING_CANCELLED'
+  | 'BOOKING_COMPLETED'
+  | 'BOOKING_REMINDER'
+  | 'BOOKING_STARTED'
+  | 'BOOKING_ENDING_SOON'
+  | 'PAYMENT_RECEIVED'
+  | 'PAYMENT_FAILED'
+  | 'PAYMENT_REFUNDED'
+  | 'INVOICE_SENT'
+  | 'INVOICE_OVERDUE'
+  | 'DOCUMENT_VERIFIED'
+  | 'DOCUMENT_REJECTED'
+  | 'NEW_MESSAGE'
+  | 'SYSTEM_ALERT'
+  | 'PROMOTION';
+
+export type NotificationChannel = 'IN_APP' | 'EMAIL' | 'SMS' | 'PUSH';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  entityType?: string;
+  entityId?: string;
+  actionUrl?: string;
+  channels: NotificationChannel[];
+  readAt?: string;
+  emailSent?: boolean;
+  emailSentAt?: string;
+  smsSent?: boolean;
+  smsSentAt?: string;
+  createdAt: string;
 }
 
 // ============ API Methods ============
-
 export const api = {
   // Auth
   auth: {
-    login: (email: string, password: string): Promise<{ user: User; token: string }> =>
+    login: (email: string, password: string): Promise<AuthResponse> =>
       request('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
@@ -216,30 +533,82 @@ export const api = {
     me: (): Promise<User> =>
       request('/auth/me'),
 
-    changePassword: (currentPassword: string, newPassword: string): Promise<{ message: string }> =>
-      request('/auth/change-password', {
-        method: 'PUT',
-        body: JSON.stringify({ currentPassword, newPassword }),
-      }),
-
-    // Exchange SSO code for token (used for seamless login from customer site)
-    exchangeSsoCode: (code: string): Promise<{ user: User; token: string }> =>
+    exchangeSsoCode: (code: string): Promise<AuthResponse> =>
       request('/auth/sso-exchange', {
         method: 'POST',
         body: JSON.stringify({ code }),
       }),
+
+    changePassword: (currentPassword: string, newPassword: string): Promise<{ message: string }> =>
+      request('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      }),
+  },
+
+  // Sessions
+  sessions: {
+    list: (): Promise<Session[]> =>
+      request('/sessions'),
+
+    listAll: (params?: { userId?: string; isActive?: boolean; page?: number; limit?: number }) =>
+      requestWithPagination<Session[]>('/sessions/all', { params }),
+
+    revoke: (sessionId: string): Promise<{ message: string }> =>
+      request(`/sessions/${sessionId}`, { method: 'DELETE' }),
+
+    revokeAll: (): Promise<{ count: number }> =>
+      request('/sessions/revoke-all', { method: 'DELETE' }),
+  },
+
+  // Activity Logs
+  activity: {
+    list: (params?: {
+      userId?: string;
+      action?: ActivityAction;
+      entityType?: string;
+      status?: ActivityStatus;
+      startDate?: string;
+      endDate?: string;
+      page?: number;
+      limit?: number;
+    }) => requestWithPagination<ActivityLog[]>('/activity', { params }),
+
+    getByUser: (userId: string, params?: { page?: number; limit?: number }) =>
+      requestWithPagination<ActivityLog[]>(`/activity/user/${userId}`, { params }),
+
+    getByEntity: (entityType: string, entityId: string, params?: { page?: number; limit?: number }) =>
+      requestWithPagination<ActivityLog[]>(`/activity/entity/${entityType}/${entityId}`, { params }),
+
+    getStats: (params?: { startDate?: string; endDate?: string }): Promise<ActivityStats> =>
+      request('/activity/stats', { params }),
+
+    getActions: (): Promise<string[]> =>
+      request('/activity/actions'),
+  },
+
+  // Notifications
+  notifications: {
+    list: (params?: { page?: number; limit?: number; unreadOnly?: boolean; type?: NotificationType }) =>
+      requestWithPagination<Notification[]>('/notifications', { params }),
+
+    getUnreadCount: (): Promise<{ count: number }> =>
+      request('/notifications/unread-count'),
+
+    markAsRead: (id: string): Promise<Notification> =>
+      request(`/notifications/${id}/read`, { method: 'PATCH' }),
+
+    markAllAsRead: (): Promise<{ count: number }> =>
+      request('/notifications/read-all', { method: 'PATCH' }),
+
+    delete: (id: string): Promise<{ message: string }> =>
+      request(`/notifications/${id}`, { method: 'DELETE' }),
   },
 
   // Vehicles
   vehicles: {
-    list: (params?: {
-      category?: string;
-      status?: string;
-      search?: string;
-      page?: number;
-      limit?: number;
-    }): Promise<PaginatedResponse<Vehicle>> =>
-      request('/vehicles', { params }),
+    list: (params?: VehicleFiltersParams) =>
+      requestWithPagination<Vehicle[]>('/vehicles', { params: params as Record<string, string | number | boolean | undefined> }),
 
     get: (id: string): Promise<Vehicle> =>
       request(`/vehicles/${id}`),
@@ -256,7 +625,7 @@ export const api = {
         body: JSON.stringify(data),
       }),
 
-    delete: (id: string): Promise<void> =>
+    delete: (id: string): Promise<{ message: string }> =>
       request(`/vehicles/${id}`, { method: 'DELETE' }),
 
     updateStatus: (id: string, status: Vehicle['status']): Promise<Vehicle> =>
@@ -265,11 +634,11 @@ export const api = {
         body: JSON.stringify({ status }),
       }),
 
-    uploadImage: async (id: string, file: File): Promise<{ imageUrl: string; vehicle: Vehicle }> => {
+    uploadImage: async (id: string, file: File): Promise<{ imageUrl: string }> => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const token = localStorage.getItem('admin_auth_token');
+      const token = tokenManager.getToken();
       const response = await fetch(`${API_BASE_URL}/vehicles/${id}/images`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -287,7 +656,7 @@ export const api = {
       return json.data;
     },
 
-    deleteImage: (id: string, imageUrl: string): Promise<Vehicle> =>
+    deleteImage: (id: string, imageUrl: string): Promise<{ message: string }> =>
       request(`/vehicles/${id}/images`, {
         method: 'DELETE',
         body: JSON.stringify({ imageUrl }),
@@ -296,17 +665,17 @@ export const api = {
 
   // Bookings
   bookings: {
-    list: (params?: {
-      status?: string;
-      userId?: string;
-      vehicleId?: string;
-      page?: number;
-      limit?: number;
-    }): Promise<PaginatedResponse<Booking>> =>
-      request('/bookings', { params }),
+    list: (params?: { status?: string; userId?: string; vehicleId?: string; page?: number; limit?: number }) =>
+      requestWithPagination<Booking[]>('/bookings', { params }),
 
     get: (id: string): Promise<Booking> =>
       request(`/bookings/${id}`),
+
+    create: (data: Partial<Booking>): Promise<Booking> =>
+      request('/bookings', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
 
     update: (id: string, data: Partial<Booking>): Promise<Booking> =>
       request(`/bookings/${id}`, {
@@ -315,55 +684,19 @@ export const api = {
       }),
 
     updateStatus: (id: string, status: Booking['status']): Promise<Booking> =>
-      request(`/bookings/${id}`, {
+      request(`/bookings/${id}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       }),
 
-    cancel: (id: string, reason?: string): Promise<Booking> =>
-      request(`/bookings/${id}/cancel`, {
-        method: 'POST',
-        body: JSON.stringify({ reason }),
-      }),
-
-    uploadContract: async (id: string, file: File): Promise<Booking & { contractSignedUrl: string }> => {
-      const formData = new FormData();
-      formData.append('contract', file);
-
-      const token = localStorage.getItem('admin_auth_token');
-      const response = await fetch(`${API_BASE_URL}/bookings/${id}/contract`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-
-      const json = await response.json();
-      if (!response.ok || !json.success) {
-        throw new ApiError(
-          response.status,
-          response.statusText,
-          json.error || json.message || 'Upload failed'
-        );
-      }
-      return json.data;
-    },
-
-    getContractUrl: (id: string): Promise<{ downloadUrl: string }> =>
-      request(`/bookings/${id}/contract`),
-
-    deleteContract: (id: string): Promise<Booking> =>
-      request(`/bookings/${id}/contract`, { method: 'DELETE' }),
+    cancel: (id: string): Promise<Booking> =>
+      request(`/bookings/${id}/cancel`, { method: 'POST' }),
   },
 
   // Customers
   customers: {
-    list: (params?: {
-      search?: string;
-      role?: string;
-      page?: number;
-      limit?: number;
-    }): Promise<PaginatedResponse<Customer>> =>
-      request('/customers', { params }),
+    list: (params?: { search?: string; page?: number; limit?: number }) =>
+      requestWithPagination<Customer[]>('/customers', { params }),
 
     get: (id: string): Promise<Customer> =>
       request(`/customers/${id}`),
@@ -374,63 +707,143 @@ export const api = {
         body: JSON.stringify(data),
       }),
 
-    uploadAvatar: async (id: string, file: File): Promise<Customer> => {
-      const formData = new FormData();
-      formData.append('avatar', file);
-
-      const token = localStorage.getItem('admin_auth_token');
-      const response = await fetch(`${API_BASE_URL}/customers/${id}/avatar`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-
-      const json = await response.json();
-      if (!response.ok || !json.success) {
-        throw new ApiError(
-          response.status,
-          response.statusText,
-          json.error || json.message || 'Upload failed'
-        );
-      }
-      return json.data;
-    },
-
-    deleteAvatar: (id: string): Promise<Customer> =>
-      request(`/customers/${id}/avatar`, { method: 'DELETE' }),
-
-    changeRole: (id: string, role: User['role']): Promise<Customer> =>
-      request(`/customers/${id}/role`, {
-        method: 'PATCH',
-        body: JSON.stringify({ role }),
-      }),
+    getBookings: (id: string, params?: { page?: number; limit?: number }) =>
+      requestWithPagination<Booking[]>(`/customers/${id}/bookings`, { params }),
   },
 
-  // Stats
+  // Conversations (Messages)
+  conversations: {
+    list: (params?: {
+      status?: ConversationStatus;
+      priority?: Priority;
+      assignedToId?: string;
+      customerId?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    }) => requestWithPagination<Conversation[]>('/conversations', { params }),
+
+    get: (id: string): Promise<Conversation> =>
+      request(`/conversations/${id}`),
+
+    create: (data: {
+      customerId: string;
+      subject?: string;
+      priority?: Priority;
+      bookingId?: string;
+      initialMessage?: string;
+    }): Promise<Conversation> =>
+      request('/conversations', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    update: (id: string, data: {
+      status?: ConversationStatus;
+      priority?: Priority;
+      assignedToId?: string | null;
+    }): Promise<Conversation> =>
+      request(`/conversations/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+
+    sendMessage: (conversationId: string, content: string): Promise<Message> =>
+      request(`/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }),
+
+    markMessageAsRead: (_conversationId: string, messageId: string): Promise<Message> =>
+      request(`/conversations/messages/${messageId}/read`, {
+        method: 'PATCH',
+      }),
+
+    markAllRead: (conversationId: string): Promise<{ count: number }> =>
+      request(`/conversations/${conversationId}/read-all`, {
+        method: 'POST',
+      }),
+
+    assign: (conversationId: string, assignedToId: string | null): Promise<Conversation> =>
+      request(`/conversations/${conversationId}/assign`, {
+        method: 'POST',
+        body: JSON.stringify({ assignedToId }),
+      }),
+
+    delete: (id: string): Promise<{ message: string }> =>
+      request(`/conversations/${id}`, { method: 'DELETE' }),
+
+    getUnreadCount: (): Promise<{ count: number }> =>
+      request('/conversations/unread-count'),
+  },
+
+  // Stats / Dashboard
   stats: {
     dashboard: (): Promise<DashboardStats> =>
       request('/stats/dashboard'),
 
-    revenue: (period: '7d' | '30d' | '90d' | '365d' = '30d'): Promise<RevenueStats> =>
-      request('/stats/revenue', { params: { period } }),
+    revenue: (period?: string): Promise<RevenueStats> =>
+      request('/stats/revenue', { params: period ? { period } : undefined }),
 
     fleet: (): Promise<FleetStats> =>
       request('/stats/fleet'),
 
-    bookings: (): Promise<{
-      total: number;
-      byStatus: Record<string, number>;
-      trends: Array<{ date: string; count: number }>;
-    }> =>
-      request('/stats/bookings'),
+    bookings: (params?: { startDate?: string; endDate?: string }): Promise<BookingStats> =>
+      request('/stats/bookings', { params }),
 
-    customers: (): Promise<{
-      total: number;
-      new: number;
-      returning: number;
-      trends: Array<{ date: string; count: number }>;
-    }> =>
+    customers: (): Promise<CustomerStats> =>
       request('/stats/customers'),
+  },
+
+  // User Preferences
+  preferences: {
+    get: (userId: string): Promise<UserPreferences> =>
+      request(`/settings/users/${userId}/preferences`),
+
+    update: (userId: string, data: Partial<UserPreferences>): Promise<UserPreferences> =>
+      request(`/settings/users/${userId}/preferences`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+  },
+
+  // Company Settings
+  company: {
+    get: (): Promise<CompanySettings> =>
+      request('/settings/company'),
+
+    update: (data: Partial<CompanySettings>): Promise<CompanySettings> =>
+      request('/settings/company', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+  },
+
+  // Integrations
+  integrations: {
+    list: (): Promise<Integration[]> =>
+      request('/integrations'),
+
+    get: (provider: IntegrationProvider): Promise<Integration> =>
+      request(`/integrations/${provider}`),
+
+    connect: (provider: IntegrationProvider, credentials: Record<string, string>): Promise<{ success: boolean; message?: string; oauthUrl?: string }> =>
+      request(`/integrations/${provider}/connect`, {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+      }),
+
+    disconnect: (provider: IntegrationProvider): Promise<{ message: string }> =>
+      request(`/integrations/${provider}/disconnect`, { method: 'POST' }),
+
+    updateConfig: (provider: IntegrationProvider, config: Record<string, unknown>): Promise<Integration> =>
+      request(`/integrations/${provider}/config`, {
+        method: 'PUT',
+        body: JSON.stringify(config),
+      }),
+
+    test: (provider: IntegrationProvider): Promise<{ success: boolean; message: string }> =>
+      request(`/integrations/${provider}/test`, { method: 'POST' }),
   },
 };
 

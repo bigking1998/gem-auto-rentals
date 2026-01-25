@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield,
@@ -17,8 +17,10 @@ import {
   QrCode,
   Copy,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
+import { api, Session as ApiSession, ActivityLog, ApiError } from '@/lib/api';
 
 interface Session {
   id: string;
@@ -42,88 +44,46 @@ interface LoginActivity {
   reason?: string;
 }
 
-const mockSessions: Session[] = [
-  {
-    id: '1',
-    device: 'MacBook Pro',
-    deviceType: 'desktop',
-    browser: 'Chrome 120',
-    location: 'Miami, FL',
-    ip: '192.168.1.100',
-    lastActive: new Date(),
-    isCurrent: true,
-  },
-  {
-    id: '2',
-    device: 'iPhone 15 Pro',
-    deviceType: 'mobile',
-    browser: 'Safari Mobile',
-    location: 'Miami, FL',
-    ip: '192.168.1.105',
-    lastActive: new Date('2026-01-17T18:30:00'),
-    isCurrent: false,
-  },
-  {
-    id: '3',
-    device: 'Windows PC',
-    deviceType: 'desktop',
-    browser: 'Edge 120',
-    location: 'Fort Lauderdale, FL',
-    ip: '10.0.0.50',
-    lastActive: new Date('2026-01-16T09:00:00'),
-    isCurrent: false,
-  },
-];
+// Transform API session to local format
+function transformSession(apiSession: ApiSession): Session {
+  const deviceType = apiSession.device?.toLowerCase().includes('mobile') || apiSession.device?.toLowerCase().includes('iphone') || apiSession.device?.toLowerCase().includes('android')
+    ? 'mobile'
+    : apiSession.device?.toLowerCase().includes('tablet') || apiSession.device?.toLowerCase().includes('ipad')
+      ? 'tablet'
+      : 'desktop';
 
-const mockLoginHistory: LoginActivity[] = [
-  {
-    id: '1',
-    device: 'MacBook Pro',
-    browser: 'Chrome 120',
-    location: 'Miami, FL',
-    ip: '192.168.1.100',
-    timestamp: new Date('2026-01-18T08:00:00'),
-    status: 'success',
-  },
-  {
-    id: '2',
-    device: 'Unknown Device',
-    browser: 'Firefox',
-    location: 'Unknown Location',
-    ip: '45.33.32.156',
-    timestamp: new Date('2026-01-17T22:15:00'),
-    status: 'failed',
-    reason: 'Invalid password',
-  },
-  {
-    id: '3',
-    device: 'iPhone 15 Pro',
-    browser: 'Safari Mobile',
-    location: 'Miami, FL',
-    ip: '192.168.1.105',
-    timestamp: new Date('2026-01-17T14:30:00'),
-    status: 'success',
-  },
-  {
-    id: '4',
-    device: 'MacBook Pro',
-    browser: 'Chrome 120',
-    location: 'Miami, FL',
-    ip: '192.168.1.100',
-    timestamp: new Date('2026-01-16T09:00:00'),
-    status: 'success',
-  },
-  {
-    id: '5',
-    device: 'Unknown Device',
-    browser: 'Chrome',
-    location: 'New York, NY',
-    ip: '72.229.28.185',
-    timestamp: new Date('2026-01-15T03:45:00'),
-    status: 'failed',
-    reason: 'Account locked - too many attempts',
-  },
-];
+  return {
+    id: apiSession.id,
+    device: apiSession.device || 'Unknown Device',
+    deviceType,
+    browser: apiSession.browser || 'Unknown Browser',
+    location: apiSession.location || 'Unknown Location',
+    ip: apiSession.ipAddress || 'Unknown IP',
+    lastActive: new Date(apiSession.lastActiveAt),
+    isCurrent: apiSession.isCurrent || false,
+  };
+}
+
+// Transform API activity log to login activity format
+function transformActivityToLogin(activity: ActivityLog): LoginActivity | null {
+  // Only include login-related activities
+  if (!['USER_LOGIN', 'LOGIN_FAILED', 'USER_LOGOUT'].includes(activity.action)) {
+    return null;
+  }
+
+  const metadata = activity.metadata as Record<string, string> | undefined;
+
+  return {
+    id: activity.id,
+    device: metadata?.device || 'Unknown Device',
+    browser: metadata?.browser || 'Unknown Browser',
+    location: metadata?.location || activity.ipAddress || 'Unknown Location',
+    ip: activity.ipAddress || 'Unknown IP',
+    timestamp: new Date(activity.createdAt),
+    status: activity.status === 'SUCCESS' ? 'success' : 'failed',
+    reason: activity.errorMessage,
+  };
+}
 
 const tabs = [
   { id: 'two-factor', label: 'Two-Factor Auth', icon: Smartphone },
@@ -136,8 +96,66 @@ export default function SecurityPage() {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [sessions, setSessions] = useState<Session[]>(mockSessions);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loginHistory, setLoginHistory] = useState<LoginActivity[]>([]);
   const [backupCodes] = useState(['ABC12-DEF34', 'GHI56-JKL78', 'MNO90-PQR12', 'STU34-VWX56']);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch sessions from API
+  const fetchSessions = useCallback(async () => {
+    setIsLoadingSessions(true);
+    setError(null);
+    try {
+      const apiSessions = await api.sessions.list();
+      setSessions(apiSessions.map(transformSession));
+    } catch (err) {
+      console.error('Failed to fetch sessions:', err);
+      setError(err instanceof ApiError ? err.message : 'Failed to fetch sessions');
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  }, []);
+
+  // Fetch activity/login history from API
+  const fetchLoginHistory = useCallback(async () => {
+    setIsLoadingHistory(true);
+    try {
+      const { data: activities } = await api.activity.list({
+        action: 'USER_LOGIN',
+        limit: 20,
+      });
+
+      // Also fetch failed logins
+      const { data: failedLogins } = await api.activity.list({
+        action: 'LOGIN_FAILED',
+        limit: 20,
+      });
+
+      // Combine and sort by date
+      const allActivities = [...activities, ...failedLogins]
+        .map(transformActivityToLogin)
+        .filter((a): a is LoginActivity => a !== null)
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .slice(0, 20);
+
+      setLoginHistory(allActivities);
+    } catch (err) {
+      console.error('Failed to fetch login history:', err);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
+  // Load data when tab changes
+  useEffect(() => {
+    if (activeTab === 'sessions') {
+      fetchSessions();
+    } else if (activeTab === 'history') {
+      fetchLoginHistory();
+    }
+  }, [activeTab, fetchSessions, fetchLoginHistory]);
 
   const handleEnable2FA = () => {
     setShowSetup(true);
@@ -157,12 +175,24 @@ export default function SecurityPage() {
     }
   };
 
-  const handleLogoutSession = (sessionId: string) => {
-    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+  const handleLogoutSession = async (sessionId: string) => {
+    try {
+      await api.sessions.revoke(sessionId);
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    } catch (err) {
+      console.error('Failed to revoke session:', err);
+      setError(err instanceof ApiError ? err.message : 'Failed to revoke session');
+    }
   };
 
-  const handleLogoutAllOther = () => {
-    setSessions((prev) => prev.filter((s) => s.isCurrent));
+  const handleLogoutAllOther = async () => {
+    try {
+      await api.sessions.revokeAll();
+      setSessions((prev) => prev.filter((s) => s.isCurrent));
+    } catch (err) {
+      console.error('Failed to revoke sessions:', err);
+      setError(err instanceof ApiError ? err.message : 'Failed to revoke sessions');
+    }
   };
 
   const getDeviceIcon = (deviceType: string) => {
@@ -414,16 +444,40 @@ export default function SecurityPage() {
                   <h2 className="text-lg font-semibold text-gray-900">Active Sessions</h2>
                   <p className="text-gray-500 text-sm">Manage devices where you're logged in</p>
                 </div>
-                {sessions.length > 1 && (
+                <div className="flex gap-2">
                   <button
-                    onClick={handleLogoutAllOther}
-                    className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
+                    onClick={fetchSessions}
+                    disabled={isLoadingSessions}
+                    className="px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
-                    Log out all other sessions
+                    <RefreshCw className={cn('w-4 h-4', isLoadingSessions && 'animate-spin')} />
                   </button>
-                )}
+                  {sessions.filter(s => !s.isCurrent).length > 0 && (
+                    <button
+                      onClick={handleLogoutAllOther}
+                      className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
+                    >
+                      Log out all other sessions
+                    </button>
+                  )}
+                </div>
               </div>
 
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+
+              {isLoadingSessions ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                </div>
+              ) : sessions.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  No active sessions found
+                </div>
+              ) : (
               <div className="space-y-4">
                 {sessions.map((session, index) => {
                   const DeviceIcon = getDeviceIcon(session.deviceType);
@@ -491,19 +545,38 @@ export default function SecurityPage() {
                   );
                 })}
               </div>
+              )}
             </div>
           )}
 
           {/* Login History */}
           {activeTab === 'history' && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Login History</h2>
-                <p className="text-gray-500 text-sm">Recent sign-in activity on your account</p>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Login History</h2>
+                  <p className="text-gray-500 text-sm">Recent sign-in activity on your account</p>
+                </div>
+                <button
+                  onClick={fetchLoginHistory}
+                  disabled={isLoadingHistory}
+                  className="px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={cn('w-4 h-4', isLoadingHistory && 'animate-spin')} />
+                </button>
               </div>
 
+              {isLoadingHistory ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                </div>
+              ) : loginHistory.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  No login activity found
+                </div>
+              ) : (
               <div className="space-y-3">
-                {mockLoginHistory.map((activity, index) => (
+                {loginHistory.map((activity, index) => (
                   <motion.div
                     key={activity.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -563,6 +636,7 @@ export default function SecurityPage() {
                   </motion.div>
                 ))}
               </div>
+              )}
             </div>
           )}
         </motion.div>

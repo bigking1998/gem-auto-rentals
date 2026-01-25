@@ -26,9 +26,22 @@ model User {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
+  // Core relations
   bookings      Booking[]
   documents     Document[]
   reviews       Review[]
+
+  // CRM Feature relations
+  preferences           UserPreferences?
+  sessions              Session[]
+  activityLogs          ActivityLog[]
+  notifications         Notification[]
+  invoices              Invoice[]
+
+  // Conversations
+  customerConversations Conversation[] @relation("CustomerConversations")
+  assignedConversations Conversation[] @relation("AssignedConversations")
+  sentMessages          Message[]
 }
 
 enum Role {
@@ -118,6 +131,10 @@ model Booking {
   vehicle         Vehicle       @relation(fields: [vehicleId], references: [id])
   payment         Payment?
 
+  // CRM relations
+  conversations   Conversation[]
+  invoices        Invoice[]
+
   @@index([userId])
   @@index([vehicleId])
   @@index([status])
@@ -161,6 +178,9 @@ enum PaymentStatus {
 enum PaymentMethod {
   CARD
   BANK_TRANSFER
+  CASH
+  CHECK
+  WIRE
 }
 
 // Document model - customer documents
@@ -238,3 +258,501 @@ model MaintenanceRecord {
 
   @@index([vehicleId])
 }
+
+// =============================================
+// CRM FEATURES - Admin Dashboard Implementation
+// =============================================
+
+// Phase 1: Messages & Communications System
+// -----------------------------------------
+
+model Conversation {
+  id            String             @id @default(cuid())
+
+  // Participants
+  customerId    String
+  customer      User               @relation("CustomerConversations", fields: [customerId], references: [id])
+
+  // Metadata
+  subject       String?
+  status        ConversationStatus @default(OPEN)
+  priority      Priority           @default(NORMAL)
+
+  // Assignment
+  assignedToId  String?
+  assignedTo    User?              @relation("AssignedConversations", fields: [assignedToId], references: [id])
+
+  // Related entities (optional)
+  bookingId     String?
+  booking       Booking?           @relation(fields: [bookingId], references: [id])
+
+  // Timestamps
+  lastMessageAt DateTime           @default(now())
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // Relations
+  messages      Message[]
+
+  @@index([customerId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id              String             @id @default(cuid())
+
+  conversationId  String
+  conversation    Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Sender
+  senderId        String
+  sender          User               @relation(fields: [senderId], references: [id])
+  senderType      SenderType
+
+  // Content
+  content         String             @db.Text
+  contentType     MessageContentType @default(TEXT)
+
+  // Attachments
+  attachments     MessageAttachment[]
+
+  // Status
+  readAt          DateTime?
+
+  // Email tracking (if sent via email)
+  emailMessageId  String?
+
+  createdAt       DateTime           @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model MessageAttachment {
+  id          String   @id @default(cuid())
+  messageId   String
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  fileName    String
+  fileUrl     String
+  fileSize    Int
+  mimeType    String
+
+  createdAt   DateTime @default(now())
+
+  @@index([messageId])
+}
+
+enum ConversationStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SenderType {
+  CUSTOMER
+  STAFF
+  SYSTEM
+}
+
+enum MessageContentType {
+  TEXT
+  HTML
+  TEMPLATE
+}
+
+// Phase 2: Security & Session Management
+// --------------------------------------
+
+model Session {
+  id            String    @id @default(cuid())
+
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Session info
+  token         String    @unique
+
+  // Device/location info
+  userAgent     String?
+  ipAddress     String?
+  device        String?
+  browser       String?
+  os            String?
+  location      String?
+
+  // Status
+  isActive      Boolean   @default(true)
+  lastActiveAt  DateTime  @default(now())
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  revokedReason String?
+
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([isActive])
+  @@index([lastActiveAt])
+}
+
+model ActivityLog {
+  id          String         @id @default(cuid())
+
+  // Actor
+  userId      String?
+  user        User?          @relation(fields: [userId], references: [id])
+
+  // Action details
+  action      ActivityAction
+  entityType  String?
+  entityId    String?
+
+  // Context
+  description String
+  metadata    Json?
+
+  // Request info
+  ipAddress   String?
+  userAgent   String?
+
+  // Status
+  status      ActivityStatus @default(SUCCESS)
+  errorMessage String?
+
+  createdAt   DateTime       @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+enum ActivityAction {
+  // Auth
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  PASSWORD_CHANGE
+  PASSWORD_RESET
+  TWO_FACTOR_ENABLED
+  TWO_FACTOR_DISABLED
+
+  // Users
+  USER_CREATE
+  USER_UPDATE
+  USER_DELETE
+  ROLE_CHANGE
+
+  // Vehicles
+  VEHICLE_CREATE
+  VEHICLE_UPDATE
+  VEHICLE_DELETE
+  VEHICLE_STATUS_CHANGE
+
+  // Bookings
+  BOOKING_CREATE
+  BOOKING_UPDATE
+  BOOKING_CANCEL
+  BOOKING_STATUS_CHANGE
+  CONTRACT_UPLOAD
+
+  // Payments
+  PAYMENT_PROCESS
+  PAYMENT_REFUND
+
+  // Documents
+  DOCUMENT_UPLOAD
+  DOCUMENT_VERIFY
+  DOCUMENT_REJECT
+
+  // Messages
+  CONVERSATION_CREATE
+  MESSAGE_SEND
+
+  // Settings
+  SETTINGS_UPDATE
+}
+
+enum ActivityStatus {
+  SUCCESS
+  FAILURE
+  PENDING
+}
+
+// Phase 3: Settings Completion
+// ----------------------------
+
+model UserPreferences {
+  id                    String   @id @default(cuid())
+
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Email notifications
+  emailBookingConfirm   Boolean  @default(true)
+  emailBookingReminder  Boolean  @default(true)
+  emailPaymentReceipt   Boolean  @default(true)
+  emailPromotions       Boolean  @default(false)
+  emailNewsletter       Boolean  @default(false)
+
+  // Push notifications (future)
+  pushEnabled           Boolean  @default(false)
+
+  // SMS notifications
+  smsBookingReminder    Boolean  @default(false)
+  smsPaymentAlert       Boolean  @default(false)
+
+  // Preferences
+  language              String   @default("en")
+  timezone              String   @default("America/New_York")
+  dateFormat            String   @default("MM/DD/YYYY")
+  currency              String   @default("USD")
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model CompanySettings {
+  id                    String   @id @default(cuid())
+
+  // Company info
+  companyName           String   @default("Gem Auto Rentals")
+  companyEmail          String?
+  companyPhone          String?
+  companyAddress        String?
+  companyLogo           String?
+
+  // Business settings
+  defaultCurrency       String   @default("USD")
+  defaultTimezone       String   @default("America/New_York")
+  taxRate               Decimal  @default(0) @db.Decimal(5, 4)
+
+  // Booking settings
+  minBookingHours       Int      @default(24)
+  maxBookingDays        Int      @default(30)
+  cancellationHours     Int      @default(24)
+  depositPercentage     Decimal  @default(0.20) @db.Decimal(3, 2)
+
+  // Operating hours (JSON)
+  operatingHours        Json?
+
+  // Terms & policies
+  termsOfService        String?  @db.Text
+  privacyPolicy         String?  @db.Text
+  cancellationPolicy    String?  @db.Text
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+
+  // Related entities
+  bookingId       String?
+  booking         Booking?      @relation(fields: [bookingId], references: [id])
+
+  customerId      String
+  customer        User          @relation(fields: [customerId], references: [id])
+
+  // Invoice details
+  invoiceNumber   String        @unique
+  status          InvoiceStatus @default(DRAFT)
+
+  // Amounts
+  subtotal        Decimal       @db.Decimal(10, 2)
+  taxAmount       Decimal       @db.Decimal(10, 2)
+  discountAmount  Decimal       @default(0) @db.Decimal(10, 2)
+  totalAmount     Decimal       @db.Decimal(10, 2)
+
+  // Line items (JSON array)
+  lineItems       Json
+
+  // Dates
+  issueDate       DateTime      @default(now())
+  dueDate         DateTime
+  paidAt          DateTime?
+
+  // Payment
+  paymentId       String?
+
+  // PDF
+  pdfUrl          String?
+
+  notes           String?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([bookingId])
+  @@index([status])
+  @@index([invoiceNumber])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+// Phase 4: Notification System
+// ----------------------------
+
+model Notification {
+  id            String              @id @default(cuid())
+
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Content
+  type          NotificationType
+  title         String
+  message       String
+
+  // Related entity
+  entityType    String?
+  entityId      String?
+  actionUrl     String?
+
+  // Delivery status
+  channels      NotificationChannel[]
+  emailSent     Boolean             @default(false)
+  emailSentAt   DateTime?
+  smsSent       Boolean             @default(false)
+  smsSentAt     DateTime?
+
+  // Read status
+  readAt        DateTime?
+
+  createdAt     DateTime            @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([readAt])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  // Bookings
+  BOOKING_CONFIRMED
+  BOOKING_REMINDER
+  BOOKING_STARTED
+  BOOKING_ENDING_SOON
+  BOOKING_COMPLETED
+  BOOKING_CANCELLED
+
+  // Payments
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  PAYMENT_REFUNDED
+  INVOICE_SENT
+  INVOICE_OVERDUE
+
+  // Documents
+  DOCUMENT_VERIFIED
+  DOCUMENT_REJECTED
+  DOCUMENT_EXPIRING
+
+  // Messages
+  NEW_MESSAGE
+  CONVERSATION_ASSIGNED
+
+  // System
+  SYSTEM_ANNOUNCEMENT
+  MAINTENANCE_ALERT
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  PUSH
+}
+
+// Phase 5: External Integrations
+// ------------------------------
+
+model Integration {
+  id              String              @id @default(cuid())
+
+  // Integration type
+  provider        IntegrationProvider @unique
+
+  // Status
+  isEnabled       Boolean             @default(false)
+  isConnected     Boolean             @default(false)
+
+  // OAuth tokens (encrypted)
+  accessToken     String?
+  refreshToken    String?
+  tokenExpiresAt  DateTime?
+
+  // Provider-specific config
+  config          Json?
+
+  // Metadata
+  connectedAt     DateTime?
+  lastSyncAt      DateTime?
+  lastError       String?
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+enum IntegrationProvider {
+  STRIPE
+  PAYPAL
+  MAILCHIMP
+  TWILIO
+  GOOGLE_CALENDAR
+  QUICKBOOKS
+  ZAPIER
+}
+
+model WebhookLog {
+  id              String              @id @default(cuid())
+
+  provider        IntegrationProvider
+
+  // Request details
+  eventType       String
+  payload         Json
+
+  // Processing
+  status          WebhookStatus       @default(PENDING)
+  processedAt     DateTime?
+  errorMessage    String?
+  retryCount      Int                 @default(0)
+
+  createdAt       DateTime            @default(now())
+
+  @@index([provider])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum WebhookStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// Update Booking model to add Invoice relation
+// (Added at bottom to maintain relation)

@@ -295,7 +295,7 @@ export default function BookingPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <Header />
+        <Header variant="booking" />
         <main className="flex-1 flex items-center justify-center py-12 pt-32">
           <div className="text-center">
             <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
@@ -311,7 +311,7 @@ export default function BookingPage() {
   if (error || !vehicle) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <Header />
+        <Header variant="booking" />
         <main className="flex-1 flex items-center justify-center py-12 pt-32">
           <div className="text-center max-w-md">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
@@ -332,7 +332,7 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
+      <Header variant="booking" />
 
       <main className="flex-1 py-12 pt-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
