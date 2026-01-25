@@ -431,6 +431,39 @@ export interface Integration {
   updatedAt: string;
 }
 
+// ============ Trash / Recycle Bin Types ============
+export type TrashEntityType = 'users' | 'vehicles' | 'bookings' | 'documents' | 'conversations' | 'invoices' | 'reviews' | 'maintenance';
+
+export interface TrashSummary {
+  users: number;
+  vehicles: number;
+  bookings: number;
+  documents: number;
+  conversations: number;
+  invoices: number;
+  reviews: number;
+  maintenance: number;
+  total: number;
+}
+
+export interface DeletedItem {
+  id: string;
+  deletedAt: string;
+  deletedBy?: string;
+  createdAt: string;
+  [key: string]: unknown;
+}
+
+export interface TrashListResponse {
+  items: DeletedItem[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 // ============ Conversation Types ============
 export type ConversationStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 export type Priority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';

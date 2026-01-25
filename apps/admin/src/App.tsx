@@ -13,6 +13,7 @@ import SettingsPage from './pages/SettingsPage';
 import MessagesPage from './pages/MessagesPage';
 import SecurityPage from './pages/SecurityPage';
 import HelpPage from './pages/HelpPage';
+import TrashPage from './pages/TrashPage';
 import LoginPage from './pages/LoginPage';
 import { useAuthStore } from './stores/authStore';
 
@@ -106,6 +107,7 @@ function App() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route path="security" element={<SecurityPage />} />
+          <Route path="trash" element={<TrashPage />} />
           <Route path="help" element={<HelpPage />} />
         </Route>
 
