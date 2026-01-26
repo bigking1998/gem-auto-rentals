@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Filter, MoreHorizontal, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle, Loader2, CalendarCheck, CalendarX, User } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Plus, Search, Filter, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle, Loader2, CalendarCheck, CalendarX } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { api, type Vehicle as ApiVehicle, type Booking } from '@/lib/api';
 import { toast } from 'sonner';
@@ -87,7 +87,7 @@ export default function FleetManagement() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null); // Kept for future use if needed, though replaced
+
 
 
   // Bulk selection state
@@ -235,7 +235,7 @@ export default function FleetManagement() {
     setDeleteVehicle(vehicle);
     setDeleteConfirmText('');
     setShowDeleteModal(true);
-    setActiveDropdown(null);
+
   };
 
   const confirmDeleteVehicle = async () => {
@@ -279,7 +279,7 @@ export default function FleetManagement() {
       console.error('Error updating status:', error);
       toast.error('Failed to update vehicle status');
     }
-    setActiveDropdown(null);
+
   };
 
   // Maintenance handlers
@@ -291,7 +291,7 @@ export default function FleetManagement() {
       notes: '',
     });
     setShowMaintenanceModal(true);
-    setActiveDropdown(null);
+
   };
 
   const handleScheduleMaintenance = async () => {
@@ -334,14 +334,14 @@ export default function FleetManagement() {
       console.error('Error completing maintenance:', error);
       toast.error('Failed to complete maintenance');
     }
-    setActiveDropdown(null);
+
   };
 
   // Booking handlers
   const handleOpenBookings = async (vehicle: Vehicle) => {
     setBookingsVehicle(vehicle);
     setShowBookingsModal(true);
-    setActiveDropdown(null);
+
     setIsLoadingBookings(true);
 
     try {

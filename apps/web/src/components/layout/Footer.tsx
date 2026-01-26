@@ -50,15 +50,15 @@ export default function Footer() {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-primary" />
-                <span>1-800-GEM-AUTO</span>
+                <span>863-277-7879</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-primary" />
-                <span>support@gemautorentals.com</span>
+                <span>gemautosalesinc@gmail.com</span>
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin className="w-5 h-5 text-primary" />
-                <span>123 Rental Way, Miami, FL 33101</span>
+                <span>1311 E CANAL ST, MULBERRY, FL 33860</span>
               </div>
             </div>
           </div>
