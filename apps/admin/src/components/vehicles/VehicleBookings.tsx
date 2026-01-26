@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import {
     Calendar,
     Clock,
@@ -8,11 +7,10 @@ import {
     Car,
     User,
     MoreHorizontal,
-    Loader2,
-    AlertTriangle
+    Loader2
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import { api, Booking, ApiError } from '@/lib/api';
+import { api, Booking } from '@/lib/api';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
