@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trash2,
   AlertTriangle,
@@ -41,6 +41,8 @@ export default function TrashPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [restoreTarget, setRestoreTarget] = useState<DeletedItem | null>(null);
   const [emptyingTrash, setEmptyingTrash] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -96,10 +98,18 @@ export default function TrashPage() {
   }, [selectedType, searchQuery]);
 
   // Handle restore
-  const handleRestore = async (id: string) => {
-    setRestoringId(id);
+  const handleRestore = (item: DeletedItem) => {
+    setRestoreTarget(item);
+    setShowRestoreModal(true);
+  };
+
+  const confirmRestore = async () => {
+    if (!restoreTarget) return;
+
+    setShowRestoreModal(false);
+    setRestoringId(restoreTarget.id);
     try {
-      await api.trash.restore(selectedType, id);
+      await api.trash.restore(selectedType, restoreTarget.id);
       toast.success('Item restored successfully');
       loadItems();
       loadSummary();
@@ -108,6 +118,7 @@ export default function TrashPage() {
       toast.error('Failed to restore item');
     } finally {
       setRestoringId(null);
+      setRestoreTarget(null);
     }
   };
 
@@ -293,7 +304,7 @@ export default function TrashPage() {
           </div>
           <div className="flex gap-2 ml-4 flex-shrink-0">
             <button
-              onClick={() => handleRestore(item.id)}
+              onClick={() => handleRestore(item)}
               disabled={isRestoring || isDeleting}
               className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
               title="Restore"
@@ -464,6 +475,83 @@ export default function TrashPage() {
           </>
         )}
       </motion.div>
+
+      {/* Restore Confirmation Modal */}
+      <AnimatePresence>
+        {showRestoreModal && restoreTarget && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowRestoreModal(false);
+                setRestoreTarget(null);
+              }}
+              className="fixed inset-0 bg-black/50 z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-white">
+                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                        <RotateCcw className="w-5 h-5" />
+                      </div>
+                      <h2 className="text-lg font-semibold">Restore Item</h2>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowRestoreModal(false);
+                        setRestoreTarget(null);
+                      }}
+                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                  <div className="p-3 bg-gray-50 rounded-xl">
+                    {renderItemDetails(restoreTarget)}
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Are you sure you want to restore this item? It will be moved back to its original location.
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowRestoreModal(false);
+                      setRestoreTarget(null);
+                    }}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmRestore}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Yes, Restore
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
