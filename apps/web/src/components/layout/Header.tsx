@@ -4,7 +4,7 @@ import { Menu, X, Car, User, LogOut, ChevronDown, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 
-const ADMIN_DASHBOARD_URL = import.meta.env.VITE_ADMIN_URL || 'https://gem-auto-rentals-admin.onrender.com';
+const ADMIN_DASHBOARD_URL = import.meta.env.VITE_ADMIN_URL || 'https://admin.gemrentalcars.com';
 
 const navLinks = [
   { label: 'Home', href: '/' },

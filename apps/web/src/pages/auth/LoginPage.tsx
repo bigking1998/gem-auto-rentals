@@ -10,12 +10,12 @@ import { api } from '@/lib/api';
 const RETURN_URL_KEY = 'gem_auth_return_url';
 
 // Admin dashboard URL - configurable via environment variable
-const ADMIN_DASHBOARD_URL = import.meta.env.VITE_ADMIN_URL || 'https://gem-auto-rentals-admin.onrender.com';
+const ADMIN_DASHBOARD_URL = import.meta.env.VITE_ADMIN_URL || 'https://admin.gemrentalcars.com';
 
 // Trusted domains for admin dashboard redirect (prevents open redirect attacks)
 const TRUSTED_ADMIN_DOMAINS = [
-  'gem-auto-rentals-admin.onrender.com',
   'admin.gemrentalcars.com',
+  'gem-auto-rentals-admin.onrender.com',
   'localhost',
 ];
 
