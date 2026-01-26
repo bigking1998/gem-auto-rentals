@@ -121,7 +121,7 @@ router.get('/', async (req, res, next) => {
       take: pageSize,
       include: {
         _count: {
-          select: { reviews: true },
+          select: { reviews: true, bookings: true },
         },
         reviews: {
           select: { rating: true },
@@ -129,7 +129,7 @@ router.get('/', async (req, res, next) => {
       },
     });
 
-    // Calculate average rating
+    // Calculate average rating and include booking count
     const vehiclesWithRating = vehicles.map((vehicle) => {
       const avgRating =
         vehicle.reviews.length > 0
@@ -141,6 +141,7 @@ router.get('/', async (req, res, next) => {
         ...rest,
         averageRating: avgRating,
         reviewCount: vehicle._count.reviews,
+        bookingCount: vehicle._count.bookings,
       };
     });
 

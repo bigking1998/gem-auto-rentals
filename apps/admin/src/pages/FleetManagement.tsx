@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Filter, MoreHorizontal, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle, Loader2, CalendarCheck } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { VehicleModal } from '@/components/vehicles/VehicleModal';
 import { api, type Vehicle as ApiVehicle } from '@/lib/api';
@@ -24,6 +24,7 @@ interface Vehicle {
   features: string[];
   images: string[];
   maintenanceSchedule?: MaintenanceSchedule;
+  bookingCount?: number;
 }
 
 interface MaintenanceSchedule {
@@ -60,7 +61,7 @@ const maintenanceTypes = [
 ];
 
 // Helper function to convert API vehicle to local Vehicle type
-const apiToVehicle = (v: ApiVehicle): Vehicle => ({
+const apiToVehicle = (v: ApiVehicle & { bookingCount?: number }): Vehicle => ({
   id: v.id,
   make: v.make,
   model: v.model,
@@ -76,6 +77,7 @@ const apiToVehicle = (v: ApiVehicle): Vehicle => ({
   vin: v.vin,
   features: v.features || [],
   images: v.images || [],
+  bookingCount: v.bookingCount || 0,
 });
 
 export default function FleetManagement() {
@@ -399,7 +401,7 @@ export default function FleetManagement() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -441,6 +443,24 @@ export default function FleetManagement() {
           className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
         >
           <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <CalendarCheck className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-blue-600">
+                {vehicles.filter((v) => v.bookingCount && v.bookingCount > 0).length}
+              </p>
+              <p className="text-sm text-gray-500">Booked</p>
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
               <Car className="w-5 h-5 text-purple-600" />
             </div>
@@ -455,7 +475,7 @@ export default function FleetManagement() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.3 }}
           className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
         >
           <div className="flex items-center gap-3">
@@ -660,7 +680,7 @@ export default function FleetManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col gap-1.5">
                         <span
                           className={cn(
                             'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit',
@@ -669,6 +689,15 @@ export default function FleetManagement() {
                         >
                           {vehicle.status}
                         </span>
+                        {vehicle.bookingCount && vehicle.bookingCount > 0 && (
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 w-fit"
+                            title={`This vehicle has ${vehicle.bookingCount} booking${vehicle.bookingCount > 1 ? 's' : ''} and cannot be deleted`}
+                          >
+                            <CalendarCheck className="w-3 h-3" />
+                            {vehicle.bookingCount} booking{vehicle.bookingCount > 1 ? 's' : ''}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -758,13 +787,23 @@ export default function FleetManagement() {
                                 </button>
                               ))}
                               <div className="border-t border-gray-100 my-1" />
-                              <button
-                                onClick={() => handleDeleteVehicle(vehicle.id)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete Vehicle
-                              </button>
+                              {vehicle.bookingCount && vehicle.bookingCount > 0 ? (
+                                <div className="px-4 py-2 text-sm text-gray-400 cursor-not-allowed flex items-center gap-2">
+                                  <Trash2 className="w-4 h-4" />
+                                  <span className="flex flex-col">
+                                    <span>Cannot Delete</span>
+                                    <span className="text-xs text-gray-400">Has {vehicle.bookingCount} booking{vehicle.bookingCount > 1 ? 's' : ''}</span>
+                                  </span>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleDeleteVehicle(vehicle.id)}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete Vehicle
+                                </button>
+                              )}
                             </div>
                           </>
                         )}

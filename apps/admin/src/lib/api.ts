@@ -271,6 +271,7 @@ export interface Vehicle {
   vin: string;
   averageRating?: number | null;
   reviewCount?: number;
+  bookingCount?: number;
   createdAt: string;
   updatedAt: string;
 }
