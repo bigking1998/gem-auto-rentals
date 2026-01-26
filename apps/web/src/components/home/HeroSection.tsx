@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 export default function HeroSection() {
   return (
-    <section className="relative h-[100svh] min-h-[600px] md:min-h-[800px] w-full overflow-hidden flex items-center md:items-end pt-32 md:pt-0 pb-8 md:pb-32">
+    <section className="relative h-[100svh] min-h-[600px] md:min-h-[800px] w-full overflow-hidden flex items-center md:items-end pt-64 md:pt-0 pb-8 md:pb-32">
       {/* Video Background */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-black/40 z-10" /> {/* Overlay for text contrast */}
