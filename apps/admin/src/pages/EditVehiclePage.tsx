@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { VehicleForm, VehicleFormData } from '@/components/vehicles/VehicleForm';
+import { VehicleBookings } from '@/components/vehicles/VehicleBookings';
 import { api, Vehicle } from '@/lib/api';
 import { toast } from 'sonner';
 import { Loader2, ArrowLeft } from 'lucide-react';
@@ -88,6 +89,10 @@ export default function EditVehiclePage() {
                 onCancel={() => navigate('/fleet')}
                 isLoading={isLoading}
             />
+
+            <div className="mt-8">
+                <VehicleBookings vehicleId={id!} />
+            </div>
         </div>
     );
 }
