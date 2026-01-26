@@ -5,6 +5,8 @@ import { Loader2 } from 'lucide-react';
 import DashboardLayout from './components/layout/DashboardLayout';
 import DashboardHome from './pages/DashboardHome';
 import FleetManagement from './pages/FleetManagement';
+import AddVehiclePage from './pages/AddVehiclePage';
+import EditVehiclePage from './pages/EditVehiclePage';
 import BookingsPage from './pages/BookingsPage';
 import CustomersPage from './pages/CustomersPage';
 import CustomerProfilePage from './pages/CustomerProfilePage';
@@ -100,6 +102,8 @@ function App() {
         >
           <Route index element={<DashboardHome />} />
           <Route path="fleet" element={<FleetManagement />} />
+          <Route path="fleet/new" element={<AddVehiclePage />} />
+          <Route path="fleet/:id" element={<EditVehiclePage />} />
           <Route path="bookings" element={<BookingsPage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/:id" element={<CustomerProfilePage />} />

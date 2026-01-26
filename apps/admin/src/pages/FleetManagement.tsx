@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Filter, MoreHorizontal, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle, Loader2, CalendarCheck, CalendarX, User } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import { VehicleModal } from '@/components/vehicles/VehicleModal';
 import { api, type Vehicle as ApiVehicle, type Booking } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -83,13 +82,11 @@ const apiToVehicle = (v: ApiVehicle & { bookingCount?: number }): Vehicle => ({
 
 export default function FleetManagement() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // Bulk selection state
@@ -150,6 +147,14 @@ export default function FleetManagement() {
     const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handleAddVehicle = () => {
+    navigate('/fleet/new');
+  };
+
+  const handleEditVehicle = (vehicle: Vehicle) => {
+    navigate(`/fleet/${vehicle.id}`);
+  };
 
   // Bulk selection handlers
   const handleSelectAll = () => {
@@ -225,17 +230,6 @@ export default function FleetManagement() {
     }
   };
 
-  const handleAddVehicle = () => {
-    setEditingVehicle(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEditVehicle = (vehicle: Vehicle) => {
-    setEditingVehicle(vehicle);
-    setIsModalOpen(true);
-    setActiveDropdown(null);
-  };
-
   const handleDeleteVehicle = (vehicle: Vehicle) => {
     setDeleteVehicle(vehicle);
     setDeleteConfirmText('');
@@ -267,59 +261,6 @@ export default function FleetManagement() {
       }
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const handleSubmitVehicle = async (data: Omit<Vehicle, 'id'> & { pendingFiles?: File[] }) => {
-    setIsSaving(true);
-
-    try {
-      const { pendingFiles, ...vehicleData } = data;
-
-      if (editingVehicle) {
-        // Update existing vehicle (images are uploaded immediately in the modal)
-        const updated = await api.vehicles.update(editingVehicle.id, vehicleData);
-        setVehicles((prev) =>
-          prev.map((v) =>
-            v.id === editingVehicle.id ? apiToVehicle(updated) : v
-          )
-        );
-        toast.success('Vehicle updated successfully');
-      } else {
-        // Add new vehicle first (without images)
-        const { images: _images, ...createData } = vehicleData;
-        const newVehicle = await api.vehicles.create(createData);
-
-        // Upload pending files if any
-        if (pendingFiles && pendingFiles.length > 0) {
-          toast.info(`Uploading ${pendingFiles.length} image(s)...`);
-          const uploadedImages: string[] = [];
-          for (const file of pendingFiles) {
-            try {
-              const result = await api.vehicles.uploadImage(newVehicle.id, file);
-              uploadedImages.push(result.imageUrl);
-            } catch (uploadError) {
-              console.error('Error uploading image:', uploadError);
-              // Continue with other uploads even if one fails
-            }
-          }
-          // Update the vehicle object with uploaded images
-          if (uploadedImages.length > 0) {
-            newVehicle.images = uploadedImages;
-          }
-        }
-
-        setVehicles((prev) => [apiToVehicle(newVehicle), ...prev]);
-        toast.success('Vehicle added successfully');
-      }
-
-      setIsModalOpen(false);
-      setEditingVehicle(null);
-    } catch (error: any) {
-      console.error('Error saving vehicle:', error);
-      toast.error(error.message || 'Failed to save vehicle');
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -358,9 +299,6 @@ export default function FleetManagement() {
     try {
       // Update vehicle status to MAINTENANCE
       await api.vehicles.updateStatus(maintenanceVehicle.id, 'MAINTENANCE');
-
-      // Note: Maintenance record creation would require a separate API endpoint
-      // For now, we just update the status
 
       setVehicles((prev) =>
         prev.map((v) =>
@@ -857,6 +795,20 @@ export default function FleetManagement() {
                                   Complete Maintenance
                                 </button>
                               )}
+                              <button
+                                onClick={() => handleOpenBookings(vehicle)}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                              >
+                                <Calendar className="w-4 h-4" />
+                                View Bookings
+                              </button>
+                              <button
+                                onClick={() => handleDeleteVehicle(vehicle)}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete Vehicle
+                              </button>
                               <div className="border-t border-gray-100 my-1" />
                               <p className="px-4 py-1 text-xs text-gray-400 uppercase">Change Status</p>
                               {['AVAILABLE', 'RENTED', 'MAINTENANCE', 'RETIRED'].map((status) => (
@@ -880,36 +832,6 @@ export default function FleetManagement() {
                                   {status.charAt(0) + status.slice(1).toLowerCase()}
                                 </button>
                               ))}
-                              {vehicle.bookingCount && vehicle.bookingCount > 0 && (
-                                <>
-                                  <div className="border-t border-gray-100 my-1" />
-                                  <button
-                                    onClick={() => handleOpenBookings(vehicle)}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
-                                  >
-                                    <CalendarX className="w-4 h-4" />
-                                    Manage Bookings ({vehicle.bookingCount})
-                                  </button>
-                                </>
-                              )}
-                              <div className="border-t border-gray-100 my-1" />
-                              {vehicle.bookingCount && vehicle.bookingCount > 0 ? (
-                                <div className="px-4 py-2 text-sm text-gray-400 cursor-not-allowed flex items-center gap-2">
-                                  <Trash2 className="w-4 h-4" />
-                                  <span className="flex flex-col">
-                                    <span>Cannot Delete</span>
-                                    <span className="text-xs text-gray-400">Has {vehicle.bookingCount} booking{vehicle.bookingCount > 1 ? 's' : ''}</span>
-                                  </span>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => handleDeleteVehicle(vehicle)}
-                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Vehicle
-                                </button>
-                              )}
                             </div>
                           </>
                         )}
@@ -921,526 +843,241 @@ export default function FleetManagement() {
             </tbody>
           </table>
         </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-          <p className="text-sm text-gray-500">
-            Showing {filteredVehicles.length} of {vehicles.length} vehicles
-          </p>
-        </div>
       </motion.div>
 
-      {/* Vehicle Modal */}
-      <VehicleModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingVehicle(null);
-        }}
-        onSubmit={handleSubmitVehicle}
-        initialData={editingVehicle || undefined}
-        isLoading={isSaving}
-      />
-
-      {/* Maintenance Scheduling Modal */}
+      {/* Maintenance Modal */}
       {showMaintenanceModal && maintenanceVehicle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowMaintenanceModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 text-white">
-                  <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
-                    <Wrench className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold">Schedule Maintenance</h2>
-                    <p className="text-sm text-white/80">
-                      {maintenanceVehicle.year} {maintenanceVehicle.make} {maintenanceVehicle.model}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowMaintenanceModal(false)}
-                  className="p-2 rounded-lg hover:bg-white/20 transition-colors"
-                >
-                  <X className="w-5 h-5 text-white" />
-                </button>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 space-y-4">
-              {/* Warning if already in maintenance */}
-              {maintenanceVehicle.status === 'MAINTENANCE' && (
-                <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-amber-800">Vehicle already in maintenance</p>
-                    <p className="text-sm text-amber-600">This will update the existing maintenance schedule.</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Maintenance Type */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
+          >
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Schedule Maintenance</h2>
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Maintenance Type
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Maintenance Type</label>
                 <select
                   value={maintenanceForm.type}
-                  onChange={(e) => setMaintenanceForm({ ...maintenanceForm, type: e.target.value as MaintenanceSchedule['type'] })}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  onChange={(e) => setMaintenanceForm({ ...maintenanceForm, type: e.target.value as any })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  {maintenanceTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
+                  {maintenanceTypes.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
                   ))}
                 </select>
               </div>
-
-              {/* Scheduled Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Scheduled Date
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="date"
-                    value={maintenanceForm.scheduledDate}
-                    onChange={(e) => setMaintenanceForm({ ...maintenanceForm, scheduledDate: e.target.value })}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
+                <input
+                  type="date"
+                  value={maintenanceForm.scheduledDate}
+                  onChange={(e) => setMaintenanceForm({ ...maintenanceForm, scheduledDate: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
               </div>
-
-              {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes (Optional)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                 <textarea
                   value={maintenanceForm.notes}
                   onChange={(e) => setMaintenanceForm({ ...maintenanceForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   rows={3}
-                  placeholder="Add any notes about the maintenance..."
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                  placeholder="Additional details..."
                 />
               </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowMaintenanceModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleScheduleMaintenance}
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600"
+                >
+                  Schedule
+                </button>
+              </div>
             </div>
-
-            {/* Footer */}
-            <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowMaintenanceModal(false)}
-                className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleScheduleMaintenance}
-                disabled={!maintenanceForm.scheduledDate}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Schedule Maintenance
-              </button>
-            </div>
-          </div>
+          </motion.div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
-      <AnimatePresence>
-        {showDeleteModal && deleteVehicle && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                if (!isDeleting) {
-                  setShowDeleteModal(false);
-                  setDeleteVehicle(null);
-                  setDeleteConfirmText('');
-                }
-              }}
-              className="fixed inset-0 bg-black/50 z-50"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            >
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-white">
-                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
-                        <AlertTriangle className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold">Delete Vehicle</h2>
-                        <p className="text-sm text-white/80">This action cannot be undone</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (!isDeleting) {
-                          setShowDeleteModal(false);
-                          setDeleteVehicle(null);
-                          setDeleteConfirmText('');
-                        }
-                      }}
-                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
-                    >
-                      <X className="w-5 h-5 text-white" />
-                    </button>
-                  </div>
-                </div>
+      {showDeleteModal && deleteVehicle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => !isDeleting && setShowDeleteModal(false)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
+          >
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <AlertTriangle className="w-8 h-8" />
+              <h2 className="text-xl font-bold">Delete Vehicle?</h2>
+            </div>
 
-                {/* Content */}
-                <div className="p-6 space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {deleteVehicle.images.length > 0 ? (
-                        <img
-                          src={deleteVehicle.images[0]}
-                          alt={`${deleteVehicle.make} ${deleteVehicle.model}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Car className="w-6 h-6 text-gray-400" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {deleteVehicle.year} {deleteVehicle.make} {deleteVehicle.model}
-                      </p>
-                      <p className="text-sm text-gray-500">{deleteVehicle.licensePlate}</p>
-                    </div>
-                  </div>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete <span className="font-semibold">{deleteVehicle.year} {deleteVehicle.make} {deleteVehicle.model}</span>?
+              This action cannot be undone.
+            </p>
 
-                  <p className="text-sm text-gray-600">
-                    Are you sure you want to delete this vehicle? This will permanently remove it from your fleet and cannot be undone.
-                  </p>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Type <span className="font-mono font-bold">confirm</span> to proceed
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="confirm"
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Type <span className="font-bold text-red-600">confirm</span> to delete
-                    </label>
-                    <input
-                      type="text"
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder="Type confirm here..."
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      disabled={isDeleting}
-                      autoFocus
-                    />
-                  </div>
-                </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteVehicle}
+                disabled={isDeleting || deleteConfirmText.toLowerCase() !== 'confirm'}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                Delete Vehicle
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
-                {/* Footer */}
-                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
-                  <button
-                    onClick={() => {
-                      setShowDeleteModal(false);
-                      setDeleteVehicle(null);
-                      setDeleteConfirmText('');
-                    }}
-                    disabled={isDeleting}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmDeleteVehicle}
-                    disabled={deleteConfirmText.toLowerCase() !== 'confirm' || isDeleting}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {isDeleting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="w-4 h-4" />
-                        Delete Vehicle
-                      </>
-                    )}
-                  </button>
-                </div>
+      {/* Bookings Modal */}
+      {showBookingsModal && bookingsVehicle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowBookingsModal(false)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] shadow-xl flex flex-col"
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Vehicle Bookings</h2>
+                <p className="text-sm text-gray-500">
+                  {bookingsVehicle.year} {bookingsVehicle.make} {bookingsVehicle.model}
+                </p>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              <button onClick={() => setShowBookingsModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
 
-      {/* Bookings Management Modal */}
-      <AnimatePresence>
-        {showBookingsModal && bookingsVehicle && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowBookingsModal(false)}
-              className="fixed inset-0 bg-black/50 z-50"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            >
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-white">
-                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
-                        <CalendarCheck className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold">Manage Bookings</h2>
-                        <p className="text-sm text-white/80">
-                          {bookingsVehicle.year} {bookingsVehicle.make} {bookingsVehicle.model}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setShowBookingsModal(false)}
-                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
-                    >
-                      <X className="w-5 h-5 text-white" />
-                    </button>
-                  </div>
+            <div className="overflow-y-auto flex-1 p-6">
+              {isLoadingBookings ? (
+                <div className="text-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
+                  <p className="text-gray-500">Loading bookings...</p>
                 </div>
-
-                {/* Content */}
-                <div className="p-6 max-h-[calc(85vh-140px)] overflow-y-auto">
-                  {isLoadingBookings ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                    </div>
-                  ) : vehicleBookings.length === 0 ? (
-                    <div className="text-center py-12">
-                      <CalendarX className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">No bookings found for this vehicle</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {vehicleBookings.map((booking) => (
-                        <div
-                          key={booking.id}
-                          className="border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className={cn(
-                                  'px-2 py-0.5 rounded-full text-xs font-medium',
-                                  getBookingStatusColor(booking.status)
-                                )}>
-                                  {booking.status}
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                  ID: {booking.id.slice(0, 8)}...
-                                </span>
-                              </div>
-
-                              {booking.user && (
-                                <div className="flex items-center gap-2 mb-2">
-                                  <User className="w-4 h-4 text-gray-400" />
-                                  <span className="text-sm font-medium text-gray-900">
-                                    {booking.user.firstName} {booking.user.lastName}
-                                  </span>
-                                  <span className="text-sm text-gray-500">
-                                    ({booking.user.email})
-                                  </span>
-                                </div>
-                              )}
-
-                              <div className="flex items-center gap-4 text-sm text-gray-600">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4" />
-                                  <span>
-                                    {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
-                                  </span>
-                                </div>
-                                <span className="font-medium text-gray-900">
-                                  {formatCurrency(booking.totalAmount)}
-                                </span>
-                              </div>
-                            </div>
-
-                            {['PENDING', 'CONFIRMED', 'ACTIVE'].includes(booking.status) && (
-                              <button
-                                onClick={() => handleCancelBooking(booking)}
-                                disabled={cancellingBookingId === booking.id}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
-                              >
-                                {cancellingBookingId === booking.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <CalendarX className="w-4 h-4" />
-                                )}
-                                Cancel
-                              </button>
-                            )}
+              ) : vehicleBookings.length === 0 ? (
+                <div className="text-center py-12">
+                  <CalendarX className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">No bookings found for this vehicle</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {vehicleBookings.map((booking) => (
+                    <div key={booking.id} className="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-gray-100">
+                          <Calendar className="w-5 h-5 text-gray-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
+                          </p>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-full text-xs font-medium',
+                              getBookingStatusColor(booking.status)
+                            )}>
+                              {booking.status}
+                            </span>
+                            <span>• {formatCurrency(booking.totalAmount)}</span>
                           </div>
                         </div>
-                      ))}
+                      </div>
+                      {['PENDING', 'CONFIRMED', 'ACTIVE'].includes(booking.status) && (
+                        <button
+                          onClick={() => handleCancelBooking(booking)}
+                          className="text-sm text-red-600 hover:text-red-700 font-medium"
+                        >
+                          Cancel
+                        </button>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-
-                {/* Footer */}
-                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-between bg-gray-50">
-                  <p className="text-sm text-gray-500">
-                    {vehicleBookings.length} booking{vehicleBookings.length !== 1 ? 's' : ''} total
-                  </p>
-                  <button
-                    onClick={() => setShowBookingsModal(false)}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Cancel Booking Confirmation Modal */}
-      <AnimatePresence>
-        {showCancelBookingModal && cancelBookingTarget && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                setShowCancelBookingModal(false);
-                setCancelBookingTarget(null);
-                setCancelBookingConfirmText('');
-              }}
-              className="fixed inset-0 bg-black/50 z-[60]"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-            >
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-white">
-                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
-                        <CalendarX className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold">Cancel Booking</h2>
-                        <p className="text-sm text-white/80">This action cannot be undone</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowCancelBookingModal(false);
-                        setCancelBookingTarget(null);
-                        setCancelBookingConfirmText('');
-                      }}
-                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
-                    >
-                      <X className="w-5 h-5 text-white" />
-                    </button>
-                  </div>
-                </div>
+      {showCancelBookingModal && cancelBookingTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => !cancellingBookingId && setShowCancelBookingModal(false)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl"
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Cancel Booking?</h3>
+            <p className="text-gray-600 mb-4 text-sm">
+              Are you sure you want to cancel this booking? This action cannot be undone.
+            </p>
 
-                {/* Content */}
-                <div className="p-6 space-y-4">
-                  <div className="p-3 bg-gray-50 rounded-xl space-y-2">
-                    {cancelBookingTarget.user && (
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">
-                          {cancelBookingTarget.user.firstName} {cancelBookingTarget.user.lastName}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span>
-                        {formatDate(cancelBookingTarget.startDate)} - {formatDate(cancelBookingTarget.endDate)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn(
-                        'px-2 py-0.5 rounded-full text-xs font-medium',
-                        getBookingStatusColor(cancelBookingTarget.status)
-                      )}>
-                        {cancelBookingTarget.status}
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">
-                        {formatCurrency(cancelBookingTarget.totalAmount)}
-                      </span>
-                    </div>
-                  </div>
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Type <span className="font-mono font-bold">confirm</span> to proceed
+              </label>
+              <input
+                type="text"
+                value={cancelBookingConfirmText}
+                onChange={(e) => setCancelBookingConfirmText(e.target.value)}
+                placeholder="confirm"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
 
-                  <p className="text-sm text-gray-600">
-                    Are you sure you want to cancel this booking? This will notify the customer and cannot be undone.
-                  </p>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Type <span className="font-bold text-red-600">confirm</span> to cancel this booking
-                    </label>
-                    <input
-                      type="text"
-                      value={cancelBookingConfirmText}
-                      onChange={(e) => setCancelBookingConfirmText(e.target.value)}
-                      placeholder="Type confirm here..."
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      autoFocus
-                    />
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
-                  <button
-                    onClick={() => {
-                      setShowCancelBookingModal(false);
-                      setCancelBookingTarget(null);
-                      setCancelBookingConfirmText('');
-                    }}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Go Back
-                  </button>
-                  <button
-                    onClick={confirmCancelBooking}
-                    disabled={cancelBookingConfirmText.toLowerCase() !== 'confirm'}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    <CalendarX className="w-4 h-4" />
-                    Cancel Booking
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowCancelBookingModal(false)}
+                disabled={!!cancellingBookingId}
+                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50"
+              >
+                Keep Booking
+              </button>
+              <button
+                onClick={confirmCancelBooking}
+                disabled={!!cancellingBookingId || cancelBookingConfirmText.toLowerCase() !== 'confirm'}
+                className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {cancellingBookingId && <Loader2 className="w-3 h-3 animate-spin" />}
+                Cancel Booking
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
