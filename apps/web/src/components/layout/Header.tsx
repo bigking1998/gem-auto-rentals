@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Car, User, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, X, Car, User, LogOut, ChevronDown, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
+
+const ADMIN_DASHBOARD_URL = import.meta.env.VITE_ADMIN_URL || 'https://gem-auto-rentals-admin.onrender.com';
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -117,6 +119,18 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                         >
                           Profile
                         </Link>
+                        {user.role === 'ADMIN' && (
+                          <a
+                            href={ADMIN_DASHBOARD_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 font-medium"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Shield className="w-4 h-4" />
+                            My Admin
+                          </a>
+                        )}
                         <hr className="my-2 border-gray-100" />
                         <button
                           onClick={() => {
@@ -195,6 +209,18 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                       >
                         My Dashboard
                       </Link>
+                      {user.role === 'ADMIN' && (
+                        <a
+                          href={ADMIN_DASHBOARD_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full text-center text-orange-600 hover:bg-orange-50 font-medium py-3 rounded-lg border border-orange-200 flex items-center justify-center gap-2"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <Shield className="w-4 h-4" />
+                          My Admin
+                        </a>
+                      )}
                       <button
                         onClick={() => {
                           setIsMobileMenuOpen(false);
