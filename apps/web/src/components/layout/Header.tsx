@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Car, User, LogOut, ChevronDown, Shield } from 'lucide-react';
+import { Menu, X, Car, User, LogOut, ChevronDown, Shield, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
+import { api } from '@/lib/api';
 
 const ADMIN_DASHBOARD_URL = import.meta.env.VITE_ADMIN_URL || 'https://admin.gemrentalcars.com';
 
@@ -33,9 +34,30 @@ export default function Header({ variant = 'default' }: HeaderProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const [isAdminRedirecting, setIsAdminRedirecting] = useState(false);
+
   const handleLogout = async () => {
     await logout();
     navigate('/');
+  };
+
+  const handleAdminRedirect = async () => {
+    setIsAdminRedirecting(true);
+    setIsUserMenuOpen(false);
+    setIsMobileMenuOpen(false);
+    try {
+      const { code } = await api.auth.generateSsoCode();
+      window.open(
+        `${ADMIN_DASHBOARD_URL}/login?code=${encodeURIComponent(code)}`,
+        '_blank',
+        'noopener,noreferrer'
+      );
+    } catch {
+      // Fallback: open admin dashboard without SSO (user will need to log in manually)
+      window.open(ADMIN_DASHBOARD_URL, '_blank', 'noopener,noreferrer');
+    } finally {
+      setIsAdminRedirecting(false);
+    }
   };
 
   return (
@@ -113,16 +135,18 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                           My Dashboard
                         </Link>
                         {user.role === 'ADMIN' && (
-                          <a
-                            href={ADMIN_DASHBOARD_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 font-medium"
-                            onClick={() => setIsUserMenuOpen(false)}
+                          <button
+                            onClick={handleAdminRedirect}
+                            disabled={isAdminRedirecting}
+                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 font-medium disabled:opacity-50"
                           >
-                            <Shield className="w-4 h-4" />
-                            My Admin
-                          </a>
+                            {isAdminRedirecting ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Shield className="w-4 h-4" />
+                            )}
+                            {isAdminRedirecting ? 'Redirecting...' : 'My Admin'}
+                          </button>
                         )}
                         <hr className="my-2 border-gray-100" />
                         <button
@@ -203,16 +227,18 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                         My Dashboard
                       </Link>
                       {user.role === 'ADMIN' && (
-                        <a
-                          href={ADMIN_DASHBOARD_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full text-center text-orange-600 hover:bg-orange-50 font-medium py-3 rounded-lg border border-orange-200 flex items-center justify-center gap-2"
-                          onClick={() => setIsMobileMenuOpen(false)}
+                        <button
+                          onClick={handleAdminRedirect}
+                          disabled={isAdminRedirecting}
+                          className="w-full text-center text-orange-600 hover:bg-orange-50 font-medium py-3 rounded-lg border border-orange-200 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                          <Shield className="w-4 h-4" />
-                          My Admin
-                        </a>
+                          {isAdminRedirecting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Shield className="w-4 h-4" />
+                          )}
+                          {isAdminRedirecting ? 'Redirecting...' : 'My Admin'}
+                        </button>
                       )}
                       <button
                         onClick={() => {
