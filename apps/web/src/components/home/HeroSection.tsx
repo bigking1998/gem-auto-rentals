@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 export default function HeroSection() {
   return (
-    <section className="relative h-screen min-h-[800px] w-full overflow-hidden flex items-end pb-32">
+    <section className="relative h-[100svh] min-h-[600px] md:min-h-[800px] w-full overflow-hidden flex items-center md:items-end pt-24 md:pt-0 pb-8 md:pb-32">
       {/* Video Background */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-black/40 z-10" /> {/* Overlay for text contrast */}
@@ -31,7 +31,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-white mb-6"
+            className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-white mb-4 md:mb-6"
           >
             <Star className="w-4 h-4 text-primary fill-primary" />
             <span className="text-sm font-medium tracking-wide">Premium Car Rental Service</span>
@@ -41,7 +41,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight"
+            className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-4 md:mb-6 leading-tight"
           >
             Drive Your <span className="text-primary">Dream</span> Today
           </motion.h1>
@@ -50,7 +50,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-xl text-gray-200 mb-10 max-w-2xl leading-relaxed"
+            className="text-lg md:text-xl text-gray-200 mb-6 md:mb-10 max-w-2xl leading-relaxed"
           >
             Experience the freedom of the road with our premium fleet.
             Flexible bookings, comprehensive insurance, and 24/7 support.
@@ -83,7 +83,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-16 flex flex-wrap gap-8"
+            className="mt-8 md:mt-16 flex flex-wrap gap-6 md:gap-8"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
