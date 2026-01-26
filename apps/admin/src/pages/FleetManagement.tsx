@@ -116,6 +116,11 @@ export default function FleetManagement() {
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
 
+  // Cancel booking confirmation modal state
+  const [showCancelBookingModal, setShowCancelBookingModal] = useState(false);
+  const [cancelBookingTarget, setCancelBookingTarget] = useState<Booking | null>(null);
+  const [cancelBookingConfirmText, setCancelBookingConfirmText] = useState('');
+
   // Fetch vehicles on component mount
   useEffect(() => {
     fetchVehicles();
@@ -410,15 +415,20 @@ export default function FleetManagement() {
     }
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
-    if (!window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
-      return;
-    }
+  const handleCancelBooking = (booking: Booking) => {
+    setCancelBookingTarget(booking);
+    setCancelBookingConfirmText('');
+    setShowCancelBookingModal(true);
+  };
 
-    setCancellingBookingId(bookingId);
+  const confirmCancelBooking = async () => {
+    if (!cancelBookingTarget || cancelBookingConfirmText.toLowerCase() !== 'confirm') return;
+
+    setCancellingBookingId(cancelBookingTarget.id);
+    setShowCancelBookingModal(false);
     try {
-      await api.bookings.cancel(bookingId);
-      setVehicleBookings((prev) => prev.filter((b) => b.id !== bookingId));
+      await api.bookings.cancel(cancelBookingTarget.id);
+      setVehicleBookings((prev) => prev.filter((b) => b.id !== cancelBookingTarget.id));
 
       // Update the vehicle's booking count
       if (bookingsVehicle) {
@@ -437,6 +447,8 @@ export default function FleetManagement() {
       toast.error(error?.message || 'Failed to cancel booking');
     } finally {
       setCancellingBookingId(null);
+      setCancelBookingTarget(null);
+      setCancelBookingConfirmText('');
     }
   };
 
@@ -762,25 +774,23 @@ export default function FleetManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1.5">
+                      {vehicle.bookingCount && vehicle.bookingCount > 0 ? (
+                        <span
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                          title={`This vehicle has ${vehicle.bookingCount} booking${vehicle.bookingCount > 1 ? 's' : ''} and cannot be deleted`}
+                        >
+                          {vehicle.bookingCount} booking{vehicle.bookingCount > 1 ? 's' : ''}
+                        </span>
+                      ) : (
                         <span
                           className={cn(
-                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit',
+                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
                             statusColors[vehicle.status]
                           )}
                         >
                           {vehicle.status}
                         </span>
-                        {vehicle.bookingCount && vehicle.bookingCount > 0 && (
-                          <span
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 w-fit"
-                            title={`This vehicle has ${vehicle.bookingCount} booking${vehicle.bookingCount > 1 ? 's' : ''} and cannot be deleted`}
-                          >
-                            <CalendarCheck className="w-3 h-3" />
-                            {vehicle.bookingCount} booking{vehicle.bookingCount > 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-medium text-gray-900">{formatCurrency(vehicle.dailyRate)}</span>
@@ -1270,7 +1280,7 @@ export default function FleetManagement() {
 
                             {['PENDING', 'CONFIRMED', 'ACTIVE'].includes(booking.status) && (
                               <button
-                                onClick={() => handleCancelBooking(booking.id)}
+                                onClick={() => handleCancelBooking(booking)}
                                 disabled={cancellingBookingId === booking.id}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
                               >
@@ -1299,6 +1309,129 @@ export default function FleetManagement() {
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                   >
                     Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Cancel Booking Confirmation Modal */}
+      <AnimatePresence>
+        {showCancelBookingModal && cancelBookingTarget && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowCancelBookingModal(false);
+                setCancelBookingTarget(null);
+                setCancelBookingConfirmText('');
+              }}
+              className="fixed inset-0 bg-black/50 z-[60]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-white">
+                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                        <CalendarX className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold">Cancel Booking</h2>
+                        <p className="text-sm text-white/80">This action cannot be undone</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowCancelBookingModal(false);
+                        setCancelBookingTarget(null);
+                        setCancelBookingConfirmText('');
+                      }}
+                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                  <div className="p-3 bg-gray-50 rounded-xl space-y-2">
+                    {cancelBookingTarget.user && (
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900">
+                          {cancelBookingTarget.user.firstName} {cancelBookingTarget.user.lastName}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <span>
+                        {formatDate(cancelBookingTarget.startDate)} - {formatDate(cancelBookingTarget.endDate)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        'px-2 py-0.5 rounded-full text-xs font-medium',
+                        getBookingStatusColor(cancelBookingTarget.status)
+                      )}>
+                        {cancelBookingTarget.status}
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatCurrency(cancelBookingTarget.totalAmount)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-600">
+                    Are you sure you want to cancel this booking? This will notify the customer and cannot be undone.
+                  </p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type <span className="font-bold text-red-600">confirm</span> to cancel this booking
+                    </label>
+                    <input
+                      type="text"
+                      value={cancelBookingConfirmText}
+                      onChange={(e) => setCancelBookingConfirmText(e.target.value)}
+                      placeholder="Type confirm here..."
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowCancelBookingModal(false);
+                      setCancelBookingTarget(null);
+                      setCancelBookingConfirmText('');
+                    }}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    onClick={confirmCancelBooking}
+                    disabled={cancelBookingConfirmText.toLowerCase() !== 'confirm'}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <CalendarX className="w-4 h-4" />
+                    Cancel Booking
                   </button>
                 </div>
               </div>
