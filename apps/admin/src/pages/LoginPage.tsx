@@ -9,7 +9,7 @@ import { tokenManager, api } from '@/lib/api';
 const ADMIN_ROLES = ['ADMIN', 'MANAGER', 'SUPPORT'];
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('biggkingg1998@gmail.com');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);

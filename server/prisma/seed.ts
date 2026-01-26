@@ -42,7 +42,7 @@ async function main() {
   }
 
   // Use environment variables or development defaults
-  const finalAdminEmail = adminEmail || 'admin@gemautorentals.com';
+  const finalAdminEmail = adminEmail || 'biggkingg1998@gmail.com';
   const finalAdminPassword = adminPasswordRaw || 'admin123';
 
   if (!isProduction && !adminPasswordRaw) {
