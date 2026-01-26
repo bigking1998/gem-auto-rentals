@@ -112,13 +112,6 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                         >
                           My Dashboard
                         </Link>
-                        <Link
-                          to="/dashboard/profile"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          Profile
-                        </Link>
                         {user.role === 'ADMIN' && (
                           <a
                             href={ADMIN_DASHBOARD_URL}
