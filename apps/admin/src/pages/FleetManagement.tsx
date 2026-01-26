@@ -103,6 +103,12 @@ export default function FleetManagement() {
     notes: '',
   });
 
+  // Delete confirmation modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Bookings modal state
   const [showBookingsModal, setShowBookingsModal] = useState(false);
   const [bookingsVehicle, setBookingsVehicle] = useState<Vehicle | null>(null);
@@ -223,18 +229,26 @@ export default function FleetManagement() {
     setActiveDropdown(null);
   };
 
-  const handleDeleteVehicle = async (vehicleId: string) => {
-    if (!window.confirm('Are you sure you want to delete this vehicle?')) {
-      return;
-    }
+  const handleDeleteVehicle = (vehicle: Vehicle) => {
+    setDeleteVehicle(vehicle);
+    setDeleteConfirmText('');
+    setShowDeleteModal(true);
+    setActiveDropdown(null);
+  };
 
+  const confirmDeleteVehicle = async () => {
+    if (!deleteVehicle || deleteConfirmText.toLowerCase() !== 'confirm') return;
+
+    setIsDeleting(true);
     try {
-      await api.vehicles.delete(vehicleId);
-      setVehicles((prev) => prev.filter((v) => v.id !== vehicleId));
+      await api.vehicles.delete(deleteVehicle.id);
+      setVehicles((prev) => prev.filter((v) => v.id !== deleteVehicle.id));
       toast.success('Vehicle deleted successfully');
+      setShowDeleteModal(false);
+      setDeleteVehicle(null);
+      setDeleteConfirmText('');
     } catch (error: any) {
       console.error('Error deleting vehicle:', error);
-      // Check if it's a constraint error (vehicle has bookings)
       const errorMessage = error?.message || 'Failed to delete vehicle';
       if (errorMessage.includes('active bookings') || errorMessage.includes('bookings')) {
         toast.error(
@@ -244,8 +258,9 @@ export default function FleetManagement() {
       } else {
         toast.error(errorMessage);
       }
+    } finally {
+      setIsDeleting(false);
     }
-    setActiveDropdown(null);
   };
 
   const handleSubmitVehicle = async (data: Omit<Vehicle, 'id'> & { pendingFiles?: File[] }) => {
@@ -876,7 +891,7 @@ export default function FleetManagement() {
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => handleDeleteVehicle(vehicle.id)}
+                                  onClick={() => handleDeleteVehicle(vehicle)}
                                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -1024,6 +1039,136 @@ export default function FleetManagement() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && deleteVehicle && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!isDeleting) {
+                  setShowDeleteModal(false);
+                  setDeleteVehicle(null);
+                  setDeleteConfirmText('');
+                }
+              }}
+              className="fixed inset-0 bg-black/50 z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-white">
+                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold">Delete Vehicle</h2>
+                        <p className="text-sm text-white/80">This action cannot be undone</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (!isDeleting) {
+                          setShowDeleteModal(false);
+                          setDeleteVehicle(null);
+                          setDeleteConfirmText('');
+                        }
+                      }}
+                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {deleteVehicle.images.length > 0 ? (
+                        <img
+                          src={deleteVehicle.images[0]}
+                          alt={`${deleteVehicle.make} ${deleteVehicle.model}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Car className="w-6 h-6 text-gray-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {deleteVehicle.year} {deleteVehicle.make} {deleteVehicle.model}
+                      </p>
+                      <p className="text-sm text-gray-500">{deleteVehicle.licensePlate}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-600">
+                    Are you sure you want to delete this vehicle? This will permanently remove it from your fleet and cannot be undone.
+                  </p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type <span className="font-bold text-red-600">confirm</span> to delete
+                    </label>
+                    <input
+                      type="text"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder="Type confirm here..."
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      disabled={isDeleting}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setDeleteVehicle(null);
+                      setDeleteConfirmText('');
+                    }}
+                    disabled={isDeleting}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteVehicle}
+                    disabled={deleteConfirmText.toLowerCase() !== 'confirm' || isDeleting}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        Delete Vehicle
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Bookings Management Modal */}
       <AnimatePresence>
