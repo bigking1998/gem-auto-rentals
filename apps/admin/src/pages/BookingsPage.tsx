@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
   Calendar,
   Search,
@@ -336,8 +337,11 @@ export default function BookingsPage() {
                     <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
                       {/* Vehicle */}
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <Link
+                          to={`/fleet?search=${booking.vehicle?.licensePlate || booking.vehicle?.make || ''}`}
+                          className="flex items-center gap-3 hover:opacity-80 transition-opacity group"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:ring-2 group-hover:ring-primary group-hover:ring-offset-2 transition-all">
                             {booking.vehicle?.images?.[0] ? (
                               <img
                                 src={booking.vehicle.images[0]}
@@ -348,16 +352,25 @@ export default function BookingsPage() {
                               <Car className="w-5 h-5 text-gray-400" />
                             )}
                           </div>
-                          <span className="font-medium text-gray-900 whitespace-nowrap">{getVehicleName(booking)}</span>
-                        </div>
+                          <span className="font-medium text-gray-900 whitespace-nowrap group-hover:text-primary transition-colors">
+                            {getVehicleName(booking)}
+                          </span>
+                        </Link>
                       </td>
 
                       {/* Customer */}
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 whitespace-nowrap">{getCustomerName(booking)}</span>
-                        </div>
+                        <Link
+                          to={`/customers/${booking.user?.id}`}
+                          className="flex items-center gap-2 group hover:opacity-80 transition-opacity"
+                        >
+                          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10 transition-colors">
+                            <User className="w-3.5 h-3.5 text-gray-400 group-hover:text-primary transition-colors" />
+                          </div>
+                          <span className="text-sm text-gray-700 whitespace-nowrap group-hover:text-primary transition-colors">
+                            {getCustomerName(booking)}
+                          </span>
+                        </Link>
                       </td>
 
                       {/* Dates */}
