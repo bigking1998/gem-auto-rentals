@@ -1,6 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, Search, Filter, ChevronDown, Loader2, MoreHorizontal, CheckCircle2, XCircle, Clock, Car, User, DollarSign, MapPin } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Calendar,
+  Search,
+  Filter,
+  ChevronDown,
+  Loader2,
+  MoreHorizontal,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Car,
+  User,
+  MapPin,
+  CalendarCheck,
+  CalendarX,
+  AlertTriangle,
+  X,
+} from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { api, Booking, ApiError } from '@/lib/api';
 import { toast } from 'sonner';
@@ -31,6 +48,12 @@ export default function BookingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+
+  // Cancel booking confirmation modal state
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
+  const [cancelConfirmText, setCancelConfirmText] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const fetchBookings = useCallback(async () => {
     setIsLoading(true);
@@ -76,19 +99,32 @@ export default function BookingsPage() {
     setActiveDropdown(null);
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
-    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+  const handleCancelBooking = (booking: Booking) => {
+    setCancelTarget(booking);
+    setCancelConfirmText('');
+    setShowCancelModal(true);
+    setActiveDropdown(null);
+  };
+
+  const confirmCancelBooking = async () => {
+    if (!cancelTarget || cancelConfirmText.toLowerCase() !== 'confirm') return;
+
+    setIsCancelling(true);
     try {
-      await api.bookings.cancel(bookingId);
+      await api.bookings.cancel(cancelTarget.id);
       setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, status: 'CANCELLED' } : b))
+        prev.map((b) => (b.id === cancelTarget.id ? { ...b, status: 'CANCELLED' } : b))
       );
       toast.success('Booking cancelled');
+      setShowCancelModal(false);
+      setCancelTarget(null);
+      setCancelConfirmText('');
     } catch (err) {
       console.error('Failed to cancel booking:', err);
       toast.error('Failed to cancel booking');
+    } finally {
+      setIsCancelling(false);
     }
-    setActiveDropdown(null);
   };
 
   const getCustomerName = (booking: Booking): string => {
@@ -134,46 +170,71 @@ export default function BookingsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
         >
-          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-          <p className="text-sm text-gray-500">Total Bookings</p>
+          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-gray-600" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+            <p className="text-sm text-gray-500">Total Bookings</p>
+          </div>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
         >
-          <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-          <p className="text-sm text-gray-500">Pending</p>
+          <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
+            <Clock className="w-5 h-5 text-yellow-600" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+            <p className="text-sm text-gray-500">Pending</p>
+          </div>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
         >
-          <p className="text-2xl font-bold text-blue-600">{stats.confirmed}</p>
-          <p className="text-sm text-gray-500">Confirmed</p>
+          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+            <CalendarCheck className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-blue-600">{stats.confirmed}</p>
+            <p className="text-sm text-gray-500">Confirmed</p>
+          </div>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
         >
-          <p className="text-2xl font-bold text-green-600">{stats.active}</p>
-          <p className="text-sm text-gray-500">Active</p>
+          <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+            <Car className="w-5 h-5 text-green-600" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+            <p className="text-sm text-gray-500">Active</p>
+          </div>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
         >
-          <p className="text-2xl font-bold text-gray-600">{stats.completed}</p>
-          <p className="text-sm text-gray-500">Completed</p>
+          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5 text-gray-600" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-gray-600">{stats.completed}</p>
+            <p className="text-sm text-gray-500">Completed</p>
+          </div>
         </motion.div>
       </div>
 
@@ -236,7 +297,7 @@ export default function BookingsPage() {
         </div>
       </motion.div>
 
-      {/* Bookings List */}
+      {/* Bookings Table */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -255,109 +316,276 @@ export default function BookingsPage() {
             <p className="text-gray-500">Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {filteredBookings.map((booking, index) => {
-              const StatusIcon = statusIcons[booking.status] || Clock;
-              return (
-                <motion.div
-                  key={booking.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.03 }}
-                  className="p-4 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden">
-                        {booking.vehicle?.images?.[0] ? (
-                          <img
-                            src={booking.vehicle.images[0]}
-                            alt={getVehicleName(booking)}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Car className="w-6 h-6 text-gray-400" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-gray-900">{getVehicleName(booking)}</p>
-                          <span className={cn(
-                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
-                            statusColors[booking.status]
-                          )}>
-                            <StatusIcon className="w-3 h-3" />
-                            {booking.status}
-                          </span>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vehicle</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Dates</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredBookings.map((booking) => {
+                  const StatusIcon = statusIcons[booking.status] || Clock;
+                  return (
+                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                      {/* Vehicle */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            {booking.vehicle?.images?.[0] ? (
+                              <img
+                                src={booking.vehicle.images[0]}
+                                alt={getVehicleName(booking)}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Car className="w-5 h-5 text-gray-400" />
+                            )}
+                          </div>
+                          <span className="font-medium text-gray-900 whitespace-nowrap">{getVehicleName(booking)}</span>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            {getCustomerName(booking)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
+                      </td>
+
+                      {/* Customer */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 whitespace-nowrap">{getCustomerName(booking)}</span>
+                        </div>
+                      </td>
+
+                      {/* Dates */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 whitespace-nowrap">
                             {formatDate(new Date(booking.startDate))} - {formatDate(new Date(booking.endDate))}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {booking.pickupLocation}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <DollarSign className="w-4 h-4" />
-                            {formatCurrency(booking.totalAmount)}
-                          </span>
+                      </td>
+
+                      {/* Location */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 whitespace-nowrap">{booking.pickupLocation}</span>
                         </div>
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <button
-                        onClick={() => setActiveDropdown(activeDropdown === booking.id ? null : booking.id)}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <MoreHorizontal className="w-5 h-5 text-gray-400" />
-                      </button>
-                      {activeDropdown === booking.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setActiveDropdown(null)} />
-                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-2">
-                            <p className="px-4 py-1 text-xs text-gray-400 uppercase">Update Status</p>
-                            {(['PENDING', 'CONFIRMED', 'ACTIVE', 'COMPLETED'] as Booking['status'][]).map((status) => (
-                              <button
-                                key={status}
-                                onClick={() => handleStatusUpdate(booking.id, status)}
-                                className={cn(
-                                  'w-full px-4 py-2 text-left text-sm hover:bg-gray-50',
-                                  booking.status === status && 'bg-orange-50 text-primary'
+                      </td>
+
+                      {/* Amount */}
+                      <td className="px-6 py-4">
+                        <span className="font-medium text-gray-900">{formatCurrency(booking.totalAmount)}</span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4">
+                        <span className={cn(
+                          'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium',
+                          statusColors[booking.status]
+                        )}>
+                          <StatusIcon className="w-3 h-3" />
+                          {booking.status}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4">
+                        <div className="relative">
+                          <button
+                            onClick={() => setActiveDropdown(activeDropdown === booking.id ? null : booking.id)}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                          >
+                            <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                          </button>
+                          {activeDropdown === booking.id && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setActiveDropdown(null)} />
+                              <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-2">
+                                <p className="px-4 py-1 text-xs text-gray-400 uppercase">Update Status</p>
+                                {(['PENDING', 'CONFIRMED', 'ACTIVE', 'COMPLETED'] as Booking['status'][]).map((status) => (
+                                  <button
+                                    key={status}
+                                    onClick={() => handleStatusUpdate(booking.id, status)}
+                                    className={cn(
+                                      'w-full px-4 py-2 text-left text-sm hover:bg-gray-50',
+                                      booking.status === status && 'bg-orange-50 text-primary'
+                                    )}
+                                  >
+                                    {status}
+                                  </button>
+                                ))}
+                                <div className="border-t border-gray-100 my-1" />
+                                {booking.status !== 'CANCELLED' ? (
+                                  <button
+                                    onClick={() => handleCancelBooking(booking)}
+                                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                                  >
+                                    Cancel Booking
+                                  </button>
+                                ) : (
+                                  <div className="px-4 py-2 text-sm text-gray-400">
+                                    Already Cancelled
+                                  </div>
                                 )}
-                              >
-                                {status}
-                              </button>
-                            ))}
-                            <div className="border-t border-gray-100 my-1" />
-                            <button
-                              onClick={() => handleCancelBooking(booking.id)}
-                              disabled={booking.status === 'CANCELLED'}
-                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
-                            >
-                              Cancel Booking
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
-        <div className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
+        <div className="px-6 py-3 border-t border-gray-100 text-sm text-gray-500">
           Showing {filteredBookings.length} of {bookings.length} bookings
         </div>
       </motion.div>
+
+      {/* Cancel Booking Confirmation Modal */}
+      <AnimatePresence>
+        {showCancelModal && cancelTarget && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!isCancelling) {
+                  setShowCancelModal(false);
+                  setCancelTarget(null);
+                  setCancelConfirmText('');
+                }
+              }}
+              className="fixed inset-0 bg-black/50 z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-white">
+                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold">Cancel Booking</h2>
+                        <p className="text-sm text-white/80">This action cannot be undone</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (!isCancelling) {
+                          setShowCancelModal(false);
+                          setCancelTarget(null);
+                          setCancelConfirmText('');
+                        }
+                      }}
+                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                  <div className="p-3 bg-gray-50 rounded-xl space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {cancelTarget.vehicle?.images?.[0] ? (
+                          <img
+                            src={cancelTarget.vehicle.images[0]}
+                            alt={getVehicleName(cancelTarget)}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Car className="w-5 h-5 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{getVehicleName(cancelTarget)}</p>
+                        <p className="text-sm text-gray-500">{getCustomerName(cancelTarget)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-600 pt-1">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        {formatDate(new Date(cancelTarget.startDate))} - {formatDate(new Date(cancelTarget.endDate))}
+                      </span>
+                      <span className="font-medium">{formatCurrency(cancelTarget.totalAmount)}</span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-600">
+                    Are you sure you want to cancel this booking? This will notify the customer and cannot be undone.
+                  </p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type <span className="font-bold text-red-600">confirm</span> to cancel this booking
+                    </label>
+                    <input
+                      type="text"
+                      value={cancelConfirmText}
+                      onChange={(e) => setCancelConfirmText(e.target.value)}
+                      placeholder="Type confirm here..."
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      disabled={isCancelling}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowCancelModal(false);
+                      setCancelTarget(null);
+                      setCancelConfirmText('');
+                    }}
+                    disabled={isCancelling}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    onClick={confirmCancelBooking}
+                    disabled={cancelConfirmText.toLowerCase() !== 'confirm' || isCancelling}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isCancelling ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Cancelling...
+                      </>
+                    ) : (
+                      <>
+                        <CalendarX className="w-4 h-4" />
+                        Cancel Booking
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
