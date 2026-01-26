@@ -20,10 +20,13 @@ import {
   Loader2,
   Mail,
   FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { api, Notification as ApiNotification, NotificationType } from '@/lib/api';
+
+const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://gemrentalcars.com';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -259,6 +262,17 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
+          {/* Back to Site */}
+          <a
+            href={SITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-primary hover:bg-orange-50 rounded-lg transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            <span className="hidden sm:inline">Back to Site</span>
+          </a>
+
           {/* Notifications */}
           <div className="relative" ref={notificationsRef}>
             <button
@@ -469,6 +483,22 @@ export default function Header({ onMenuClick }: HeaderProps) {
                         <p className="text-xs text-gray-500">FAQs & support</p>
                       </div>
                     </button>
+
+                    <a
+                      href={SITE_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-left"
+                      onClick={() => setSettingsOpen(false)}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <ExternalLink className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Back to Site</p>
+                        <p className="text-xs text-gray-500">Visit main website</p>
+                      </div>
+                    </a>
 
                     {/* Theme Toggle */}
                     <div className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-100 transition-colors">
