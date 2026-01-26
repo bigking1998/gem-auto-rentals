@@ -175,16 +175,31 @@ export default function FleetManagement() {
 
     try {
       const ids = Array.from(selectedVehicles);
-      // Delete each vehicle via API
-      await Promise.all(ids.map(id => api.vehicles.delete(id)));
+      // Delete each vehicle via API, track failures
+      const results = await Promise.allSettled(ids.map(id => api.vehicles.delete(id)));
 
-      setVehicles((prev) => prev.filter((v) => !selectedVehicles.has(v.id)));
-      setSelectedVehicles(new Set());
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+
+      if (succeeded > 0) {
+        // Remove successfully deleted vehicles from state
+        const successfulIds = ids.filter((_, i) => results[i].status === 'fulfilled');
+        setVehicles((prev) => prev.filter((v) => !successfulIds.includes(v.id)));
+        setSelectedVehicles(new Set());
+      }
+
       setShowBulkActions(false);
-      toast.success(`Deleted ${ids.length} vehicles`);
-    } catch (error) {
+
+      if (failed > 0 && succeeded > 0) {
+        toast.warning(`Deleted ${succeeded} vehicles. ${failed} could not be deleted (may have active bookings).`, { duration: 6000 });
+      } else if (failed > 0 && succeeded === 0) {
+        toast.error('Could not delete vehicles. They may have active bookings. Try changing status to "Retired" instead.', { duration: 6000 });
+      } else {
+        toast.success(`Deleted ${succeeded} vehicles`);
+      }
+    } catch (error: any) {
       console.error('Error deleting vehicles:', error);
-      toast.error('Failed to delete vehicles');
+      toast.error(error?.message || 'Failed to delete vehicles');
     }
   };
 
@@ -208,9 +223,18 @@ export default function FleetManagement() {
       await api.vehicles.delete(vehicleId);
       setVehicles((prev) => prev.filter((v) => v.id !== vehicleId));
       toast.success('Vehicle deleted successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting vehicle:', error);
-      toast.error('Failed to delete vehicle');
+      // Check if it's a constraint error (vehicle has bookings)
+      const errorMessage = error?.message || 'Failed to delete vehicle';
+      if (errorMessage.includes('active bookings') || errorMessage.includes('bookings')) {
+        toast.error(
+          'Cannot delete vehicle with bookings. Try changing status to "Retired" instead, or use Recycle Bin for soft delete.',
+          { duration: 6000 }
+        );
+      } else {
+        toast.error(errorMessage);
+      }
     }
     setActiveDropdown(null);
   };
