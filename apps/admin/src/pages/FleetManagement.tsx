@@ -87,7 +87,8 @@ export default function FleetManagement() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null); // Kept for future use if needed, though replaced
+
 
   // Bulk selection state
   const [selectedVehicles, setSelectedVehicles] = useState<Set<string>>(new Set());
@@ -598,7 +599,7 @@ export default function FleetManagement() {
               placeholder="Search vehicles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
 
@@ -683,8 +684,11 @@ export default function FleetManagement() {
                       </button>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
+                      <div
+                        className="flex items-center gap-3 cursor-pointer group"
+                        onClick={() => handleEditVehicle(vehicle)}
+                      >
+                        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden group-hover:ring-2 group-hover:ring-primary group-hover:ring-offset-2 transition-all">
                           {vehicle.images.length > 0 ? (
                             <img
                               src={vehicle.images[0]}
@@ -696,7 +700,7 @@ export default function FleetManagement() {
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-gray-900 group-hover:text-primary transition-colors">
                             {vehicle.year} {vehicle.make} {vehicle.model}
                           </p>
                           <p className="text-sm text-gray-500">{vehicle.mileage.toLocaleString()} miles</p>
@@ -724,9 +728,16 @@ export default function FleetManagement() {
                       ) : (
                         <span
                           className={cn(
-                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity',
                             statusColors[vehicle.status]
                           )}
+                          title="Click to toggle status (Available/Retired)"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Simple toggle for quick status change
+                            if (vehicle.status === 'AVAILABLE') handleStatusChange(vehicle.id, 'RETIRED');
+                            else if (vehicle.status === 'RETIRED') handleStatusChange(vehicle.id, 'AVAILABLE');
+                          }}
                         >
                           {vehicle.status}
                         </span>
@@ -738,346 +749,314 @@ export default function FleetManagement() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" title={`${vehicle.seats} Seats`}>
                           <Users className="w-4 h-4" />
                           <span>{vehicle.seats}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" title={vehicle.transmission === 'AUTOMATIC' ? 'Automatic' : 'Manual'}>
                           <Settings2 className="w-4 h-4" />
-                          <span>{vehicle.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</span>
+                          <span>{vehicle.transmission === 'AUTOMATIC' ? 'Auto' : 'Man'}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" title={vehicle.fuelType}>
                           <Fuel className="w-4 h-4" />
                           <span>{vehicle.fuelType.charAt(0)}</span>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-gray-600 font-mono">{vehicle.licensePlate}</span>
+                      <span className="text-gray-600 font-mono text-sm">{vehicle.licensePlate}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="relative inline-block">
+                      <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => setActiveDropdown(activeDropdown === vehicle.id ? null : vehicle.id)}
-                          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                          onClick={() => handleEditVehicle(vehicle)}
+                          className="p-2 text-gray-400 hover:text-primary hover:bg-orange-50 rounded-lg transition-colors"
+                          title="Edit Vehicle"
                         >
-                          <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                          <Pencil className="w-4 h-4" />
                         </button>
-
-                        {/* Dropdown Menu */}
-                        {activeDropdown === vehicle.id && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-10"
-                              onClick={() => setActiveDropdown(null)}
-                            />
-                            <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20">
-                              <button
-                                onClick={() => handleEditVehicle(vehicle)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                              >
-                                <Pencil className="w-4 h-4" />
-                                Edit Details
-                              </button>
-                              <button
-                                onClick={() => handleOpenMaintenance(vehicle)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                              >
-                                <Wrench className="w-4 h-4" />
-                                Schedule Maintenance
-                              </button>
-                              {vehicle.status === 'MAINTENANCE' && (
-                                <button
-                                  onClick={() => handleCompleteMaintenance(vehicle.id)}
-                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50"
-                                >
-                                  <CheckSquare className="w-4 h-4" />
-                                  Complete Maintenance
-                                </button>
-                              )}
-                              <button
-                                onClick={() => handleOpenBookings(vehicle)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                              >
-                                <Calendar className="w-4 h-4" />
-                                View Bookings
-                              </button>
-                              <button
-                                onClick={() => handleDeleteVehicle(vehicle)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete Vehicle
-                              </button>
-                              <div className="border-t border-gray-100 my-1" />
-                              <p className="px-4 py-1 text-xs text-gray-400 uppercase">Change Status</p>
-                              {['AVAILABLE', 'RENTED', 'MAINTENANCE', 'RETIRED'].map((status) => (
-                                <button
-                                  key={status}
-                                  onClick={() => handleStatusChange(vehicle.id, status as Vehicle['status'])}
-                                  className={cn(
-                                    'w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50',
-                                    vehicle.status === status ? 'text-primary bg-orange-50' : 'text-gray-700'
-                                  )}
-                                >
-                                  <span
-                                    className={cn(
-                                      'w-2 h-2 rounded-full',
-                                      status === 'AVAILABLE' && 'bg-green-500',
-                                      status === 'RENTED' && 'bg-purple-500',
-                                      status === 'MAINTENANCE' && 'bg-orange-500',
-                                      status === 'RETIRED' && 'bg-gray-500'
-                                    )}
-                                  />
-                                  {status.charAt(0) + status.slice(1).toLowerCase()}
-                                </button>
-                              ))}
-                            </div>
-                          </>
+                        <button
+                          onClick={() => handleOpenMaintenance(vehicle)}
+                          className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                          title="Schedule Maintenance"
+                        >
+                          <Wrench className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleOpenBookings(vehicle)}
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="View Bookings"
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </button>
+                        {vehicle.status === 'MAINTENANCE' && (
+                          <button
+                            onClick={() => handleCompleteMaintenance(vehicle.id)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Complete Maintenance"
+                          >
+                            <CheckSquare className="w-4 h-4" />
+                          </button>
                         )}
+                        <button
+                          onClick={() => handleDeleteVehicle(vehicle)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Vehicle"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))
+
               )}
             </tbody>
           </table>
         </div>
-      </motion.div>
+      </motion.div >
 
       {/* Maintenance Modal */}
-      {showMaintenanceModal && maintenanceVehicle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowMaintenanceModal(false)} />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
-          >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Schedule Maintenance</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Maintenance Type</label>
-                <select
-                  value={maintenanceForm.type}
-                  onChange={(e) => setMaintenanceForm({ ...maintenanceForm, type: e.target.value as any })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  {maintenanceTypes.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
-                  ))}
-                </select>
+      {
+        showMaintenanceModal && maintenanceVehicle && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setShowMaintenanceModal(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
+            >
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Schedule Maintenance</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Maintenance Type</label>
+                  <select
+                    value={maintenanceForm.type}
+                    onChange={(e) => setMaintenanceForm({ ...maintenanceForm, type: e.target.value as any })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    {maintenanceTypes.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
+                  <input
+                    type="date"
+                    value={maintenanceForm.scheduledDate}
+                    onChange={(e) => setMaintenanceForm({ ...maintenanceForm, scheduledDate: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <textarea
+                    value={maintenanceForm.notes}
+                    onChange={(e) => setMaintenanceForm({ ...maintenanceForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    rows={3}
+                    placeholder="Additional details..."
+                  />
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={() => setShowMaintenanceModal(false)}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-900"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleScheduleMaintenance}
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600"
+                  >
+                    Schedule
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
+            </motion.div>
+          </div>
+        )
+      }
+
+      {/* Delete Confirmation Modal */}
+      {
+        showDeleteModal && deleteVehicle && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50" onClick={() => !isDeleting && setShowDeleteModal(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
+            >
+              <div className="flex items-center gap-3 text-red-600 mb-4">
+                <AlertTriangle className="w-8 h-8" />
+                <h2 className="text-xl font-bold">Delete Vehicle?</h2>
+              </div>
+
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to delete <span className="font-semibold">{deleteVehicle.year} {deleteVehicle.make} {deleteVehicle.model}</span>?
+                This action cannot be undone.
+              </p>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Type <span className="font-mono font-bold">confirm</span> to proceed
+                </label>
                 <input
-                  type="date"
-                  value={maintenanceForm.scheduledDate}
-                  onChange={(e) => setMaintenanceForm({ ...maintenanceForm, scheduledDate: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="confirm"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                <textarea
-                  value={maintenanceForm.notes}
-                  onChange={(e) => setMaintenanceForm({ ...maintenanceForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  rows={3}
-                  placeholder="Additional details..."
-                />
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
+
+              <div className="flex justify-end gap-3">
                 <button
-                  onClick={() => setShowMaintenanceModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-900"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleScheduleMaintenance}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600"
+                  onClick={confirmDeleteVehicle}
+                  disabled={isDeleting || deleteConfirmText.toLowerCase() !== 'confirm'}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
                 >
-                  Schedule
+                  {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Delete Vehicle
                 </button>
               </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && deleteVehicle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => !isDeleting && setShowDeleteModal(false)} />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
-          >
-            <div className="flex items-center gap-3 text-red-600 mb-4">
-              <AlertTriangle className="w-8 h-8" />
-              <h2 className="text-xl font-bold">Delete Vehicle?</h2>
-            </div>
-
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to delete <span className="font-semibold">{deleteVehicle.year} {deleteVehicle.make} {deleteVehicle.model}</span>?
-              This action cannot be undone.
-            </p>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Type <span className="font-mono font-bold">confirm</span> to proceed
-              </label>
-              <input
-                type="text"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="confirm"
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={isDeleting}
-                className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteVehicle}
-                disabled={isDeleting || deleteConfirmText.toLowerCase() !== 'confirm'}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
-              >
-                {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Delete Vehicle
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            </motion.div>
+          </div>
+        )
+      }
 
       {/* Bookings Modal */}
-      {showBookingsModal && bookingsVehicle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowBookingsModal(false)} />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] shadow-xl flex flex-col"
-          >
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Vehicle Bookings</h2>
-                <p className="text-sm text-gray-500">
-                  {bookingsVehicle.year} {bookingsVehicle.make} {bookingsVehicle.model}
-                </p>
+      {
+        showBookingsModal && bookingsVehicle && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setShowBookingsModal(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] shadow-xl flex flex-col"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Vehicle Bookings</h2>
+                  <p className="text-sm text-gray-500">
+                    {bookingsVehicle.year} {bookingsVehicle.make} {bookingsVehicle.model}
+                  </p>
+                </div>
+                <button onClick={() => setShowBookingsModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
-              <button onClick={() => setShowBookingsModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
 
-            <div className="overflow-y-auto flex-1 p-6">
-              {isLoadingBookings ? (
-                <div className="text-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
-                  <p className="text-gray-500">Loading bookings...</p>
-                </div>
-              ) : vehicleBookings.length === 0 ? (
-                <div className="text-center py-12">
-                  <CalendarX className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No bookings found for this vehicle</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {vehicleBookings.map((booking) => (
-                    <div key={booking.id} className="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-gray-100">
-                          <Calendar className="w-5 h-5 text-gray-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
-                          </p>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <span className={cn(
-                              'px-2 py-0.5 rounded-full text-xs font-medium',
-                              getBookingStatusColor(booking.status)
-                            )}>
-                              {booking.status}
-                            </span>
-                            <span>• {formatCurrency(booking.totalAmount)}</span>
+              <div className="overflow-y-auto flex-1 p-6">
+                {isLoadingBookings ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
+                    <p className="text-gray-500">Loading bookings...</p>
+                  </div>
+                ) : vehicleBookings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <CalendarX className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">No bookings found for this vehicle</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {vehicleBookings.map((booking) => (
+                      <div key={booking.id} className="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-gray-100">
+                            <Calendar className="w-5 h-5 text-gray-500" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
+                            </p>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <span className={cn(
+                                'px-2 py-0.5 rounded-full text-xs font-medium',
+                                getBookingStatusColor(booking.status)
+                              )}>
+                                {booking.status}
+                              </span>
+                              <span>• {formatCurrency(booking.totalAmount)}</span>
+                            </div>
                           </div>
                         </div>
+                        {['PENDING', 'CONFIRMED', 'ACTIVE'].includes(booking.status) && (
+                          <button
+                            onClick={() => handleCancelBooking(booking)}
+                            className="text-sm text-red-600 hover:text-red-700 font-medium"
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </div>
-                      {['PENDING', 'CONFIRMED', 'ACTIVE'].includes(booking.status) && (
-                        <button
-                          onClick={() => handleCancelBooking(booking)}
-                          className="text-sm text-red-600 hover:text-red-700 font-medium"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-      )}
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )
+      }
 
       {/* Cancel Booking Confirmation Modal */}
-      {showCancelBookingModal && cancelBookingTarget && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => !cancellingBookingId && setShowCancelBookingModal(false)} />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl"
-          >
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Cancel Booking?</h3>
-            <p className="text-gray-600 mb-4 text-sm">
-              Are you sure you want to cancel this booking? This action cannot be undone.
-            </p>
+      {
+        showCancelBookingModal && cancelBookingTarget && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50" onClick={() => !cancellingBookingId && setShowCancelBookingModal(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl"
+            >
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Cancel Booking?</h3>
+              <p className="text-gray-600 mb-4 text-sm">
+                Are you sure you want to cancel this booking? This action cannot be undone.
+              </p>
 
-            <div className="mb-4">
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Type <span className="font-mono font-bold">confirm</span> to proceed
-              </label>
-              <input
-                type="text"
-                value={cancelBookingConfirmText}
-                onChange={(e) => setCancelBookingConfirmText(e.target.value)}
-                placeholder="confirm"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-            </div>
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Type <span className="font-mono font-bold">confirm</span> to proceed
+                </label>
+                <input
+                  type="text"
+                  value={cancelBookingConfirmText}
+                  onChange={(e) => setCancelBookingConfirmText(e.target.value)}
+                  placeholder="confirm"
+                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
 
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowCancelBookingModal(false)}
-                disabled={!!cancellingBookingId}
-                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50"
-              >
-                Keep Booking
-              </button>
-              <button
-                onClick={confirmCancelBooking}
-                disabled={!!cancellingBookingId || cancelBookingConfirmText.toLowerCase() !== 'confirm'}
-                className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
-              >
-                {cancellingBookingId && <Loader2 className="w-3 h-3 animate-spin" />}
-                Cancel Booking
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowCancelBookingModal(false)}
+                  disabled={!!cancellingBookingId}
+                  className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50"
+                >
+                  Keep Booking
+                </button>
+                <button
+                  onClick={confirmCancelBooking}
+                  disabled={!!cancellingBookingId || cancelBookingConfirmText.toLowerCase() !== 'confirm'}
+                  className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {cancellingBookingId && <Loader2 className="w-3 h-3 animate-spin" />}
+                  Cancel Booking
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )
+      }
+    </div >
   );
 }
