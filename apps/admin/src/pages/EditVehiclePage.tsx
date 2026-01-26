@@ -37,7 +37,14 @@ export default function EditVehiclePage() {
         setIsLoading(true);
         try {
             const { pendingFiles, ...vehicleData } = data;
-            await api.vehicles.update(id, vehicleData);
+
+            // Sanitize data: allow empty VIN by converting to undefined so partial update ignores it
+            const sanitizedData = {
+                ...vehicleData,
+                vin: vehicleData.vin === '' ? undefined : vehicleData.vin,
+            };
+
+            await api.vehicles.update(id, sanitizedData);
             toast.success('Vehicle updated successfully');
             navigate('/fleet');
         } catch (error: any) {

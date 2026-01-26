@@ -12,6 +12,7 @@ const VehiclesPage = lazy(() => import('./pages/VehiclesPage'));
 const VehicleDetailPage = lazy(() => import('./pages/VehicleDetailPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
 
 // Auth pages - lazy loaded
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
@@ -44,6 +45,7 @@ function App() {
           <Route path="/vehicles/:id" element={<VehicleDetailPage />} />
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
+          <Route path="/about" element={<AboutPage />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />

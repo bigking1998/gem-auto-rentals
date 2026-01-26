@@ -14,7 +14,13 @@ export default function AddVehiclePage() {
             const { pendingFiles, ...vehicleData } = data;
             const { images: _images, ...createData } = vehicleData;
 
-            const newVehicle = await api.vehicles.create(createData);
+            // Sanitize data: remove empty VIN
+            const sanitizedData = {
+                ...createData,
+                vin: createData.vin === '' ? undefined : createData.vin,
+            };
+
+            const newVehicle = await api.vehicles.create(sanitizedData);
 
             if (pendingFiles && pendingFiles.length > 0) {
                 toast.info(`Uploading ${pendingFiles.length} image(s)...`);

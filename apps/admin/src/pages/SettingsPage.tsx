@@ -780,7 +780,7 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="XX-XXXXXXX"
+                      defaultValue="59-2586252"
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                     />
                   </div>
@@ -790,7 +790,7 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="url"
-                      defaultValue="https://gemautorentals.com"
+                      defaultValue="https://gemautosalesinc.com"
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                     />
                   </div>
@@ -808,7 +808,7 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="email"
-                      defaultValue="contact@gemautorentals.com"
+                      defaultValue="gemautosalesinc@gmail.com"
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                     />
                   </div>
@@ -818,7 +818,7 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="tel"
-                      defaultValue="+1 (800) GEM-AUTO"
+                      defaultValue="863-277-7879"
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                     />
                   </div>
@@ -828,13 +828,13 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="123 Ocean Drive"
+                      defaultValue="1311 E CANAL ST"
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all mb-3"
                     />
                     <div className="grid grid-cols-3 gap-3">
                       <input
                         type="text"
-                        defaultValue="Miami"
+                        defaultValue="Mulberry"
                         placeholder="City"
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                       />
@@ -846,7 +846,7 @@ export default function SettingsPage() {
                       />
                       <input
                         type="text"
-                        defaultValue="33139"
+                        defaultValue="33860"
                         placeholder="ZIP"
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                       />
@@ -864,9 +864,13 @@ export default function SettingsPage() {
 
                 <div className="space-y-3">
                   {[
-                    { day: 'Monday - Friday', hours: '8:00 AM - 8:00 PM' },
-                    { day: 'Saturday', hours: '9:00 AM - 6:00 PM' },
-                    { day: 'Sunday', hours: '10:00 AM - 4:00 PM' },
+                    { day: 'Monday', hours: '10:00 AM – 6:00 PM' },
+                    { day: 'Tuesday', hours: '10:00 AM – 12:30 PM' },
+                    { day: 'Wednesday', hours: '10:00 AM – 6:00 PM' },
+                    { day: 'Thursday', hours: '10:00 AM – 6:00 PM' },
+                    { day: 'Friday', hours: '10:00 AM – 6:00 PM' },
+                    { day: 'Saturday', hours: '11:00 AM – 3:00 PM' },
+                    { day: 'Sunday', hours: 'Closed' },
                   ].map((schedule, index) => (
                     <div
                       key={index}

@@ -27,7 +27,7 @@ const vehicleSchema = z.object({
     fuelType: z.enum(['GASOLINE', 'DIESEL', 'ELECTRIC', 'HYBRID']),
     mileage: z.number().min(0, 'Mileage cannot be negative'),
     licensePlate: z.string().min(1, 'License plate is required'),
-    vin: z.string().length(17, 'VIN must be exactly 17 characters'),
+    vin: z.string().length(17, 'VIN must be exactly 17 characters').optional().or(z.literal('')),
     features: z.array(z.string()).default([]),
 });
 
