@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { VehicleForm, VehicleFormData } from '@/components/vehicles/VehicleForm';
 import { api, Vehicle } from '@/lib/api';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 
 export default function EditVehiclePage() {
     const { id } = useParams<{ id: string }>();
@@ -71,6 +71,13 @@ export default function EditVehiclePage() {
     return (
         <div className="max-w-4xl mx-auto py-8">
             <div className="mb-6">
+                <button
+                    onClick={() => navigate('/fleet')}
+                    className="flex items-center text-sm text-gray-500 hover:text-gray-900 mb-2 transition-colors"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    Back to Fleet
+                </button>
                 <h1 className="text-3xl font-bold text-gray-900">Edit Vehicle</h1>
                 <p className="text-gray-500">Update vehicle information</p>
             </div>

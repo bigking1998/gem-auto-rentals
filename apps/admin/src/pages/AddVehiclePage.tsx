@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { VehicleForm, VehicleFormData } from '@/components/vehicles/VehicleForm';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { ArrowLeft } from 'lucide-react';
 
 export default function AddVehiclePage() {
     const navigate = useNavigate();
@@ -48,6 +49,13 @@ export default function AddVehiclePage() {
     return (
         <div className="max-w-4xl mx-auto py-8">
             <div className="mb-6">
+                <button
+                    onClick={() => navigate('/fleet')}
+                    className="flex items-center text-sm text-gray-500 hover:text-gray-900 mb-2 transition-colors"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    Back to Fleet
+                </button>
                 <h1 className="text-3xl font-bold text-gray-900">Add Vehicle</h1>
                 <p className="text-gray-500">Add a new vehicle to your fleet</p>
             </div>
