@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Search, Filter, MoreHorizontal, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle, Loader2, CalendarCheck } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Search, Filter, MoreHorizontal, Car, Fuel, Users, Settings2, Pencil, Trash2, CheckSquare, Square, Wrench, Calendar, X, AlertTriangle, Loader2, CalendarCheck, CalendarX, User } from 'lucide-react';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { VehicleModal } from '@/components/vehicles/VehicleModal';
-import { api, type Vehicle as ApiVehicle } from '@/lib/api';
+import { api, type Vehicle as ApiVehicle, type Booking } from '@/lib/api';
 import { toast } from 'sonner';
 
 // Vehicle type for the fleet
@@ -102,6 +102,13 @@ export default function FleetManagement() {
     scheduledDate: '',
     notes: '',
   });
+
+  // Bookings modal state
+  const [showBookingsModal, setShowBookingsModal] = useState(false);
+  const [bookingsVehicle, setBookingsVehicle] = useState<Vehicle | null>(null);
+  const [vehicleBookings, setVehicleBookings] = useState<Booking[]>([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
 
   // Fetch vehicles on component mount
   useEffect(() => {
@@ -367,6 +374,66 @@ export default function FleetManagement() {
       toast.error('Failed to complete maintenance');
     }
     setActiveDropdown(null);
+  };
+
+  // Booking handlers
+  const handleOpenBookings = async (vehicle: Vehicle) => {
+    setBookingsVehicle(vehicle);
+    setShowBookingsModal(true);
+    setActiveDropdown(null);
+    setIsLoadingBookings(true);
+
+    try {
+      const response = await api.bookings.list({ vehicleId: vehicle.id, limit: 50 });
+      setVehicleBookings(response.items);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      toast.error('Failed to load bookings');
+      setVehicleBookings([]);
+    } finally {
+      setIsLoadingBookings(false);
+    }
+  };
+
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+      return;
+    }
+
+    setCancellingBookingId(bookingId);
+    try {
+      await api.bookings.cancel(bookingId);
+      setVehicleBookings((prev) => prev.filter((b) => b.id !== bookingId));
+
+      // Update the vehicle's booking count
+      if (bookingsVehicle) {
+        setVehicles((prev) =>
+          prev.map((v) =>
+            v.id === bookingsVehicle.id
+              ? { ...v, bookingCount: Math.max(0, (v.bookingCount || 1) - 1) }
+              : v
+          )
+        );
+      }
+
+      toast.success('Booking cancelled successfully');
+    } catch (error: any) {
+      console.error('Error cancelling booking:', error);
+      toast.error(error?.message || 'Failed to cancel booking');
+    } finally {
+      setCancellingBookingId(null);
+    }
+  };
+
+  const getBookingStatusColor = (status: string) => {
+    switch (status) {
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+      case 'CONFIRMED': return 'bg-blue-100 text-blue-800';
+      case 'ACTIVE': return 'bg-green-100 text-green-800';
+      case 'COMPLETED': return 'bg-gray-100 text-gray-800';
+      case 'CANCELLED': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const isAllSelected = filteredVehicles.length > 0 && selectedVehicles.size === filteredVehicles.length;
@@ -786,6 +853,18 @@ export default function FleetManagement() {
                                   {status.charAt(0) + status.slice(1).toLowerCase()}
                                 </button>
                               ))}
+                              {vehicle.bookingCount && vehicle.bookingCount > 0 && (
+                                <>
+                                  <div className="border-t border-gray-100 my-1" />
+                                  <button
+                                    onClick={() => handleOpenBookings(vehicle)}
+                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
+                                  >
+                                    <CalendarX className="w-4 h-4" />
+                                    Manage Bookings ({vehicle.bookingCount})
+                                  </button>
+                                </>
+                              )}
                               <div className="border-t border-gray-100 my-1" />
                               {vehicle.bookingCount && vehicle.bookingCount > 0 ? (
                                 <div className="px-4 py-2 text-sm text-gray-400 cursor-not-allowed flex items-center gap-2">
@@ -945,6 +1024,143 @@ export default function FleetManagement() {
           </div>
         </div>
       )}
+
+      {/* Bookings Management Modal */}
+      <AnimatePresence>
+        {showBookingsModal && bookingsVehicle && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowBookingsModal(false)}
+              className="fixed inset-0 bg-black/50 z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-white">
+                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                        <CalendarCheck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold">Manage Bookings</h2>
+                        <p className="text-sm text-white/80">
+                          {bookingsVehicle.year} {bookingsVehicle.make} {bookingsVehicle.model}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowBookingsModal(false)}
+                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 max-h-[calc(85vh-140px)] overflow-y-auto">
+                  {isLoadingBookings ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                    </div>
+                  ) : vehicleBookings.length === 0 ? (
+                    <div className="text-center py-12">
+                      <CalendarX className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500">No bookings found for this vehicle</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {vehicleBookings.map((booking) => (
+                        <div
+                          key={booking.id}
+                          className="border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className={cn(
+                                  'px-2 py-0.5 rounded-full text-xs font-medium',
+                                  getBookingStatusColor(booking.status)
+                                )}>
+                                  {booking.status}
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                  ID: {booking.id.slice(0, 8)}...
+                                </span>
+                              </div>
+
+                              {booking.user && (
+                                <div className="flex items-center gap-2 mb-2">
+                                  <User className="w-4 h-4 text-gray-400" />
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {booking.user.firstName} {booking.user.lastName}
+                                  </span>
+                                  <span className="text-sm text-gray-500">
+                                    ({booking.user.email})
+                                  </span>
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  <span>
+                                    {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
+                                  </span>
+                                </div>
+                                <span className="font-medium text-gray-900">
+                                  {formatCurrency(booking.totalAmount)}
+                                </span>
+                              </div>
+                            </div>
+
+                            {['PENDING', 'CONFIRMED', 'ACTIVE'].includes(booking.status) && (
+                              <button
+                                onClick={() => handleCancelBooking(booking.id)}
+                                disabled={cancellingBookingId === booking.id}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+                              >
+                                {cancellingBookingId === booking.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <CalendarX className="w-4 h-4" />
+                                )}
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-between bg-gray-50">
+                  <p className="text-sm text-gray-500">
+                    {vehicleBookings.length} booking{vehicleBookings.length !== 1 ? 's' : ''} total
+                  </p>
+                  <button
+                    onClick={() => setShowBookingsModal(false)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
