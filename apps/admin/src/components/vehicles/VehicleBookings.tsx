@@ -109,7 +109,7 @@ export function VehicleBookings({ vehicleId }: VehicleBookingsProps) {
                 </span>
             </div>
 
-            <div className="overflow-x-auto overflow-y-visible">
+            <div>
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-gray-100 bg-gray-50/30">
