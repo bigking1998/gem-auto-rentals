@@ -134,6 +134,18 @@ export default function SettingsPage() {
     email: '',
     phone: '',
   });
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
+
+  // Company contact form state
+  const [companyForm, setCompanyForm] = useState({
+    email: 'gemautosalesinc@gmail.com',
+    phone: '863-277-7879',
+    street: '1311 E CANAL ST',
+    city: 'Mulberry',
+    state: 'FL',
+    zipCode: '33860',
+  });
+  const [isCompanySaving, setIsCompanySaving] = useState(false);
 
   // Initialize profile form when user loads
   useEffect(() => {
@@ -203,6 +215,51 @@ export default function SettingsPage() {
     setSearchParams({ tab: tabId });
   };
 
+  const handleProfileSave = async () => {
+    if (!user) return;
+
+    setIsProfileSaving(true);
+    try {
+      await api.customers.update(user.id, {
+        firstName: profileForm.firstName,
+        lastName: profileForm.lastName,
+        email: profileForm.email,
+        phone: profileForm.phone,
+      });
+      toast.success('Profile updated successfully');
+      // Update the user in the store
+      useAuthStore.setState({
+        user: {
+          ...user,
+          ...profileForm
+        }
+      });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setIsProfileSaving(false);
+    }
+  };
+
+  const handleCompanySave = async () => {
+    setIsCompanySaving(true);
+    try {
+      await api.company.update({
+        email: companyForm.email,
+        phone: companyForm.phone,
+        address: companyForm.street,
+        city: companyForm.city,
+        state: companyForm.state,
+        zipCode: companyForm.zipCode,
+      });
+      toast.success('Company settings updated successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update company settings');
+    } finally {
+      setIsCompanySaving(false);
+    }
+  };
+
   const handlePasswordChange = async () => {
     setPasswordError(null);
     setPasswordSuccess(false);
@@ -228,6 +285,7 @@ export default function SettingsPage() {
       await api.auth.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
       setPasswordSuccess(true);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success('Password changed successfully');
     } catch (err: any) {
       setPasswordError(err.message || 'Failed to change password');
     } finally {
@@ -442,11 +500,34 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
-                <button className="px-5 py-2.5 text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
+                <button
+                  onClick={() => {
+                    if (user) {
+                      setProfileForm({
+                        firstName: user.firstName || '',
+                        lastName: user.lastName || '',
+                        email: user.email || '',
+                        phone: user.phone || '',
+                      });
+                    }
+                  }}
+                  className="px-5 py-2.5 text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+                >
                   Cancel
                 </button>
-                <button className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300">
-                  Save Changes
+                <button
+                  onClick={handleProfileSave}
+                  disabled={isProfileSaving}
+                  className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isProfileSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
                 </button>
               </div>
             </div>
@@ -808,7 +889,8 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="email"
-                      defaultValue="gemautosalesinc@gmail.com"
+                      value={companyForm.email}
+                      onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                     />
                   </div>
@@ -818,7 +900,8 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="tel"
-                      defaultValue="863-277-7879"
+                      value={companyForm.phone}
+                      onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                     />
                   </div>
@@ -828,25 +911,29 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="1311 E CANAL ST"
+                      value={companyForm.street}
+                      onChange={(e) => setCompanyForm({ ...companyForm, street: e.target.value })}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all mb-3"
                     />
                     <div className="grid grid-cols-3 gap-3">
                       <input
                         type="text"
-                        defaultValue="Mulberry"
+                        value={companyForm.city}
+                        onChange={(e) => setCompanyForm({ ...companyForm, city: e.target.value })}
                         placeholder="City"
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                       />
                       <input
                         type="text"
-                        defaultValue="FL"
+                        value={companyForm.state}
+                        onChange={(e) => setCompanyForm({ ...companyForm, state: e.target.value })}
                         placeholder="State"
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                       />
                       <input
                         type="text"
-                        defaultValue="33860"
+                        value={companyForm.zipCode}
+                        onChange={(e) => setCompanyForm({ ...companyForm, zipCode: e.target.value })}
                         placeholder="ZIP"
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                       />
@@ -889,11 +976,32 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
-                  <button className="px-5 py-2.5 text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
+                  <button
+                    onClick={() => setCompanyForm({
+                      email: 'gemautosalesinc@gmail.com',
+                      phone: '863-277-7879',
+                      street: '1311 E CANAL ST',
+                      city: 'Mulberry',
+                      state: 'FL',
+                      zipCode: '33860',
+                    })}
+                    className="px-5 py-2.5 text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+                  >
                     Cancel
                   </button>
-                  <button className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300">
-                    Save Changes
+                  <button
+                    onClick={handleCompanySave}
+                    disabled={isCompanySaving}
+                    className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isCompanySaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
                   </button>
                 </div>
               </div>
