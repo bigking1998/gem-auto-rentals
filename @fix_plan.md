@@ -227,12 +227,12 @@ Phase 6: Admin Dashboard CRM Features - Backend APIs complete, frontend integrat
 - [x] Invoices API (`/api/invoices`) - Invoice management, PDF generation
 - [x] Integrations API (`/api/integrations`) - OAuth flows, webhook handlers
 
-### 6.3 Frontend Integration (PENDING)
-- [ ] Update SecurityPage to use real session/activity APIs
-- [ ] Update MessagesPage to use real conversation APIs
-- [ ] Update SettingsPage to use real preferences/company APIs
-- [ ] Add notification dropdown to header
-- [ ] Update integration cards to show real status
+### 6.3 Frontend Integration (COMPLETE)
+- [x] Update SecurityPage to use real session/activity APIs
+- [x] Update MessagesPage to use real conversation APIs
+- [x] Update SettingsPage to use real preferences/company APIs
+- [x] Add notification dropdown to header
+- [x] Update integration cards to show real status
 
 ## Notes
 - Use shadcn/ui components as foundation

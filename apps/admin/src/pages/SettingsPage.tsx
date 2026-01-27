@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import { api, PaymentMethod } from '@/lib/api';
+import { api, PaymentMethod, Integration } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { AddPaymentMethodModal } from '@/components/settings/AddPaymentMethodModal';
 import { DeletePaymentMethodModal } from '@/components/settings/DeletePaymentMethodModal';
@@ -36,57 +36,6 @@ const mockInvoices = [
   { id: 'INV-001', date: new Date('2026-01-01'), amount: 299, status: 'paid' },
   { id: 'INV-002', date: new Date('2025-12-01'), amount: 299, status: 'paid' },
   { id: 'INV-003', date: new Date('2025-11-01'), amount: 299, status: 'paid' },
-];
-
-const mockIntegrations = [
-  {
-    id: 'stripe',
-    name: 'Stripe',
-    description: 'Accept payments online',
-    icon: '💳',
-    connected: true,
-    category: 'payments',
-  },
-  {
-    id: 'paypal',
-    name: 'PayPal',
-    description: 'Alternative payment method',
-    icon: '🅿️',
-    connected: false,
-    category: 'payments',
-  },
-  {
-    id: 'mailchimp',
-    name: 'Mailchimp',
-    description: 'Email marketing campaigns',
-    icon: '📧',
-    connected: true,
-    category: 'marketing',
-  },
-  {
-    id: 'twilio',
-    name: 'Twilio',
-    description: 'SMS notifications',
-    icon: '📱',
-    connected: false,
-    category: 'communications',
-  },
-  {
-    id: 'google-analytics',
-    name: 'Google Analytics',
-    description: 'Website analytics',
-    icon: '📊',
-    connected: true,
-    category: 'analytics',
-  },
-  {
-    id: 'quickbooks',
-    name: 'QuickBooks',
-    description: 'Accounting software',
-    icon: '📚',
-    connected: false,
-    category: 'accounting',
-  },
 ];
 
 const tabs = [
@@ -146,6 +95,10 @@ export default function SettingsPage() {
     zipCode: '33860',
   });
   const [isCompanySaving, setIsCompanySaving] = useState(false);
+
+  // Integrations state
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [isLoadingIntegrations, setIsLoadingIntegrations] = useState(false);
 
   // Initialize profile form when user loads
   useEffect(() => {
@@ -329,6 +282,27 @@ export default function SettingsPage() {
     setPaymentMethodToDelete(method);
     setIsDeletePaymentModalOpen(true);
   };
+
+  // Fetch integrations from API
+  const fetchIntegrations = async () => {
+    setIsLoadingIntegrations(true);
+    try {
+      const items = await api.integrations.list();
+      setIntegrations(items);
+    } catch (error: any) {
+      console.error('Failed to fetch integrations:', error);
+      toast.error(error.message || 'Failed to load integrations');
+    } finally {
+      setIsLoadingIntegrations(false);
+    }
+  };
+
+  // Load integrations when the integrations tab is active
+  useEffect(() => {
+    if (activeTab === 'integrations') {
+      fetchIntegrations();
+    }
+  }, [activeTab]);
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1019,7 +993,7 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-gray-900">
-                        {mockIntegrations.filter((i) => i.connected).length}
+                        {integrations.filter((i) => i.isConnected).length}
                       </p>
                       <p className="text-sm text-gray-500">Connected</p>
                     </div>
@@ -1031,7 +1005,7 @@ export default function SettingsPage() {
                       <Globe className="w-5 h-5 text-gray-600" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-gray-900">{mockIntegrations.length}</p>
+                      <p className="text-2xl font-bold text-gray-900">{integrations.length}</p>
                       <p className="text-sm text-gray-500">Available</p>
                     </div>
                   </div>
@@ -1053,50 +1027,76 @@ export default function SettingsPage() {
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold text-gray-900">Available Integrations</h2>
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-primary border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors">
-                    <ExternalLink className="w-4 h-4" />
-                    Browse Marketplace
+                  <button
+                    onClick={fetchIntegrations}
+                    disabled={isLoadingIntegrations}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-primary border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={cn('w-4 h-4', isLoadingIntegrations && 'animate-spin')} />
+                    Refresh
                   </button>
                 </div>
 
+                {isLoadingIntegrations ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  </div>
+                ) : integrations.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    No integrations available
+                  </div>
+                ) : (
                 <div className="grid md:grid-cols-2 gap-4">
-                  {mockIntegrations.map((integration) => (
+                  {integrations.map((integration) => (
                     <div
                       key={integration.id}
                       className={cn(
                         'flex items-center justify-between p-4 rounded-xl border transition-all',
-                        integration.connected
+                        integration.isConnected
                           ? 'bg-green-50 border-green-200'
                           : 'bg-gray-50 border-gray-200 hover:border-orange-200'
                       )}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-2xl">
-                          {integration.icon}
+                        <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 flex items-center justify-center">
+                          <Globe className="w-6 h-6 text-gray-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{integration.name}</p>
-                          <p className="text-sm text-gray-500">{integration.description}</p>
+                          <p className="font-medium text-gray-900 capitalize">{integration.provider}</p>
+                          <p className="text-sm text-gray-500">
+                            {integration.isConnected && integration.connectedAt
+                              ? `Connected ${formatDate(new Date(integration.connectedAt))}`
+                              : 'Not connected'}
+                          </p>
                         </div>
                       </div>
-                      {integration.connected ? (
+                      {integration.isConnected ? (
                         <div className="flex items-center gap-2">
                           <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                            <Check className="w-3 h-3" />
+                            <CheckCircle2 className="w-3 h-3" />
                             Connected
                           </span>
-                          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-lg transition-colors">
+                          <button
+                            onClick={() => api.integrations.disconnect(integration.provider)}
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Disconnect"
+                          >
                             <ExternalLink className="w-4 h-4" />
                           </button>
                         </div>
                       ) : (
-                        <button className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300">
+                        <button
+                          onClick={() => api.integrations.connect(integration.provider, {})}
+                          disabled={!integration.isEnabled}
+                          className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                           Connect
                         </button>
                       )}
                     </div>
                   ))}
                 </div>
+                )}
               </div>
 
               {/* API Access */}
