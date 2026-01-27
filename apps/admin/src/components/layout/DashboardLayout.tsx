@@ -9,7 +9,7 @@ export default function DashboardLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
       <Sidebar
         collapsed={sidebarCollapsed}
@@ -21,15 +21,15 @@ export default function DashboardLayout() {
       {/* Main Content */}
       <div
         className={cn(
-          'transition-all duration-300',
-          sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'
+          'fixed inset-0 flex flex-col transition-all duration-300',
+          sidebarCollapsed ? 'lg:left-20' : 'lg:left-64'
         )}
       >
         <Header
           onMenuClick={() => setMobileSidebarOpen(true)}
           sidebarCollapsed={sidebarCollapsed}
         />
-        <main className="p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
