@@ -60,6 +60,9 @@ app.use(
     origin: [
       process.env.WEB_URL || 'http://localhost:5173',
       process.env.ADMIN_URL || 'http://localhost:5174',
+      'http://localhost:5175',
+      'http://localhost:5176',
+      'http://localhost:5177',
       'https://gemrentalcars.com',
       'https://www.gemrentalcars.com',
       'https://gem-auto-rentals.vercel.app',
