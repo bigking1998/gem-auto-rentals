@@ -110,7 +110,11 @@ export default function MessagesPage() {
   const fetchCustomers = useCallback(async () => {
     setIsLoadingCustomers(true);
     try {
-      const { items } = await api.customers.list({ search: customerSearch || undefined, limit: 20 });
+      const { items } = await api.customers.list({
+        search: customerSearch || undefined,
+        role: 'CUSTOMER', // Only fetch customers, not staff
+        limit: 100
+      });
       setCustomers(items);
     } catch (err) {
       console.error('Failed to fetch customers:', err);
@@ -664,7 +668,7 @@ export default function MessagesPage() {
                               No customers found
                             </div>
                           ) : (
-                            customers.filter(c => c.role === 'CUSTOMER').map((customer) => (
+                            customers.map((customer) => (
                               <button
                                 key={customer.id}
                                 onClick={() => setSelectedCustomer(customer)}
