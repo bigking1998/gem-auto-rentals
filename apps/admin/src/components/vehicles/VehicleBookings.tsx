@@ -98,7 +98,7 @@ export function VehicleBookings({ vehicleId }: VehicleBookingsProps) {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div>
                     <h2 className="text-lg font-semibold text-gray-900">Vehicle Bookings</h2>
@@ -109,7 +109,7 @@ export function VehicleBookings({ vehicleId }: VehicleBookingsProps) {
                 </span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-visible">
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-gray-100 bg-gray-50/30">
@@ -174,7 +174,7 @@ export function VehicleBookings({ vehicleId }: VehicleBookingsProps) {
                                                             initial={{ opacity: 0, scale: 0.95, y: -5 }}
                                                             animate={{ opacity: 1, scale: 1, y: 0 }}
                                                             exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                                                            className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-20 focus:outline-none py-1"
+                                                            className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 focus:outline-none max-h-64 overflow-y-auto"
                                                         >
                                                             <div className="px-4 py-2 border-b border-gray-100">
                                                                 <p className="text-xs font-medium text-gray-500 uppercase">Update Status</p>
