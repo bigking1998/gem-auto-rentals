@@ -750,7 +750,7 @@ export const api = {
 
   // Customers
   customers: {
-    list: (params?: { search?: string; role?: Role; page?: number; limit?: number }) =>
+    list: (params?: { search?: string; role?: 'CUSTOMER' | 'SUPPORT' | 'MANAGER' | 'ADMIN'; page?: number; limit?: number }) =>
       requestWithPagination<Customer[]>('/customers', { params }),
 
     get: (id: string): Promise<Customer> =>
