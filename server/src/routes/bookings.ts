@@ -421,9 +421,14 @@ router.post('/:id/cancel', authenticate, async (req, res, next) => {
       throw BadRequestError('Booking is already cancelled');
     }
 
+    // Soft delete the booking when cancelled
     const updatedBooking = await prisma.booking.update({
       where: { id },
-      data: { status: 'CANCELLED' },
+      data: {
+        status: 'CANCELLED',
+        deletedAt: new Date(),
+        deletedBy: req.user!.id,
+      },
       include: {
         vehicle: {
           select: {
@@ -441,6 +446,7 @@ router.post('/:id/cancel', authenticate, async (req, res, next) => {
     res.json({
       success: true,
       data: updatedBooking,
+      message: 'Booking cancelled and moved to recycling bin',
     });
   } catch (error) {
     next(error);
