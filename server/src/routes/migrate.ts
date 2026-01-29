@@ -330,4 +330,29 @@ router.post('/from-supabase', async (req, res: Response) => {
   }
 });
 
+// Set user as admin (one-time setup)
+router.post('/make-admin', async (req, res: Response) => {
+  const authKey = req.headers['x-migration-key'];
+  if (authKey !== 'migrate-gem-2024') {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const { email } = req.body;
+  if (!email) {
+    res.status(400).json({ error: 'Email required' });
+    return;
+  }
+
+  try {
+    const user = await prisma.user.update({
+      where: { email },
+      data: { role: 'ADMIN' },
+    });
+    res.json({ success: true, user: { id: user.id, email: user.email, role: user.role } });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;
