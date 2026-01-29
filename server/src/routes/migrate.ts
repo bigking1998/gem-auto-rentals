@@ -330,6 +330,30 @@ router.post('/from-supabase', async (req, res: Response) => {
   }
 });
 
+// Delete user by email (cleanup utility)
+router.delete('/user', async (req, res: Response) => {
+  const authKey = req.headers['x-migration-key'];
+  if (authKey !== 'migrate-gem-2024') {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const { email } = req.body;
+  if (!email) {
+    res.status(400).json({ error: 'Email required' });
+    return;
+  }
+
+  try {
+    await prisma.user.delete({
+      where: { email },
+    });
+    res.json({ success: true, message: `User ${email} deleted` });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Set user as admin (one-time setup)
 router.post('/make-admin', async (req, res: Response) => {
   const authKey = req.headers['x-migration-key'];
