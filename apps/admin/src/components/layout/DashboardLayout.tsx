@@ -12,13 +12,13 @@ export default function DashboardLayout() {
 
   const fetchBadgeCounts = useCallback(async () => {
     try {
-      // Fetch pending bookings count
+      // Fetch pending bookings count (data.total contains the count)
       const bookingsResponse = await api.bookings.list({ status: 'PENDING' });
-      const pendingBookings = bookingsResponse.pagination?.total || 0;
+      const pendingBookings = (bookingsResponse.data as { total?: number })?.total || 0;
 
       // Fetch unread conversations count
       const unreadResponse = await api.conversations.getUnreadCount();
-      const unreadMessages = unreadResponse.count || 0;
+      const unreadMessages = unreadResponse?.count || 0;
 
       setBadges({
         pendingBookings: pendingBookings > 0 ? pendingBookings : undefined,
