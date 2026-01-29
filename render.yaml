@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     region: oregon 
-    buildCommand: pnpm install && pnpm run db:generate && pnpm --filter server run build
+    buildCommand: pnpm install && pnpm run db:generate && pnpm run db:push && pnpm --filter server run build
     startCommand: node server/dist/index.js
     envVars:
       - key: NPM_CONFIG_PRODUCTION

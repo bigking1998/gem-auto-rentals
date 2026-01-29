@@ -29,7 +29,7 @@ let isDbConnected = false;
 
 // Initialize database connection on startup
 async function initializeDatabase(): Promise<boolean> {
-  const maxRetries = 8; // More retries for Supabase cold starts
+  const maxRetries = 5; // Retries for Render cold starts
   let retries = 0;
 
   while (retries < maxRetries) {
@@ -44,8 +44,8 @@ async function initializeDatabase(): Promise<boolean> {
       retries++;
       console.error(`Database connection attempt ${retries}/${maxRetries} failed:`, error);
       if (retries < maxRetries) {
-        // Wait before retrying (longer delays for Supabase: 2s, 4s, 6s, 8s, 10s, 12s, 14s, 16s)
-        const delay = Math.min(2000 * retries, 16000);
+        // Wait before retrying (1s, 2s, 3s, 4s)
+        const delay = Math.min(1000 * retries, 4000);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
