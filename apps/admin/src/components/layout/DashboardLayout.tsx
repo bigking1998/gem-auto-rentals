@@ -12,9 +12,9 @@ export default function DashboardLayout() {
 
   const fetchBadgeCounts = useCallback(async () => {
     try {
-      // Fetch total bookings count
+      // Fetch total bookings count (total is in pagination object)
       const bookingsResponse = await api.bookings.list({ limit: 1 });
-      const totalBookings = (bookingsResponse.data as { total?: number })?.total || 0;
+      const totalBookings = bookingsResponse.pagination?.total || 0;
 
       // Fetch open conversations count (total is in pagination object)
       const conversationsResponse = await api.conversations.list({ status: 'OPEN', limit: 1 });
