@@ -32,9 +32,11 @@ model User {
   deletedBy          String?
 
   // Core relations
-  bookings      Booking[]
-  documents     Document[]
-  reviews       Review[]
+  bookings           Booking[]
+  documents          Document[]
+  reviews            Review[]
+  favorites          Favorite[]
+  abandonedBookings  AbandonedBooking[]
 
   // CRM Feature relations
   preferences           UserPreferences?
@@ -47,6 +49,11 @@ model User {
   customerConversations Conversation[] @relation("CustomerConversations")
   assignedConversations Conversation[] @relation("AssignedConversations")
   sentMessages          Message[]
+
+  // Loyalty & Retention
+  loyaltyAccount        LoyaltyAccount?
+  referralsMade         Referral[]     @relation("Referrals")
+  referredBy            Referral?      @relation("ReferredBy")
 
   @@index([deletedAt])
 }
@@ -86,9 +93,11 @@ model Vehicle {
   deletedAt    DateTime?
   deletedBy    String?
 
-  bookings     Booking[]
-  reviews      Review[]
-  maintenance  MaintenanceRecord[]
+  bookings          Booking[]
+  reviews           Review[]
+  favorites         Favorite[]
+  maintenance       MaintenanceRecord[]
+  abandonedBookings AbandonedBooking[]
 
   @@index([deletedAt])
 }
@@ -151,6 +160,9 @@ model Booking {
   // CRM relations
   conversations   Conversation[]
   invoices        Invoice[]
+
+  // Extensions
+  extensions      BookingExtension[]
 
   @@index([userId])
   @@index([vehicleId])
@@ -254,6 +266,7 @@ model Review {
   vehicleId String
   rating    Int      @db.SmallInt // 1-5
   comment   String?
+  images    String[] // Array of image URLs for review photos
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -267,6 +280,46 @@ model Review {
   @@unique([userId, vehicleId])
   @@index([vehicleId])
   @@index([deletedAt])
+}
+
+// Favorites/Wishlist - users can save vehicles for later
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  vehicleId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, vehicleId])
+  @@index([userId])
+  @@index([vehicleId])
+}
+
+// Abandoned bookings for recovery emails
+model AbandonedBooking {
+  id                String    @id @default(cuid())
+  userId            String?
+  email             String?
+  vehicleId         String
+  startDate         DateTime
+  endDate           DateTime
+  extras            Json?
+  step              Int       // Which step of checkout they abandoned at (1-4)
+  recovered         Boolean   @default(false)
+  recoveryEmailSent Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  vehicle Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([vehicleId])
+  @@index([recovered])
+  @@index([recoveryEmailSent])
+  @@index([createdAt])
 }
 
 // Maintenance records for vehicles
@@ -819,5 +872,154 @@ enum WebhookStatus {
   FAILED
 }
 
-// Update Booking model to add Invoice relation
-// (Added at bottom to maintain relation)
+// =============================================
+// PHASE 4: RETENTION & LOYALTY FEATURES
+// =============================================
+
+// Loyalty Points System
+// ---------------------
+
+model LoyaltyAccount {
+  id             String               @id @default(cuid())
+  userId         String               @unique
+  points         Int                  @default(0)
+  tier           LoyaltyTier          @default(BRONZE)
+  lifetimePoints Int                  @default(0)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   LoyaltyTransaction[]
+}
+
+model LoyaltyTransaction {
+  id          String                 @id @default(cuid())
+  accountId   String
+  type        LoyaltyTransactionType
+  points      Int                    // Positive for earned, negative for redeemed
+  description String
+  bookingId   String?
+  createdAt   DateTime               @default(now())
+
+  account     LoyaltyAccount         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([bookingId])
+  @@index([createdAt])
+}
+
+enum LoyaltyTier {
+  BRONZE    // 0 - 999 lifetime points
+  SILVER    // 1000 - 4999 lifetime points (1.1x multiplier)
+  GOLD      // 5000 - 14999 lifetime points (1.25x multiplier)
+  PLATINUM  // 15000+ lifetime points (1.5x multiplier)
+}
+
+enum LoyaltyTransactionType {
+  EARNED       // Points earned from bookings
+  REDEEMED     // Points used for discounts
+  BONUS        // Promotional bonus points
+  EXPIRED      // Points that expired
+  ADJUSTMENT   // Manual adjustment by admin
+}
+
+// Referral Program
+// ----------------
+
+model Referral {
+  id             String         @id @default(cuid())
+  referrerId     String
+  refereeId      String?        @unique
+  code           String         @unique
+  status         ReferralStatus @default(PENDING)
+  referrerReward Int            @default(0)  // Points awarded to referrer
+  refereeReward  Int            @default(0)  // Points awarded to referee
+  expiresAt      DateTime
+  completedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  referrer       User           @relation("Referrals", fields: [referrerId], references: [id])
+  referee        User?          @relation("ReferredBy", fields: [refereeId], references: [id])
+
+  @@index([referrerId])
+  @@index([refereeId])
+  @@index([code])
+  @@index([status])
+}
+
+enum ReferralStatus {
+  PENDING     // Code generated, waiting for signup
+  SIGNED_UP   // New user signed up, waiting for first booking
+  COMPLETED   // First booking completed, rewards issued
+  EXPIRED     // Code expired unused
+}
+
+// Promo/Discount Codes
+// --------------------
+
+model PromoCode {
+  id             String           @id @default(cuid())
+  code           String           @unique
+  type           PromoType
+  value          Decimal          @db.Decimal(10, 2) // Either percentage or fixed amount
+  maxUsesTotal   Int?             // Null = unlimited
+  maxUsesPerUser Int              @default(1)
+  usedCount      Int              @default(0)
+  minBookingAmount Decimal?       @db.Decimal(10, 2) // Minimum booking amount required
+  validFrom      DateTime
+  validUntil     DateTime
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  usages         PromoCodeUsage[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([validFrom, validUntil])
+}
+
+model PromoCodeUsage {
+  id              String    @id @default(cuid())
+  promoCodeId     String
+  userId          String
+  bookingId       String
+  discountApplied Decimal   @db.Decimal(10, 2)
+  createdAt       DateTime  @default(now())
+
+  promoCode       PromoCode @relation(fields: [promoCodeId], references: [id])
+
+  @@unique([promoCodeId, bookingId])
+  @@index([userId])
+  @@index([bookingId])
+}
+
+enum PromoType {
+  PERCENTAGE    // Percentage off (e.g., 10% off)
+  FIXED_AMOUNT  // Fixed dollar amount off (e.g., $25 off)
+  FREE_EXTRA    // Free add-on (e.g., free GPS)
+}
+
+// Rental Extension Self-Service
+// -----------------------------
+
+model BookingExtension {
+  id               String        @id @default(cuid())
+  bookingId        String
+  originalEndDate  DateTime
+  newEndDate       DateTime
+  additionalAmount Decimal       @db.Decimal(10, 2)
+  paymentStatus    PaymentStatus @default(PENDING)
+  paymentIntentId  String?
+  requestedAt      DateTime      @default(now())
+  approvedAt       DateTime?
+  paidAt           DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  booking          Booking       @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([paymentStatus])
+}

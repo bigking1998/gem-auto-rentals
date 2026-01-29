@@ -61,6 +61,80 @@ const vehicleFilterSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
+// GET /api/vehicles/preview-pricing - Public endpoint for homepage pricing widget
+router.get('/preview-pricing', async (req, res, next) => {
+  try {
+    const params = z
+      .object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        category: z.enum(['ECONOMY', 'STANDARD', 'PREMIUM', 'LUXURY', 'SUV', 'VAN']).optional(),
+      })
+      .parse(req.query);
+
+    // Build where clause for available vehicles
+    const where: Record<string, unknown> = {
+      status: 'AVAILABLE',
+      deletedAt: null,
+    };
+
+    if (params.category) {
+      where.category = params.category;
+    }
+
+    // Get pricing statistics
+    const priceStats = await prisma.vehicle.aggregate({
+      where,
+      _min: { dailyRate: true },
+      _max: { dailyRate: true },
+      _avg: { dailyRate: true },
+      _count: true,
+    });
+
+    // Calculate days if dates provided
+    let days = 1;
+    if (params.startDate && params.endDate) {
+      const start = new Date(params.startDate);
+      const end = new Date(params.endDate);
+      days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+    }
+
+    // Get featured vehicles (top 3)
+    const featuredVehicles = await prisma.vehicle.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+      select: {
+        id: true,
+        make: true,
+        model: true,
+        year: true,
+        category: true,
+        dailyRate: true,
+        images: true,
+        seats: true,
+        transmission: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        availableCount: priceStats._count,
+        minDailyRate: priceStats._min.dailyRate ? Number(priceStats._min.dailyRate) : null,
+        maxDailyRate: priceStats._max.dailyRate ? Number(priceStats._max.dailyRate) : null,
+        avgDailyRate: priceStats._avg.dailyRate ? Number(priceStats._avg.dailyRate) : null,
+        days,
+        estimatedMinTotal: priceStats._min.dailyRate ? Number(priceStats._min.dailyRate) * days : null,
+        estimatedMaxTotal: priceStats._max.dailyRate ? Number(priceStats._max.dailyRate) * days : null,
+        featuredVehicles,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/vehicles - Public endpoint
 router.get('/', async (req, res, next) => {
   try {
@@ -357,6 +431,83 @@ router.get('/:id/availability', async (req, res, next) => {
   }
 });
 
+// POST /api/vehicles/availability-bulk - Check availability for multiple vehicles
+router.post('/availability-bulk', async (req, res, next) => {
+  try {
+    const { vehicleIds, startDate, endDate } = z
+      .object({
+        vehicleIds: z.array(z.string()).min(1).max(50),
+        startDate: z.string().transform((s) => new Date(s)),
+        endDate: z.string().transform((s) => new Date(s)),
+      })
+      .parse(req.body);
+
+    // Get all vehicles with their statuses
+    const vehicles = await prisma.vehicle.findMany({
+      where: {
+        id: { in: vehicleIds },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    // Get all conflicting bookings for these vehicles
+    const conflictingBookings = await prisma.booking.groupBy({
+      by: ['vehicleId'],
+      where: {
+        vehicleId: { in: vehicleIds },
+        status: { in: ['PENDING', 'CONFIRMED', 'ACTIVE'] },
+        OR: [
+          {
+            startDate: { lte: endDate },
+            endDate: { gte: startDate },
+          },
+        ],
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    // Create a map of vehicle ID to conflict count
+    const conflictMap = new Map(
+      conflictingBookings.map((b) => [b.vehicleId, b._count.id])
+    );
+
+    // Build availability result
+    const availability: Record<string, { available: boolean; status: 'available' | 'limited' | 'unavailable' }> = {};
+
+    for (const vehicle of vehicles) {
+      const conflicts = conflictMap.get(vehicle.id) || 0;
+      const isAvailable = conflicts === 0 && vehicle.status === 'AVAILABLE';
+
+      let status: 'available' | 'limited' | 'unavailable';
+      if (!isAvailable) {
+        status = 'unavailable';
+      } else {
+        // Check how many bookings exist in the next 7 days to determine if "limited"
+        // For simplicity, we mark all available as "available"
+        status = 'available';
+      }
+
+      availability[vehicle.id] = {
+        available: isAvailable,
+        status,
+      };
+    }
+
+    res.json({
+      success: true,
+      data: availability,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // POST /api/vehicles/:id/images - Upload vehicle image (Admin only)
 router.post('/:id/images', authenticate, staffOnly, upload.single('image'), async (req, res, next) => {
   try {
@@ -468,6 +619,331 @@ router.delete('/:id/images', authenticate, staffOnly, async (req, res, next) => 
     res.json({
       success: true,
       data: updatedVehicle,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============ REVIEW ENDPOINTS ============
+
+// GET /api/vehicles/:id/reviews - Get reviews for a vehicle
+router.get('/:id/reviews', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, limit = 10 } = z
+      .object({
+        page: z.coerce.number().int().positive().default(1),
+        limit: z.coerce.number().int().min(1).max(50).default(10),
+      })
+      .parse(req.query);
+
+    // Verify vehicle exists
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!vehicle) {
+      throw NotFoundError('Vehicle not found');
+    }
+
+    // Get total count
+    const total = await prisma.review.count({
+      where: { vehicleId: id, deletedAt: null },
+    });
+
+    // Get reviews with pagination
+    const reviews = await prisma.review.findMany({
+      where: { vehicleId: id, deletedAt: null },
+      include: {
+        user: {
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    // Calculate average rating
+    const avgResult = await prisma.review.aggregate({
+      where: { vehicleId: id, deletedAt: null },
+      _avg: { rating: true },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        items: reviews,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        averageRating: avgResult._avg.rating,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/vehicles/:id/reviews - Submit a review (authenticated, must have completed booking)
+router.post('/:id/reviews', authenticate, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    const { rating, comment } = z
+      .object({
+        rating: z.number().int().min(1).max(5),
+        comment: z.string().max(1000).optional(),
+      })
+      .parse(req.body);
+
+    // Verify vehicle exists
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!vehicle) {
+      throw NotFoundError('Vehicle not found');
+    }
+
+    // Check if user has a completed booking for this vehicle
+    const completedBooking = await prisma.booking.findFirst({
+      where: {
+        userId,
+        vehicleId: id,
+        status: 'COMPLETED',
+      },
+    });
+
+    if (!completedBooking) {
+      throw BadRequestError('You can only review vehicles you have rented');
+    }
+
+    // Check if user already has a review for this vehicle
+    const existingReview = await prisma.review.findUnique({
+      where: {
+        userId_vehicleId: { userId, vehicleId: id },
+      },
+    });
+
+    let review;
+    if (existingReview) {
+      // Update existing review
+      review = await prisma.review.update({
+        where: { id: existingReview.id },
+        data: {
+          rating,
+          comment,
+          deletedAt: null, // Restore if previously deleted
+          deletedBy: null,
+        },
+        include: {
+          user: {
+            select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          },
+        },
+      });
+    } else {
+      // Create new review
+      review = await prisma.review.create({
+        data: {
+          userId,
+          vehicleId: id,
+          rating,
+          comment,
+        },
+        include: {
+          user: {
+            select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          },
+        },
+      });
+    }
+
+    res.status(existingReview ? 200 : 201).json({
+      success: true,
+      data: review,
+      message: existingReview ? 'Review updated successfully' : 'Review submitted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/vehicles/:id/reviews - Delete own review (authenticated)
+router.delete('/:id/reviews', authenticate, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    const review = await prisma.review.findUnique({
+      where: {
+        userId_vehicleId: { userId, vehicleId: id },
+      },
+    });
+
+    if (!review) {
+      throw NotFoundError('Review not found');
+    }
+
+    // Soft delete
+    await prisma.review.update({
+      where: { id: review.id },
+      data: {
+        deletedAt: new Date(),
+        deletedBy: userId,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Review deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/vehicles/:id/reviews/images - Upload images for a review
+router.post('/:id/reviews/images', authenticate, upload.array('images', 5), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const files = req.files as Express.Multer.File[];
+
+    if (!files || files.length === 0) {
+      throw BadRequestError('No images provided');
+    }
+
+    if (!isStorageConfigured()) {
+      throw BadRequestError('Storage is not configured');
+    }
+
+    // Find user's review for this vehicle
+    const review = await prisma.review.findUnique({
+      where: {
+        userId_vehicleId: { userId, vehicleId: id },
+      },
+    });
+
+    if (!review) {
+      throw NotFoundError('Review not found. Please submit a review first.');
+    }
+
+    // Upload images
+    const uploadedUrls: string[] = [];
+    for (const file of files) {
+      const fileName = `reviews/${review.id}/${Date.now()}-${file.originalname}`;
+      await uploadFile(BUCKETS.DOCUMENTS, fileName, file.buffer, file.mimetype);
+      const url = getPublicUrl(BUCKETS.DOCUMENTS, fileName);
+      if (url) {
+        uploadedUrls.push(url);
+      }
+    }
+
+    // Update review with new images (append to existing)
+    const existingImages = review.images || [];
+    const updatedReview = await prisma.review.update({
+      where: { id: review.id },
+      data: {
+        images: [...existingImages, ...uploadedUrls],
+      },
+      include: {
+        user: {
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: updatedReview,
+      message: `${uploadedUrls.length} image(s) uploaded successfully`,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/vehicles/:id/reviews/images - Remove an image from a review
+router.delete('/:id/reviews/images', authenticate, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+    const userId = req.user!.id;
+
+    if (!imageUrl) {
+      throw BadRequestError('Image URL is required');
+    }
+
+    const review = await prisma.review.findUnique({
+      where: {
+        userId_vehicleId: { userId, vehicleId: id },
+      },
+    });
+
+    if (!review) {
+      throw NotFoundError('Review not found');
+    }
+
+    // Remove image from array
+    const updatedImages = (review.images || []).filter((url) => url !== imageUrl);
+
+    const updatedReview = await prisma.review.update({
+      where: { id: review.id },
+      data: { images: updatedImages },
+      include: {
+        user: {
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: updatedReview,
+      message: 'Image removed successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/vehicles/:id/can-review - Check if user can review this vehicle
+router.get('/:id/can-review', authenticate, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check for completed booking
+    const completedBooking = await prisma.booking.findFirst({
+      where: {
+        userId,
+        vehicleId: id,
+        status: 'COMPLETED',
+      },
+    });
+
+    // Check for existing review
+    const existingReview = await prisma.review.findUnique({
+      where: {
+        userId_vehicleId: { userId, vehicleId: id },
+      },
+      select: { id: true, rating: true, comment: true, deletedAt: true },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        canReview: !!completedBooking,
+        hasExistingReview: !!existingReview && !existingReview.deletedAt,
+        existingReview: existingReview && !existingReview.deletedAt ? existingReview : null,
+      },
     });
   } catch (error) {
     next(error);
