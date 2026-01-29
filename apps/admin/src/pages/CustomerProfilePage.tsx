@@ -12,7 +12,6 @@ import {
   DollarSign,
   CheckCircle2,
   Clock,
-  Shield,
   Star,
   Edit,
   Trash2,
