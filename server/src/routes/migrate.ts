@@ -4,8 +4,8 @@ import prisma from '../lib/prisma.js';
 
 const router = Router();
 
-// Source: Supabase (external URL - accessible from anywhere)
-const SUPABASE_URL = 'postgresql://postgres:Kinggodfrey.1998@db.szvnxiozrxmsudtcsddx.supabase.co:5432/postgres';
+// Source: Use environment variable (set only when migration is needed)
+const SUPABASE_URL = process.env.SUPABASE_MIGRATION_URL || '';
 
 // Helper to handle JSON null values for Prisma
 function handleJsonNull(value: Prisma.JsonValue): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput {
