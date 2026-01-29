@@ -34,13 +34,13 @@ export async function wakeUpServer(): Promise<void> {
   if (serverWakeUpPromise) return serverWakeUpPromise;
 
   serverWakeUpPromise = (async () => {
-    const maxRetries = 12; // 12 retries = up to ~60 seconds
+    const maxRetries = 12; // 12 retries with faster delays
     let retryCount = 0;
 
     while (retryCount < maxRetries) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
         const response = await fetch(`${SERVER_BASE_URL}/health`, {
           signal: controller.signal,
@@ -58,8 +58,8 @@ export async function wakeUpServer(): Promise<void> {
       }
 
       retryCount++;
-      // Exponential backoff: 2s, 4s, 6s, 8s, 10s, then 10s for remaining attempts
-      const delayMs = Math.min(2000 + retryCount * 2000, 10000);
+      // Faster exponential backoff: 1s, 2s, 3s, 4s, 5s, then 5s for remaining attempts
+      const delayMs = Math.min(1000 * retryCount, 5000);
       await sleep(delayMs);
     }
 
@@ -84,9 +84,9 @@ async function request<T>(
   options: RequestOptions = {},
   retryCount = 0
 ): Promise<T> {
-  // Wake up server on first request (non-blocking for subsequent calls)
+  // Trigger server wake-up in background (non-blocking)
   if (!isServerAwake && retryCount === 0) {
-    await wakeUpServer();
+    wakeUpServer().catch(console.error);
   }
 
   const { params, ...fetchOptions } = options;
@@ -129,8 +129,8 @@ async function request<T>(
     if (!text) {
       if (!response.ok) {
         // Retry on 500 errors (server might still be waking up)
-        if (response.status === 500 && retryCount < 3) {
-          await sleep(2000 * (retryCount + 1));
+        if (response.status === 500 && retryCount < 5) {
+          await sleep(1000 * (retryCount + 1)); // Faster retries: 1s, 2s, 3s, 4s, 5s
           return request<T>(endpoint, options, retryCount + 1);
         }
         throw new ApiError(response.status, response.statusText, 'Empty response from server');
@@ -142,8 +142,8 @@ async function request<T>(
 
     if (!response.ok || !json.success) {
       // Retry on 500 errors (server might still be waking up)
-      if (response.status === 500 && retryCount < 3) {
-        await sleep(2000 * (retryCount + 1));
+      if (response.status === 500 && retryCount < 5) {
+        await sleep(1000 * (retryCount + 1)); // Faster retries: 1s, 2s, 3s, 4s, 5s
         return request<T>(endpoint, options, retryCount + 1);
       }
 
@@ -158,8 +158,8 @@ async function request<T>(
     return json.data;
   } catch (error) {
     // Retry on network errors (server might be waking up)
-    if (retryCount < 3 && error instanceof TypeError) {
-      await sleep(2000 * (retryCount + 1));
+    if (retryCount < 5 && error instanceof TypeError) {
+      await sleep(1000 * (retryCount + 1)); // Faster retries: 1s, 2s, 3s, 4s, 5s
       return request<T>(endpoint, options, retryCount + 1);
     }
     throw error;
