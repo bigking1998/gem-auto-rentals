@@ -1,12 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
+import Sidebar, { BadgeCounts } from './Sidebar';
 import Header from './Header';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
 
 export default function DashboardLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [badges, setBadges] = useState<BadgeCounts>({});
+
+  const fetchBadgeCounts = useCallback(async () => {
+    try {
+      // Fetch pending bookings count
+      const bookingsResponse = await api.bookings.list({ status: 'PENDING' });
+      const pendingBookings = bookingsResponse.pagination?.total || 0;
+
+      // Fetch unread conversations count
+      const unreadResponse = await api.conversations.getUnreadCount();
+      const unreadMessages = unreadResponse.count || 0;
+
+      setBadges({
+        pendingBookings: pendingBookings > 0 ? pendingBookings : undefined,
+        unreadMessages: unreadMessages > 0 ? unreadMessages : undefined,
+      });
+    } catch (error) {
+      console.error('Failed to fetch badge counts:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBadgeCounts();
+    // Refresh badge counts every 30 seconds
+    const interval = setInterval(fetchBadgeCounts, 30000);
+    return () => clearInterval(interval);
+  }, [fetchBadgeCounts]);
 
   return (
     <div className="h-screen overflow-hidden bg-gray-50">
@@ -16,6 +44,7 @@ export default function DashboardLayout() {
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         mobileOpen={mobileSidebarOpen}
         onMobileClose={() => setMobileSidebarOpen(false)}
+        badges={badges}
       />
 
       {/* Main Content */}

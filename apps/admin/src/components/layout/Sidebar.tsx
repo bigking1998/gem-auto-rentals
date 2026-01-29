@@ -16,18 +16,24 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 
+export interface BadgeCounts {
+  pendingBookings?: number;
+  unreadMessages?: number;
+}
+
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  badges?: BadgeCounts;
 }
 
-const mainNavItems = [
+const getMainNavItems = (badges?: BadgeCounts) => [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/' },
-  { label: 'Bookings', icon: CalendarDays, href: '/bookings', badge: 3 },
+  { label: 'Bookings', icon: CalendarDays, href: '/bookings', badge: badges?.pendingBookings || undefined },
   { label: 'Customers', icon: Users, href: '/customers' },
-  { label: 'Messages', icon: MessageSquare, href: '/messages', badge: 5 },
+  { label: 'Messages', icon: MessageSquare, href: '/messages', badge: badges?.unreadMessages || undefined },
 ];
 
 const toolsNavItems = [
@@ -42,9 +48,10 @@ const supportNavItems = [
   { label: 'Help', icon: HelpCircle, href: '/help' },
 ];
 
-export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose, badges }: SidebarProps) {
   const location = useLocation();
   const { user } = useAuthStore();
+  const mainNavItems = getMainNavItems(badges);
 
   const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => {
     const isActive = location.pathname === item.href;
