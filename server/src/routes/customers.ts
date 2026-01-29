@@ -86,6 +86,12 @@ router.get('/', authenticate, staffOnly, async (req, res, next) => {
         emailVerified: true,
         avatarUrl: true,
         createdAt: true,
+        bookings: {
+          select: {
+            totalAmount: true,
+            status: true,
+          },
+        },
         _count: {
           select: {
             bookings: true,
@@ -95,10 +101,32 @@ router.get('/', authenticate, staffOnly, async (req, res, next) => {
       },
     });
 
+    // Transform data to include totalBookings and totalSpent
+    const customersWithStats = customers.map((customer) => {
+      const totalSpent = customer.bookings
+        .filter((b) => b.status !== 'CANCELLED')
+        .reduce((sum, b) => sum + Number(b.totalAmount), 0);
+
+      return {
+        id: customer.id,
+        email: customer.email,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        phone: customer.phone,
+        role: customer.role,
+        emailVerified: customer.emailVerified,
+        avatarUrl: customer.avatarUrl,
+        createdAt: customer.createdAt,
+        totalBookings: customer._count.bookings,
+        totalSpent,
+        documentsCount: customer._count.documents,
+      };
+    });
+
     res.json({
       success: true,
       data: {
-        items: customers,
+        items: customersWithStats,
         total,
         page,
         pageSize,
