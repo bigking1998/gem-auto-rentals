@@ -3,6 +3,7 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
+const SERVER_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -19,6 +20,57 @@ class ApiError extends Error {
   }
 }
 
+// Server wake-up utility for Render free tier
+let serverWakeUpPromise: Promise<void> | null = null;
+let isServerAwake = false;
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function wakeUpServer(): Promise<void> {
+  // If already awake or waking up, return existing promise
+  if (isServerAwake) return Promise.resolve();
+  if (serverWakeUpPromise) return serverWakeUpPromise;
+
+  serverWakeUpPromise = (async () => {
+    const maxRetries = 12; // 12 retries = up to ~60 seconds
+    let retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const response = await fetch(`${SERVER_BASE_URL}/health`, {
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          isServerAwake = true;
+          serverWakeUpPromise = null;
+          return;
+        }
+      } catch (error) {
+        // Ignore errors and retry
+      }
+
+      retryCount++;
+      // Exponential backoff: 2s, 4s, 6s, 8s, 10s, then 10s for remaining attempts
+      const delayMs = Math.min(2000 + retryCount * 2000, 10000);
+      await sleep(delayMs);
+    }
+
+    // If we exhausted retries, assume it's awake and let the actual API calls handle errors
+    isServerAwake = true;
+    serverWakeUpPromise = null;
+  })();
+
+  return serverWakeUpPromise;
+}
+
 // Backend response wrapper type
 interface ApiResponse<T> {
   success: boolean;
@@ -29,8 +81,14 @@ interface ApiResponse<T> {
 
 async function request<T>(
   endpoint: string,
-  options: RequestOptions = {}
+  options: RequestOptions = {},
+  retryCount = 0
 ): Promise<T> {
+  // Wake up server on first request (non-blocking for subsequent calls)
+  if (!isServerAwake && retryCount === 0) {
+    await wakeUpServer();
+  }
+
   const { params, ...fetchOptions } = options;
 
   // Build URL with query params
@@ -60,32 +118,52 @@ async function request<T>(
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...fetchOptions,
-    headers,
-  });
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers,
+    });
 
-  // Handle empty responses
-  const text = await response.text();
-  if (!text) {
-    if (!response.ok) {
-      throw new ApiError(response.status, response.statusText, 'Empty response from server');
+    // Handle empty responses
+    const text = await response.text();
+    if (!text) {
+      if (!response.ok) {
+        // Retry on 500 errors (server might still be waking up)
+        if (response.status === 500 && retryCount < 3) {
+          await sleep(2000 * (retryCount + 1));
+          return request<T>(endpoint, options, retryCount + 1);
+        }
+        throw new ApiError(response.status, response.statusText, 'Empty response from server');
+      }
+      return {} as T;
     }
-    return {} as T;
+
+    const json = JSON.parse(text) as ApiResponse<T>;
+
+    if (!response.ok || !json.success) {
+      // Retry on 500 errors (server might still be waking up)
+      if (response.status === 500 && retryCount < 3) {
+        await sleep(2000 * (retryCount + 1));
+        return request<T>(endpoint, options, retryCount + 1);
+      }
+
+      throw new ApiError(
+        response.status,
+        response.statusText,
+        json.error || json.message || `API Error: ${response.status} ${response.statusText}`
+      );
+    }
+
+    // Unwrap the data from the response wrapper
+    return json.data;
+  } catch (error) {
+    // Retry on network errors (server might be waking up)
+    if (retryCount < 3 && error instanceof TypeError) {
+      await sleep(2000 * (retryCount + 1));
+      return request<T>(endpoint, options, retryCount + 1);
+    }
+    throw error;
   }
-
-  const json = JSON.parse(text) as ApiResponse<T>;
-
-  if (!response.ok || !json.success) {
-    throw new ApiError(
-      response.status,
-      response.statusText,
-      json.error || json.message || `API Error: ${response.status} ${response.statusText}`
-    );
-  }
-
-  // Unwrap the data from the response wrapper
-  return json.data;
 }
 
 // ============ Vehicle Types ============
