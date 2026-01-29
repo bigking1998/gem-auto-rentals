@@ -1,7 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { api } from '@/lib/api';
 
-const stats = [
+interface StatItem {
+  value: number;
+  suffix: string;
+  label: string;
+}
+
+// Default stats (shown while loading or on error)
+const defaultStats: StatItem[] = [
   { value: 1250, suffix: '+', label: 'Happy Customers' },
   { value: 99.9, suffix: '%', label: 'Satisfaction Rate' },
   { value: 10, suffix: '+', label: 'Years Experience' },
@@ -47,6 +55,48 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
 }
 
 export default function Statistics() {
+  const [stats, setStats] = useState<StatItem[]>(defaultStats);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await api.stats.getPublic();
+
+        // Convert average rating to percentage for satisfaction rate
+        // (4.8 out of 5 = 96%)
+        const satisfactionRate = Math.round((data.averageRating / 5) * 1000) / 10;
+
+        setStats([
+          {
+            value: data.totalCustomers || 1250,
+            suffix: '+',
+            label: 'Happy Customers'
+          },
+          {
+            value: satisfactionRate || 99.9,
+            suffix: '%',
+            label: 'Satisfaction Rate'
+          },
+          {
+            value: data.yearsInBusiness || 10,
+            suffix: '+',
+            label: 'Years Experience'
+          },
+          {
+            value: data.totalRentals || 50000,
+            suffix: '+',
+            label: 'Completed Rentals'
+          },
+        ]);
+      } catch (error) {
+        // Keep default values on error
+        console.debug('Failed to fetch public stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <section className="py-20 lg:py-28 bg-gray-900 relative overflow-hidden">
       {/* Background Effects */}

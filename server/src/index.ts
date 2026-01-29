@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 import dotenv from 'dotenv';
 
 import { errorHandler } from './middleware/errorHandler.js';
@@ -17,6 +18,8 @@ import customerRoutes from './routes/customers.js';
 import paymentRoutes from './routes/payments.js';
 import statsRoutes from './routes/stats.js';
 import documentRoutes from './routes/documents.js';
+import favoritesRoutes from './routes/favorites.js';
+import abandonmentRoutes from './routes/abandonment.js';
 // CRM Feature routes
 import sessionRoutes from './routes/sessions.js';
 import activityRoutes from './routes/activity.js';
@@ -28,6 +31,11 @@ import integrationRoutes from './routes/integrations.js';
 import billingRoutes from './routes/billing.js';
 import trashRoutes from './routes/trash.js';
 import migrateRoutes from './routes/migrate.js';
+import sitemapRoutes from './routes/sitemap.js';
+import loyaltyRoutes from './routes/loyalty.js';
+import referralRoutes from './routes/referrals.js';
+import promoRoutes from './routes/promos.js';
+import extensionRoutes from './routes/extensions.js';
 
 // Load environment variables
 dotenv.config();
@@ -37,6 +45,20 @@ const PORT = process.env.PORT || 3000;
 
 // Trust proxy - required for rate limiting behind reverse proxies (Render, etc.)
 app.set('trust proxy', 1);
+
+// Compression middleware - compress all responses
+app.use(compression({
+  level: 6, // Balanced compression level (1-9)
+  threshold: 1024, // Only compress responses > 1KB
+  filter: (req, res) => {
+    // Don't compress if client doesn't accept it
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    // Use compression filter to determine if response should be compressed
+    return compression.filter(req, res);
+  },
+}));
 
 // Security middleware
 app.use(
@@ -73,10 +95,10 @@ app.use(
   })
 );
 
-// Rate limiting
+// Rate limiting - increased for better user experience
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 200, // Increased from 100 to 200 requests per windowMs
   message: { error: 'Too many requests, please try again later.' },
 });
 app.use('/api', limiter);
@@ -91,6 +113,19 @@ if (process.env.NODE_ENV === 'development') {
 } else {
   app.use(morgan('combined'));
 }
+
+// Cache control middleware for API responses
+const cacheControl = (maxAge: number) => {
+  return (_req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // Only cache GET requests
+    if (_req.method === 'GET') {
+      res.set('Cache-Control', `public, max-age=${maxAge}, stale-while-revalidate=${maxAge * 2}`);
+    } else {
+      res.set('Cache-Control', 'no-store');
+    }
+    next();
+  };
+};
 
 // Health check - checks database connection status
 app.get('/health', async (_req, res) => {
@@ -109,14 +144,34 @@ app.get('/health', async (_req, res) => {
   });
 });
 
-// API Routes
+// API Routes with cache control
+// Vehicles - cacheable for 60 seconds (frequently browsed)
+app.use('/api/vehicles', cacheControl(60), vehicleRoutes);
+
+// Auth - no caching (sensitive)
 app.use('/api/auth', authRoutes);
-app.use('/api/vehicles', vehicleRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/customers', customerRoutes);
+
+// Bookings - short cache (5 seconds) for list, no cache for mutations
+app.use('/api/bookings', cacheControl(5), bookingRoutes);
+
+// Customers - short cache
+app.use('/api/customers', cacheControl(5), customerRoutes);
+
+// Payments - no caching (sensitive)
 app.use('/api/payments', paymentRoutes);
-app.use('/api/stats', statsRoutes);
+
+// Stats - cache for 30 seconds (dashboard data)
+app.use('/api/stats', cacheControl(30), statsRoutes);
+
+// Documents - no caching (sensitive)
 app.use('/api/documents', documentRoutes);
+
+// Favorites - user-specific, no caching
+app.use('/api/favorites', favoritesRoutes);
+
+// Abandonment tracking - for recovery emails
+app.use('/api/abandonment', abandonmentRoutes);
+
 // CRM Feature routes
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/activity', activityRoutes);
@@ -128,6 +183,13 @@ app.use('/api/integrations', integrationRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/trash', trashRoutes);
 app.use('/api/migrate', migrateRoutes);
+app.use('/api/loyalty', loyaltyRoutes);
+app.use('/api/referrals', referralRoutes);
+app.use('/api/promos', promoRoutes);
+app.use('/api/bookings', extensionRoutes); // Extension routes under /api/bookings/:id/extend/*
+
+// Sitemap for SEO (served at /sitemap.xml)
+app.use('/sitemap.xml', cacheControl(3600), sitemapRoutes);
 
 // 404 handler
 app.use(notFound);

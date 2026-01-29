@@ -24,6 +24,8 @@ import Footer from '@/components/layout/Footer';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@gem/ui';
 import AvailabilityCalendar from '@/components/vehicles/AvailabilityCalendar';
+import ReviewList from '@/components/vehicles/ReviewList';
+import FavoriteButton from '@/components/vehicles/FavoriteButton';
 import { api, Vehicle } from '@/lib/api';
 import { BOOKING_VEHICLE_KEY } from './BookingPage';
 import { useAuthStore } from '@/stores/authStore';
@@ -297,12 +299,13 @@ export default function VehicleDetailPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end">
+                  <div className="flex flex-col items-end gap-3">
+                    <FavoriteButton vehicleId={vehicle.id} size="lg" />
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-bold text-gray-900">${vehicle.dailyRate}</span>
                       <span className="text-gray-500 font-medium">/day</span>
                     </div>
-                    <p className="text-green-600 text-sm font-medium flex items-center gap-1 mt-1">
+                    <p className="text-green-600 text-sm font-medium flex items-center gap-1">
                       <Check className="w-3 h-3" /> Best Price Guarantee
                     </p>
                   </div>
@@ -352,22 +355,11 @@ export default function VehicleDetailPage() {
               </div>
 
               {/* Reviews */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
-                {(vehicle.reviewCount ?? 0) > 0 ? (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Star className="w-5 h-5 text-primary fill-primary" />
-                    <span className="font-bold text-gray-900">{vehicle.averageRating?.toFixed(1) ?? 'N/A'}</span>
-                    <span>({vehicle.reviewCount} reviews)</span>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Star className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                    <p className="text-gray-500">No reviews yet</p>
-                    <p className="text-sm text-gray-400">Be the first to review this vehicle!</p>
-                  </div>
-                )}
-              </div>
+              <ReviewList
+                vehicleId={vehicle.id}
+                initialReviewCount={vehicle.reviewCount ?? 0}
+                initialAverageRating={vehicle.averageRating ?? null}
+              />
             </div>
 
             {/* Right Column - Booking Card (4 cols) */}

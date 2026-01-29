@@ -1,8 +1,10 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, Fuel, Gauge, Star, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LazyImage from '@/components/ui/LazyImage';
+import FavoriteButton from './FavoriteButton';
 
 interface VehicleCardProps {
   id: string;
@@ -30,7 +32,7 @@ const categoryColors: Record<string, string> = {
   VAN: 'bg-primary text-white shadow-md',
 };
 
-export default function VehicleCard({
+const VehicleCard = memo(function VehicleCard({
   id,
   make,
   model,
@@ -85,6 +87,9 @@ export default function VehicleCard({
             {category}
           </span>
         </div>
+        <div className="absolute top-3 right-3 z-10">
+          <FavoriteButton vehicleId={id} />
+        </div>
       </Link>
 
       {/* Content */}
@@ -136,4 +141,6 @@ export default function VehicleCard({
       </div>
     </motion.div>
   );
-}
+});
+
+export default VehicleCard;

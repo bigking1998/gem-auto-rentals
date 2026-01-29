@@ -237,6 +237,7 @@ export interface Review {
   vehicleId: string;
   rating: number;
   comment?: string | null;
+  images?: string[];
   createdAt: string;
   updatedAt: string;
   user: {
@@ -393,6 +394,16 @@ export const api = {
         transmission: string;
       }>;
     }> => request('/vehicles/preview-pricing', { params }),
+
+    checkAvailabilityBulk: (
+      vehicleIds: string[],
+      startDate: string,
+      endDate: string
+    ): Promise<Record<string, { available: boolean; status: 'available' | 'limited' | 'unavailable' }>> =>
+      request('/vehicles/availability-bulk', {
+        method: 'POST',
+        body: JSON.stringify({ vehicleIds, startDate, endDate }),
+      }),
   },
 
   // Reviews
@@ -400,7 +411,7 @@ export const api = {
     list: (vehicleId: string, params?: { page?: number; limit?: number }): Promise<ReviewsResponse> =>
       request(`/vehicles/${vehicleId}/reviews`, { params }),
 
-    submit: (vehicleId: string, data: { rating: number; comment?: string }): Promise<Review> =>
+    submit: (vehicleId: string, data: { rating: number; comment?: string }): Promise<{ id: string } & Review> =>
       request(`/vehicles/${vehicleId}/reviews`, {
         method: 'POST',
         body: JSON.stringify(data),
@@ -411,6 +422,37 @@ export const api = {
 
     canReview: (vehicleId: string): Promise<CanReviewResponse> =>
       request(`/vehicles/${vehicleId}/can-review`),
+
+    uploadImages: async (vehicleId: string, reviewId: string, files: File[]): Promise<string[]> => {
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('images', file);
+      });
+      formData.append('reviewId', reviewId);
+
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE_URL}/vehicles/${vehicleId}/reviews/images`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new ApiError(
+          response.status,
+          response.statusText,
+          json.error || json.message || 'Image upload failed'
+        );
+      }
+      return json.data.imageUrls;
+    },
+
+    removeImage: (vehicleId: string, reviewId: string, imageUrl: string): Promise<{ message: string }> =>
+      request(`/vehicles/${vehicleId}/reviews/images`, {
+        method: 'DELETE',
+        body: JSON.stringify({ reviewId, imageUrl }),
+      }),
   },
 
   // Favorites
@@ -728,6 +770,291 @@ export const api = {
       // Clean up the object URL after a short delay
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     },
+  },
+
+  // Abandonment tracking (for recovery emails)
+  abandonment: {
+    track: (data: {
+      vehicleId: string;
+      startDate: string;
+      endDate: string;
+      extras?: Record<string, unknown>;
+      step: number;
+      email?: string;
+    }): Promise<{ tracked: boolean }> =>
+      request('/abandonment/track', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    complete: (vehicleId: string): Promise<{ message: string }> =>
+      request('/abandonment/complete', {
+        method: 'POST',
+        body: JSON.stringify({ vehicleId }),
+      }),
+
+    recover: (id: string): Promise<{
+      vehicle: {
+        id: string;
+        make: string;
+        model: string;
+        year: number;
+        dailyRate: number;
+        images: string[];
+        category: string;
+        seats: number;
+        transmission: string;
+        fuelType: string;
+        status: string;
+      };
+      startDate: string;
+      endDate: string;
+      extras: Record<string, unknown> | null;
+      isAvailable: boolean;
+    }> => request(`/abandonment/recover/${id}`),
+  },
+
+  // Public Stats
+  stats: {
+    getPublic: (): Promise<{
+      totalCustomers: number;
+      totalRentals: number;
+      averageRating: number;
+      yearsInBusiness: number;
+      vehicleCount: number;
+    }> => request('/stats/public'),
+  },
+
+  // Loyalty Program
+  loyalty: {
+    getAccount: (): Promise<{
+      id: string;
+      userId: string;
+      points: number;
+      tier: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+      lifetimePoints: number;
+      transactions: Array<{
+        id: string;
+        type: 'EARNED' | 'REDEEMED' | 'BONUS' | 'EXPIRED' | 'ADJUSTMENT';
+        points: number;
+        description: string;
+        bookingId?: string;
+        createdAt: string;
+      }>;
+      tierProgress: {
+        currentTier: string;
+        nextTier: string | null;
+        pointsToNextTier: number;
+        progressToNextTier: number;
+        multiplier: number;
+      };
+      pointsValue: number;
+    }> => request('/loyalty/account'),
+
+    getHistory: (params?: { page?: number; limit?: number }): Promise<{
+      transactions: Array<{
+        id: string;
+        type: 'EARNED' | 'REDEEMED' | 'BONUS' | 'EXPIRED' | 'ADJUSTMENT';
+        points: number;
+        description: string;
+        bookingId?: string;
+        createdAt: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }> => request('/loyalty/history', { params }),
+
+    calculateRedemption: (points: number): Promise<{
+      points: number;
+      dollarValue: number;
+      availablePoints: number;
+      remainingPoints: number;
+    }> =>
+      request('/loyalty/calculate-redemption', {
+        method: 'POST',
+        body: JSON.stringify({ points }),
+      }),
+
+    redeem: (points: number, bookingId?: string): Promise<{
+      transaction: {
+        id: string;
+        type: string;
+        points: number;
+        description: string;
+      };
+      account: {
+        points: number;
+        tier: string;
+      };
+      dollarValue: number;
+    }> =>
+      request('/loyalty/redeem', {
+        method: 'POST',
+        body: JSON.stringify({ points, bookingId }),
+      }),
+
+    getTierInfo: (): Promise<{
+      tiers: Array<{
+        name: string;
+        threshold: number;
+        multiplier: number;
+        benefits: string[];
+      }>;
+      redemption: {
+        pointsPerDollar: number;
+        description: string;
+      };
+    }> => request('/loyalty/tier-info'),
+  },
+
+  // Referral Program
+  referrals: {
+    getMyCode: (): Promise<{
+      code: string;
+      expiresAt: string;
+      referrerReward: number;
+      refereeReward: number;
+      shareUrl: string;
+      stats: {
+        completed: number;
+        pending: number;
+        signedUp: number;
+        totalEarned: number;
+      };
+    }> => request('/referrals/my-code'),
+
+    getHistory: (params?: { page?: number; limit?: number }): Promise<{
+      referrals: Array<{
+        id: string;
+        code: string;
+        status: 'PENDING' | 'SIGNED_UP' | 'COMPLETED' | 'EXPIRED';
+        refereeFirstName?: string;
+        refereeLastName?: string;
+        refereeJoinDate?: string;
+        reward: number;
+        completedAt?: string;
+        createdAt: string;
+        expiresAt: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }> => request('/referrals/history', { params }),
+
+    validate: (code: string): Promise<{
+      valid: boolean;
+      referrerName?: string;
+      refereeReward?: number;
+      message: string;
+    }> => request(`/referrals/validate/${code}`),
+
+    apply: (code: string): Promise<{
+      message: string;
+      refereeReward: number;
+    }> =>
+      request('/referrals/apply', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      }),
+  },
+
+  // Promo Codes
+  promos: {
+    validate: (code: string, bookingAmount?: number): Promise<{
+      valid: boolean;
+      message?: string;
+      code?: string;
+      type?: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_EXTRA';
+      value?: number;
+      discountAmount?: number;
+      discountDescription?: string;
+      minBookingAmount?: number | null;
+      validUntil?: string;
+    }> =>
+      request('/promos/validate', {
+        method: 'POST',
+        body: JSON.stringify({ code, bookingAmount }),
+      }),
+
+    apply: (code: string, bookingId: string, bookingAmount: number): Promise<{
+      code: string;
+      type: string;
+      discountApplied: number;
+      message: string;
+    }> =>
+      request('/promos/apply', {
+        method: 'POST',
+        body: JSON.stringify({ code, bookingId, bookingAmount }),
+      }),
+  },
+
+  // Booking Extensions
+  extensions: {
+    preview: (bookingId: string, newEndDate: string): Promise<{
+      available: boolean;
+      message?: string;
+      conflictDate?: string;
+      booking?: {
+        id: string;
+        currentEndDate: string;
+        newEndDate: string;
+        vehicle: {
+          id: string;
+          make: string;
+          model: string;
+          year: number;
+          dailyRate: number;
+        };
+      };
+      pricing?: {
+        additionalDays: number;
+        dailyRate: number;
+        additionalAmount: number;
+      };
+    }> =>
+      request(`/bookings/${bookingId}/extend/preview`, {
+        method: 'POST',
+        body: JSON.stringify({ newEndDate }),
+      }),
+
+    request: (bookingId: string, newEndDate: string): Promise<{
+      extension: {
+        id: string;
+        originalEndDate: string;
+        newEndDate: string;
+        additionalAmount: number;
+        paymentStatus: string;
+      };
+      message: string;
+    }> =>
+      request(`/bookings/${bookingId}/extend`, {
+        method: 'POST',
+        body: JSON.stringify({ newEndDate }),
+      }),
+
+    pay: (bookingId: string, extensionId: string, paymentMethodId?: string): Promise<{
+      message: string;
+      newEndDate: string;
+      amountPaid: number;
+    }> =>
+      request(`/bookings/${bookingId}/extend/pay`, {
+        method: 'POST',
+        body: JSON.stringify({ extensionId, paymentMethodId }),
+      }),
+
+    getHistory: (bookingId: string): Promise<Array<{
+      id: string;
+      originalEndDate: string;
+      newEndDate: string;
+      additionalAmount: number;
+      paymentStatus: string;
+      requestedAt: string;
+      approvedAt?: string;
+      paidAt?: string;
+    }>> => request(`/bookings/${bookingId}/extensions`),
   },
 };
 

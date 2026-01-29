@@ -6,7 +6,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 import { BadRequestError, ConflictError, UnauthorizedError } from '../middleware/errorHandler.js';
-import { sendPasswordResetEmail } from '../lib/email.js';
+import { sendPasswordResetEmail, sendWelcomeEmail } from '../lib/email.js';
 
 const router = Router();
 
@@ -96,6 +96,11 @@ router.post('/register', async (req, res, next) => {
 
     // Generate token
     const token = generateToken(user.id, user.role);
+
+    // Send welcome email (async, don't block response)
+    sendWelcomeEmail(user.email, user.firstName).catch((err) => {
+      console.error('Failed to send welcome email:', err);
+    });
 
     res.status(201).json({
       success: true,

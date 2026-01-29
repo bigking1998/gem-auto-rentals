@@ -1,0 +1,27 @@
+# Robots.txt for Gem Auto Rentals
+# https://gemrentalcars.com
+
+User-agent: *
+Allow: /
+
+# Allow search engines to crawl all public pages
+Allow: /vehicles
+Allow: /vehicles/*
+Allow: /about
+
+# Disallow private/authenticated areas
+Disallow: /dashboard
+Disallow: /dashboard/*
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Disallow API routes (if any are exposed)
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://gemrentalcars.com/sitemap.xml
+
+# Crawl-delay for politeness (optional)
+Crawl-delay: 1

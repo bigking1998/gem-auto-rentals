@@ -503,4 +503,249 @@ router.post('/from-booking/:bookingId', authenticate, authorize('ADMIN', 'MANAGE
   }
 });
 
+// ==========================================
+// CUSTOMER-FACING ENDPOINTS (for web app)
+// ==========================================
+
+// GET /api/invoices/my - Get current user's invoices
+router.get('/my', authenticate, async (req, res, next) => {
+  try {
+    const userId = req.user!.id;
+
+    const invoices = await prisma.invoice.findMany({
+      where: { customerId: userId },
+      include: {
+        booking: {
+          select: {
+            id: true,
+            startDate: true,
+            endDate: true,
+            vehicle: {
+              select: {
+                make: true,
+                model: true,
+                year: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({
+      success: true,
+      data: invoices,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/invoices/:id/download - Download invoice PDF (customer-facing)
+router.get('/:id/download', authenticate, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: {
+        customer: {
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+          },
+        },
+        booking: {
+          include: {
+            vehicle: {
+              select: {
+                make: true,
+                model: true,
+                year: true,
+                licensePlate: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!invoice) {
+      throw NotFoundError('Invoice not found');
+    }
+
+    // Check ownership or admin access
+    if (invoice.customerId !== userId && !['ADMIN', 'MANAGER', 'SUPPORT'].includes(userRole)) {
+      throw NotFoundError('Invoice not found');
+    }
+
+    // Get company settings for branding
+    const companySettings = await prisma.companySettings.findFirst();
+
+    // Generate HTML receipt
+    const lineItems = invoice.lineItems as Array<{
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      amount: number;
+    }>;
+
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    };
+
+    const formatCurrency = (amount: unknown) => {
+      return `$${(Number(amount) || 0).toFixed(2)}`;
+    };
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Invoice ${invoice.invoiceNumber}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #1f2937; }
+    .header { display: flex; justify-content: space-between; margin-bottom: 40px; }
+    .logo { font-size: 28px; font-weight: bold; color: #ea580c; }
+    .invoice-title { text-align: right; }
+    .invoice-title h1 { font-size: 32px; color: #1f2937; margin-bottom: 5px; }
+    .invoice-number { color: #6b7280; font-size: 14px; }
+    .section { margin-bottom: 30px; }
+    .section-title { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
+    .info-block p { margin: 4px 0; font-size: 14px; }
+    .info-block strong { font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    th { background: #f9fafb; text-align: left; padding: 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 2px solid #e5e7eb; }
+    td { padding: 16px 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+    .amount { text-align: right; }
+    .totals { margin-left: auto; width: 280px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+    .totals-row.total { font-size: 18px; font-weight: bold; border-top: 2px solid #1f2937; padding-top: 16px; margin-top: 8px; }
+    .status { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+    .status.paid { background: #dcfce7; color: #15803d; }
+    .status.pending { background: #fef3c7; color: #b45309; }
+    .status.draft { background: #e5e7eb; color: #4b5563; }
+    .footer { margin-top: 60px; padding-top: 30px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+    @media print {
+      body { padding: 20px; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">${companySettings?.companyName || 'Gem Auto Rentals'}</div>
+    <div class="invoice-title">
+      <h1>INVOICE</h1>
+      <p class="invoice-number">${invoice.invoiceNumber}</p>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-block">
+      <p class="section-title">Bill To</p>
+      <p><strong>${invoice.customer.firstName} ${invoice.customer.lastName}</strong></p>
+      <p>${invoice.customer.email}</p>
+      ${invoice.customer.phone ? `<p>${invoice.customer.phone}</p>` : ''}
+    </div>
+    <div class="info-block" style="text-align: right;">
+      <p class="section-title">Invoice Details</p>
+      <p><strong>Date:</strong> ${formatDate(invoice.issueDate)}</p>
+      <p><strong>Due:</strong> ${formatDate(invoice.dueDate)}</p>
+      <p><strong>Status:</strong> <span class="status ${invoice.status.toLowerCase()}">${invoice.status}</span></p>
+    </div>
+  </div>
+
+  ${invoice.booking ? `
+  <div class="section">
+    <p class="section-title">Rental Details</p>
+    <div class="info-block">
+      <p><strong>Vehicle:</strong> ${invoice.booking.vehicle.year} ${invoice.booking.vehicle.make} ${invoice.booking.vehicle.model}</p>
+      <p><strong>Rental Period:</strong> ${formatDate(invoice.booking.startDate)} - ${formatDate(invoice.booking.endDate)}</p>
+    </div>
+  </div>
+  ` : ''}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="amount">Qty</th>
+        <th class="amount">Unit Price</th>
+        <th class="amount">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${lineItems.map(item => `
+        <tr>
+          <td>${item.description}</td>
+          <td class="amount">${item.quantity}</td>
+          <td class="amount">${formatCurrency(item.unitPrice)}</td>
+          <td class="amount">${formatCurrency(item.amount)}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-row">
+      <span>Subtotal</span>
+      <span>${formatCurrency(invoice.subtotal)}</span>
+    </div>
+    ${Number(invoice.taxAmount) > 0 ? `
+    <div class="totals-row">
+      <span>Tax</span>
+      <span>${formatCurrency(invoice.taxAmount)}</span>
+    </div>
+    ` : ''}
+    ${Number(invoice.discountAmount) > 0 ? `
+    <div class="totals-row">
+      <span>Discount</span>
+      <span>-${formatCurrency(invoice.discountAmount)}</span>
+    </div>
+    ` : ''}
+    <div class="totals-row total">
+      <span>Total</span>
+      <span>${formatCurrency(invoice.totalAmount)}</span>
+    </div>
+  </div>
+
+  ${invoice.notes ? `
+  <div class="section" style="margin-top: 40px;">
+    <p class="section-title">Notes</p>
+    <p style="font-size: 14px; color: #4b5563;">${invoice.notes}</p>
+  </div>
+  ` : ''}
+
+  <div class="footer">
+    <p><strong>${companySettings?.companyName || 'Gem Auto Rentals'}</strong></p>
+    ${companySettings?.companyAddress ? `<p>${companySettings.companyAddress}</p>` : '<p>Mulberry, FL</p>'}
+    ${companySettings?.companyPhone ? `<p>Phone: ${companySettings.companyPhone}</p>` : ''}
+    ${companySettings?.companyEmail ? `<p>Email: ${companySettings.companyEmail}</p>` : ''}
+    <p style="margin-top: 20px;">Thank you for your business!</p>
+  </div>
+</body>
+</html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.html"`);
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

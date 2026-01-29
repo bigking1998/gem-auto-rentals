@@ -15,6 +15,9 @@ import {
   Car,
   Home,
   ArrowRight,
+  Heart,
+  Gift,
+  Share2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
@@ -25,6 +28,11 @@ const sidebarLinks = [
     label: 'My Bookings',
     href: '/dashboard/bookings',
     icon: Calendar,
+  },
+  {
+    label: 'Favorites',
+    href: '/dashboard/favorites',
+    icon: Heart,
   },
   {
     label: 'Profile',
@@ -40,6 +48,16 @@ const sidebarLinks = [
     label: 'Payment Methods',
     href: '/dashboard/payments',
     icon: CreditCard,
+  },
+  {
+    label: 'Loyalty Rewards',
+    href: '/dashboard/loyalty',
+    icon: Gift,
+  },
+  {
+    label: 'Refer a Friend',
+    href: '/dashboard/referrals',
+    icon: Share2,
   },
   {
     label: 'Settings',
@@ -180,8 +198,8 @@ export default function DashboardLayout() {
           {/* User Info */}
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                <span className="text-lg font-semibold text-indigo-600">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-lg font-semibold text-orange-600">
                   {displayUser.firstName[0]}{displayUser.lastName?.[0] || ''}
                 </span>
               </div>
@@ -207,7 +225,7 @@ export default function DashboardLayout() {
                       className={cn(
                         'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                         active
-                          ? 'bg-indigo-50 text-indigo-600'
+                          ? 'bg-orange-50 text-orange-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       )}
                     >
@@ -245,7 +263,7 @@ export default function DashboardLayout() {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center"
+          className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-orange-600 text-white rounded-full shadow-lg flex items-center justify-center"
         >
           <Menu className="w-6 h-6" />
         </button>
@@ -279,8 +297,8 @@ export default function DashboardLayout() {
                 {/* User Info */}
                 <div className="p-6 pt-16 border-b border-gray-100">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <span className="text-lg font-semibold text-indigo-600">
+                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                      <span className="text-lg font-semibold text-orange-600">
                         {displayUser.firstName[0]}{displayUser.lastName?.[0] || ''}
                       </span>
                     </div>
@@ -307,7 +325,7 @@ export default function DashboardLayout() {
                             className={cn(
                               'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                               active
-                                ? 'bg-indigo-50 text-indigo-600'
+                                ? 'bg-orange-50 text-orange-600'
                                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             )}
                           >

@@ -2,10 +2,17 @@ import { motion } from 'framer-motion';
 import { Clock, MapPin, Phone, Mail, Car } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import SEO from '@/components/SEO';
 
 export default function AboutPage() {
     return (
         <div className="min-h-screen flex flex-col">
+            <SEO
+                title="About Us"
+                description="Learn about Gem Auto Rentals - your trusted car rental partner in Mulberry, Florida. Quality vehicles, exceptional service, and competitive rates since day one."
+                keywords="about gem auto rentals, car rental company, Mulberry Florida, vehicle rental service"
+                canonicalUrl="https://gemrentalcars.com/about"
+            />
             <Header />
             <main className="flex-1 bg-gray-50">
                 {/* Hero Section */}

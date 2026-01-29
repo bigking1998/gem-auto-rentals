@@ -55,3 +55,7 @@ temp
 progress.json
 status.json
 .vercel
+
+# Vite
+*.timestamp-*.mjs
+

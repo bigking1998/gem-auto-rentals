@@ -383,4 +383,87 @@ router.get('/customers', authenticate, staffOnly, async (req, res, next) => {
   }
 });
 
+// ============ Public Stats (no auth, cached) ============
+
+// Simple in-memory cache for public stats
+let publicStatsCache: {
+  data: {
+    totalCustomers: number;
+    totalRentals: number;
+    averageRating: number;
+    yearsInBusiness: number;
+    vehicleCount: number;
+  } | null;
+  timestamp: number;
+} = { data: null, timestamp: 0 };
+
+const PUBLIC_STATS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// GET /api/stats/public - Public stats for homepage (no auth required)
+router.get('/public', async (_req, res, next) => {
+  try {
+    const now = Date.now();
+
+    // Return cached data if still valid
+    if (publicStatsCache.data && now - publicStatsCache.timestamp < PUBLIC_STATS_CACHE_TTL) {
+      res.json({
+        success: true,
+        data: publicStatsCache.data,
+        cached: true,
+      });
+      return;
+    }
+
+    // Fetch fresh stats
+    const [totalCustomers, completedBookings, averageRating, vehicleCount] = await Promise.all([
+      // Total customers (all users with CUSTOMER role)
+      prisma.user.count({
+        where: { role: 'CUSTOMER' },
+      }),
+
+      // Total completed rentals
+      prisma.booking.count({
+        where: { status: 'COMPLETED' },
+      }),
+
+      // Average rating across all reviews
+      prisma.review.aggregate({
+        _avg: { rating: true },
+      }),
+
+      // Total vehicles
+      prisma.vehicle.count({
+        where: { status: { not: 'RETIRED' } },
+      }),
+    ]);
+
+    // Calculate years in business (founded in 2018)
+    const foundedYear = 2018;
+    const currentYear = new Date().getFullYear();
+    const yearsInBusiness = currentYear - foundedYear;
+
+    const statsData = {
+      totalCustomers,
+      totalRentals: completedBookings,
+      averageRating: Math.round((averageRating._avg.rating || 4.8) * 10) / 10, // Default to 4.8 if no reviews
+      yearsInBusiness,
+      vehicleCount,
+    };
+
+    // Update cache
+    publicStatsCache = {
+      data: statsData,
+      timestamp: now,
+    };
+
+    res.json({
+      success: true,
+      data: statsData,
+      cached: false,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

@@ -340,3 +340,136 @@ export async function sendBookingConfirmationEmail(
     };
   }
 }
+
+/**
+ * Send a booking abandonment recovery email
+ */
+export async function sendAbandonmentRecoveryEmail(
+  to: string,
+  firstName: string,
+  details: {
+    abandonmentId: string;
+    vehicleName: string;
+    vehicleImage: string;
+    dailyRate: number;
+    startDate: string;
+    endDate: string;
+  }
+): Promise<EmailResult> {
+  const recoveryUrl = `${WEB_URL}/booking?recover=${details.abandonmentId}`;
+
+  if (!isEmailConfigured()) {
+    console.warn('Email not configured (RESEND_API_KEY missing). Recovery email not sent.');
+    console.log(`[DEV] Recovery link for ${to}: ${recoveryUrl}`);
+    return { success: true, messageId: 'dev-mode-no-email' };
+  }
+
+  // Calculate days
+  const start = new Date(details.startDate);
+  const end = new Date(details.endDate);
+  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const estimatedTotal = days * details.dailyRate;
+
+  try {
+    const { data, error } = await resend!.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Complete Your ${APP_NAME} Reservation - Your Car is Waiting!`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Your Reservation</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 32px 32px 24px; text-align: center; background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 32px;">
+              <h2 style="margin: 0 0 16px; font-size: 20px; font-weight: 600; color: #18181b;">Hey ${firstName}, your car is still waiting!</h2>
+
+              <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #3f3f46;">
+                We noticed you didn't complete your reservation. Don't worry - we saved your selection for you!
+              </p>
+
+              <!-- Vehicle Card -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 24px; border: 1px solid #e4e4e7; border-radius: 8px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 0;">
+                    <img src="${details.vehicleImage}" alt="${details.vehicleName}" style="width: 100%; height: auto; display: block;">
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 16px;">
+                    <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 600; color: #18181b;">${details.vehicleName}</h3>
+                    <p style="margin: 0 0 4px; font-size: 14px; color: #71717a;">
+                      ${start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} (${days} days)
+                    </p>
+                    <p style="margin: 8px 0 0; font-size: 20px; font-weight: 700; color: #18181b;">
+                      $${details.dailyRate}/day <span style="font-size: 14px; font-weight: 400; color: #71717a;">• Est. Total: $${estimatedTotal}</span>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 24px;">
+                <tr>
+                  <td align="center">
+                    <a href="${recoveryUrl}" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 600; color: #ffffff; background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); text-decoration: none; border-radius: 8px;">Complete My Reservation</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #71717a; text-align: center;">
+                This vehicle may have limited availability. Book now to secure your dates!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; text-align: center; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0 0 8px; font-size: 13px; color: #a1a1aa;">
+                Not interested? No worries - you can ignore this email.
+              </p>
+              <p style="margin: 0; font-size: 13px; color: #a1a1aa;">
+                &copy; ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `.trim(),
+    });
+
+    if (error) {
+      console.error('Failed to send abandonment recovery email:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (err) {
+    console.error('Email service error:', err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}

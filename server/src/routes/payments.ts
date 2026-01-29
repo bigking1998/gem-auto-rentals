@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import prisma from '../lib/prisma.js';
 import { authenticate, staffOnly } from '../middleware/auth.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../middleware/errorHandler.js';
+import { sendBookingConfirmationEmail } from '../lib/email.js';
 
 const router = Router();
 
@@ -166,6 +167,43 @@ router.post('/confirm', authenticate, async (req, res, next) => {
         data: { status: bookingStatus },
       }),
     ]);
+
+    // Send booking confirmation email on successful payment
+    if (paymentStatus === 'SUCCEEDED') {
+      const bookingWithDetails = await prisma.booking.findUnique({
+        where: { id: payment.bookingId },
+        include: {
+          user: { select: { email: true, firstName: true } },
+          vehicle: { select: { make: true, model: true, year: true } },
+        },
+      });
+
+      if (bookingWithDetails && bookingWithDetails.user) {
+        const formatDate = (date: Date) => {
+          return date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          });
+        };
+
+        sendBookingConfirmationEmail(
+          bookingWithDetails.user.email,
+          bookingWithDetails.user.firstName,
+          {
+            bookingId: bookingWithDetails.id,
+            vehicleName: `${bookingWithDetails.vehicle.year} ${bookingWithDetails.vehicle.make} ${bookingWithDetails.vehicle.model}`,
+            startDate: formatDate(bookingWithDetails.startDate),
+            endDate: formatDate(bookingWithDetails.endDate),
+            pickupLocation: bookingWithDetails.pickupLocation,
+            totalAmount: `$${Number(bookingWithDetails.totalAmount).toFixed(2)}`,
+          }
+        ).catch((err) => {
+          console.error('Failed to send booking confirmation email:', err);
+        });
+      }
+    }
 
     res.json({
       success: true,
@@ -346,6 +384,41 @@ router.post(
               where: { id: payment.bookingId },
               data: { status: 'CONFIRMED' },
             });
+
+            // Send booking confirmation email
+            const booking = await prisma.booking.findUnique({
+              where: { id: payment.bookingId },
+              include: {
+                user: { select: { email: true, firstName: true } },
+                vehicle: { select: { make: true, model: true, year: true } },
+              },
+            });
+
+            if (booking && booking.user) {
+              const formatDate = (date: Date) => {
+                return date.toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                });
+              };
+
+              sendBookingConfirmationEmail(
+                booking.user.email,
+                booking.user.firstName,
+                {
+                  bookingId: booking.id,
+                  vehicleName: `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`,
+                  startDate: formatDate(booking.startDate),
+                  endDate: formatDate(booking.endDate),
+                  pickupLocation: booking.pickupLocation,
+                  totalAmount: `$${Number(booking.totalAmount).toFixed(2)}`,
+                }
+              ).catch((err) => {
+                console.error('Failed to send booking confirmation email:', err);
+              });
+            }
           }
           break;
         }

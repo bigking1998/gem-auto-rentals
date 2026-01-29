@@ -23,9 +23,12 @@ const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 // Dashboard pages - lazy loaded
 const DashboardLayout = lazy(() => import('./components/dashboard/DashboardLayout'));
 const MyBookingsPage = lazy(() => import('./pages/dashboard/MyBookingsPage'));
+const FavoritesPage = lazy(() => import('./pages/dashboard/FavoritesPage'));
 const ProfilePage = lazy(() => import('./pages/dashboard/ProfilePage'));
 const DocumentsPage = lazy(() => import('./pages/dashboard/DocumentsPage'));
 const PaymentMethodsPage = lazy(() => import('./pages/dashboard/PaymentMethodsPage'));
+const LoyaltyPage = lazy(() => import('./pages/dashboard/LoyaltyPage'));
+const ReferralPage = lazy(() => import('./pages/dashboard/ReferralPage'));
 
 function App() {
   const initialize = useAuthStore((state) => state.initialize);
@@ -59,9 +62,12 @@ function App() {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Navigate to="/dashboard/bookings" replace />} />
             <Route path="bookings" element={<MyBookingsPage />} />
+            <Route path="favorites" element={<FavoritesPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="documents" element={<DocumentsPage />} />
             <Route path="payments" element={<PaymentMethodsPage />} />
+            <Route path="loyalty" element={<LoyaltyPage />} />
+            <Route path="referrals" element={<ReferralPage />} />
           </Route>
         </Routes>
       </Suspense>

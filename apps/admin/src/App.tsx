@@ -1,23 +1,39 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import DashboardLayout from './components/layout/DashboardLayout';
-import DashboardHome from './pages/DashboardHome';
-import FleetManagement from './pages/FleetManagement';
-import AddVehiclePage from './pages/AddVehiclePage';
-import EditVehiclePage from './pages/EditVehiclePage';
-import BookingsPage from './pages/BookingsPage';
-import CustomersPage from './pages/CustomersPage';
-import CustomerProfilePage from './pages/CustomerProfilePage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import SettingsPage from './pages/SettingsPage';
-import MessagesPage from './pages/MessagesPage';
-import SecurityPage from './pages/SecurityPage';
-import HelpPage from './pages/HelpPage';
-import TrashPage from './pages/TrashPage';
-import LoginPage from './pages/LoginPage';
 import { useAuthStore } from './stores/authStore';
+
+// Eager load - needed immediately for auth flow
+import LoginPage from './pages/LoginPage';
+import DashboardLayout from './components/layout/DashboardLayout';
+
+// Lazy load all dashboard pages for code splitting
+const DashboardHome = lazy(() => import('./pages/DashboardHome'));
+const FleetManagement = lazy(() => import('./pages/FleetManagement'));
+const AddVehiclePage = lazy(() => import('./pages/AddVehiclePage'));
+const EditVehiclePage = lazy(() => import('./pages/EditVehiclePage'));
+const BookingsPage = lazy(() => import('./pages/BookingsPage'));
+const CustomersPage = lazy(() => import('./pages/CustomersPage'));
+const CustomerProfilePage = lazy(() => import('./pages/CustomerProfilePage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const MessagesPage = lazy(() => import('./pages/MessagesPage'));
+const SecurityPage = lazy(() => import('./pages/SecurityPage'));
+const HelpPage = lazy(() => import('./pages/HelpPage'));
+const TrashPage = lazy(() => import('./pages/TrashPage'));
+
+// Page loader component for Suspense fallback
+function PageLoader() {
+  return (
+    <div className="min-h-[400px] flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
+        <p className="text-sm text-gray-500">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -100,19 +116,20 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<DashboardHome />} />
-          <Route path="fleet" element={<FleetManagement />} />
-          <Route path="fleet/new" element={<AddVehiclePage />} />
-          <Route path="fleet/:id" element={<EditVehiclePage />} />
-          <Route path="bookings" element={<BookingsPage />} />
-          <Route path="customers" element={<CustomersPage />} />
-          <Route path="customers/:id" element={<CustomerProfilePage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="messages" element={<MessagesPage />} />
-          <Route path="security" element={<SecurityPage />} />
-          <Route path="trash" element={<TrashPage />} />
-          <Route path="help" element={<HelpPage />} />
+          {/* Wrap lazy-loaded routes in Suspense */}
+          <Route index element={<Suspense fallback={<PageLoader />}><DashboardHome /></Suspense>} />
+          <Route path="fleet" element={<Suspense fallback={<PageLoader />}><FleetManagement /></Suspense>} />
+          <Route path="fleet/new" element={<Suspense fallback={<PageLoader />}><AddVehiclePage /></Suspense>} />
+          <Route path="fleet/:id" element={<Suspense fallback={<PageLoader />}><EditVehiclePage /></Suspense>} />
+          <Route path="bookings" element={<Suspense fallback={<PageLoader />}><BookingsPage /></Suspense>} />
+          <Route path="customers" element={<Suspense fallback={<PageLoader />}><CustomersPage /></Suspense>} />
+          <Route path="customers/:id" element={<Suspense fallback={<PageLoader />}><CustomerProfilePage /></Suspense>} />
+          <Route path="analytics" element={<Suspense fallback={<PageLoader />}><AnalyticsPage /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<PageLoader />}><SettingsPage /></Suspense>} />
+          <Route path="messages" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
+          <Route path="security" element={<Suspense fallback={<PageLoader />}><SecurityPage /></Suspense>} />
+          <Route path="trash" element={<Suspense fallback={<PageLoader />}><TrashPage /></Suspense>} />
+          <Route path="help" element={<Suspense fallback={<PageLoader />}><HelpPage /></Suspense>} />
         </Route>
 
         {/* Catch all - redirect to dashboard or login */}

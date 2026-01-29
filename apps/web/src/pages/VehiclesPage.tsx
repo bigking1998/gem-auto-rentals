@@ -9,6 +9,7 @@ import FilterSidebar, { VehicleFilters } from '@/components/vehicles/FilterSideb
 import { VehicleGridSkeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
 import { api, type Vehicle as ApiVehicle } from '@/lib/api';
+import SEO from '@/components/SEO';
 
 // Vehicle type that matches VehicleCard props
 interface Vehicle {
@@ -184,6 +185,12 @@ export default function VehiclesPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+      <SEO
+        title="Browse Our Fleet"
+        description="Browse our wide selection of rental vehicles. From economy cars to luxury sedans and SUVs, find the perfect car for your next trip. Book online today!"
+        keywords="rental cars, browse vehicles, car fleet, economy rental, luxury rental, SUV rental, Mulberry FL"
+        canonicalUrl="https://gemrentalcars.com/vehicles"
+      />
       <Header />
 
       <main className="flex-1">
