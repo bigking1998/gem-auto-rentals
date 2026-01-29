@@ -1,3 +1,12 @@
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -5,9 +14,9 @@ import viteCompression from 'vite-plugin-compression';
 export default defineConfig(function (_a) {
     var mode = _a.mode;
     return ({
-        plugins: [
-            react(),
-            // Gzip compression for production builds
+        plugins: __spreadArray([
+            react()
+        ], (mode === 'production' ? [
             viteCompression({
                 algorithm: 'gzip',
                 ext: '.gz',
@@ -19,7 +28,7 @@ export default defineConfig(function (_a) {
                 ext: '.br',
                 threshold: 1024,
             }),
-        ],
+        ] : []), true),
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, './src'),
@@ -46,7 +55,7 @@ export default defineConfig(function (_a) {
             terserOptions: {
                 compress: {
                     drop_console: mode === 'production', // Remove console.logs in production
-                    drop_debugger: true,
+                    drop_debugger: mode === 'production', // Remove debugger statements in production
                 },
             },
             // Chunk splitting for better caching

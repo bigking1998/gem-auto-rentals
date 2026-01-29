@@ -29,6 +29,7 @@ import FavoriteButton from '@/components/vehicles/FavoriteButton';
 import { api, Vehicle } from '@/lib/api';
 import { BOOKING_VEHICLE_KEY } from './BookingPage';
 import { useAuthStore } from '@/stores/authStore';
+import { useBookingDates, useBookingStore } from '@/stores/bookingStore';
 
 const extras = [
   { id: 'insurance', name: 'Full Insurance', price: 25, icon: Shield, description: 'Complete coverage for peace of mind' },
@@ -41,13 +42,26 @@ export default function VehicleDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, isInitialized } = useAuthStore();
+
+  // Get dates from booking store for sticky context
+  const { startDate: storeStartDate, endDate: storeEndDate } = useBookingDates();
+  const { setDates: setStoreDates } = useBookingStore();
+
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  // Initialize from store instead of empty strings
+  const [startDate, setStartDate] = useState(storeStartDate || '');
+  const [endDate, setEndDate] = useState(storeEndDate || '');
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync local dates back to store when they change
+  useEffect(() => {
+    if (startDate && endDate) {
+      setStoreDates(startDate, endDate);
+    }
+  }, [startDate, endDate, setStoreDates]);
 
   // Fetch vehicle data from API
   useEffect(() => {

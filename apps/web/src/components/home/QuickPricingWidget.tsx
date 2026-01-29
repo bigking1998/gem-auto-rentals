@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@gem/ui';
 import AvailabilityCalendar from '@/components/vehicles/AvailabilityCalendar';
+import { useBookingStore } from '@/stores/bookingStore';
 
 const categories = [
   { value: '', label: 'All Categories' },
@@ -29,6 +30,7 @@ interface PricingData {
 
 export default function QuickPricingWidget() {
   const navigate = useNavigate();
+  const { setDates: setStoreDates, setCategory: setStoreCategory } = useBookingStore();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [category, setCategory] = useState('');
@@ -135,18 +137,29 @@ export default function QuickPricingWidget() {
                 selectedStart={parseLocalDate(startDate)}
                 selectedEnd={parseLocalDate(endDate)}
                 onSelectStart={(date) => {
-                  setStartDate(formatLocalDate(date));
-                  // Auto-set end date if not set or if before new start
                   const newStartStr = formatLocalDate(date);
+                  setStartDate(newStartStr);
+                  // Auto-set end date if not set or if before new start
                   if (!endDate || newStartStr >= endDate) {
                     const newEnd = new Date(date);
                     newEnd.setDate(newEnd.getDate() + 1);
-                    setEndDate(formatLocalDate(newEnd));
+                    const newEndStr = formatLocalDate(newEnd);
+                    setEndDate(newEndStr);
+                    // Save to store for sticky context
+                    setStoreDates(newStartStr, newEndStr);
+                  } else {
+                    // Save to store for sticky context
+                    setStoreDates(newStartStr, endDate);
                   }
                 }}
                 onSelectEnd={(date) => {
                   if (date) {
-                    setEndDate(formatLocalDate(date));
+                    const newEndStr = formatLocalDate(date);
+                    setEndDate(newEndStr);
+                    // Save to store for sticky context
+                    if (startDate) {
+                      setStoreDates(startDate, newEndStr);
+                    }
                   } else {
                     setEndDate('');
                   }
@@ -182,10 +195,21 @@ export default function QuickPricingWidget() {
               <AvailabilityCalendar
                 selectedStart={parseLocalDate(startDate)}
                 selectedEnd={parseLocalDate(endDate)}
-                onSelectStart={(date) => setStartDate(formatLocalDate(date))}
+                onSelectStart={(date) => {
+                  const newStartStr = formatLocalDate(date);
+                  setStartDate(newStartStr);
+                  if (endDate) {
+                    setStoreDates(newStartStr, endDate);
+                  }
+                }}
                 onSelectEnd={(date) => {
                   if (date) {
-                    setEndDate(formatLocalDate(date));
+                    const newEndStr = formatLocalDate(date);
+                    setEndDate(newEndStr);
+                    // Save to store for sticky context
+                    if (startDate) {
+                      setStoreDates(startDate, newEndStr);
+                    }
                   } else {
                     setEndDate('');
                   }
@@ -205,7 +229,12 @@ export default function QuickPricingWidget() {
           </label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => {
+              const newCategory = e.target.value;
+              setCategory(newCategory);
+              // Save to store for sticky context
+              setStoreCategory(newCategory);
+            }}
             className="w-full h-[48px] px-4 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none cursor-pointer"
           >
             {categories.map((cat) => (

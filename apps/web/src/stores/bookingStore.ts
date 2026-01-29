@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface BookingExtras {
   insurance: boolean;
@@ -40,6 +41,7 @@ interface BookingState {
   // Date & Location
   startDate: string;
   endDate: string;
+  category: string;
   pickupLocation: string;
   dropoffLocation: string;
   pickupTime: string;
@@ -66,6 +68,7 @@ interface BookingActions {
   setVehicle: (vehicle: BookingVehicle) => void;
 
   setDates: (startDate: string, endDate: string) => void;
+  setCategory: (category: string) => void;
   setLocations: (pickup: string, dropoff: string) => void;
   setTimes: (pickupTime: string, dropoffTime: string) => void;
 
@@ -126,6 +129,7 @@ const initialState: BookingState = {
   vehicle: null,
   startDate: '',
   endDate: '',
+  category: '',
   pickupLocation: '',
   dropoffLocation: '',
   pickupTime: '10:00',
@@ -138,87 +142,108 @@ const initialState: BookingState = {
   total: 0,
 };
 
-export const useBookingStore = create<BookingState & BookingActions>((set, get) => ({
-  ...initialState,
+export const useBookingStore = create<BookingState & BookingActions>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
 
-  setStep: (step) => set({ currentStep: step }),
+      setStep: (step) => set({ currentStep: step }),
 
-  nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, 4) })),
+      nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, 4) })),
 
-  prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 1) })),
+      prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 1) })),
 
-  setVehicle: (vehicle) => {
-    set({ vehicle });
-    get().calculateTotals();
-  },
+      setVehicle: (vehicle) => {
+        set({ vehicle });
+        get().calculateTotals();
+      },
 
-  setDates: (startDate, endDate) => {
-    set({ startDate, endDate });
-    get().calculateTotals();
-  },
+      setDates: (startDate, endDate) => {
+        set({ startDate, endDate });
+        get().calculateTotals();
+      },
 
-  setLocations: (pickup, dropoff) => set({ pickupLocation: pickup, dropoffLocation: dropoff }),
+      setCategory: (category) => set({ category }),
 
-  setTimes: (pickupTime, dropoffTime) => set({ pickupTime, dropoffTime }),
+      setLocations: (pickup, dropoff) => set({ pickupLocation: pickup, dropoffLocation: dropoff }),
 
-  setExtras: (extras) => {
-    set((state) => ({ extras: { ...state.extras, ...extras } }));
-    get().calculateTotals();
-  },
+      setTimes: (pickupTime, dropoffTime) => set({ pickupTime, dropoffTime }),
 
-  toggleExtra: (extra) => {
-    set((state) => ({
-      extras: { ...state.extras, [extra]: !state.extras[extra] },
-    }));
-    get().calculateTotals();
-  },
+      setExtras: (extras) => {
+        set((state) => ({ extras: { ...state.extras, ...extras } }));
+        get().calculateTotals();
+      },
 
-  setCustomer: (customer) =>
-    set((state) => ({ customer: { ...state.customer, ...customer } })),
+      toggleExtra: (extra) => {
+        set((state) => ({
+          extras: { ...state.extras, [extra]: !state.extras[extra] },
+        }));
+        get().calculateTotals();
+      },
 
-  calculateTotals: () => {
-    const { vehicle, startDate, endDate, extras } = get();
+      setCustomer: (customer) =>
+        set((state) => ({ customer: { ...state.customer, ...customer } })),
 
-    if (!vehicle || !startDate || !endDate) {
-      set({ days: 0, subtotal: 0, extrasTotal: 0, total: 0 });
-      return;
+      calculateTotals: () => {
+        const { vehicle, startDate, endDate, extras } = get();
+
+        if (!vehicle || !startDate || !endDate) {
+          set({ days: 0, subtotal: 0, extrasTotal: 0, total: 0 });
+          return;
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+
+        const subtotal = vehicle.dailyRate * days;
+
+        let extrasTotal = 0;
+        if (extras.insurance) extrasTotal += EXTRAS_PRICES.insurance * days;
+        if (extras.gps) extrasTotal += EXTRAS_PRICES.gps * days;
+        if (extras.childSeat) extrasTotal += EXTRAS_PRICES.childSeat * days;
+        if (extras.additionalDriver) extrasTotal += EXTRAS_PRICES.additionalDriver * days;
+
+        const total = subtotal + extrasTotal;
+
+        set({ days, subtotal, extrasTotal, total });
+      },
+
+      resetBooking: () => set(initialState),
+
+      getBookingData: () => {
+        const state = get();
+        return {
+          vehicleId: state.vehicle?.id || '',
+          startDate: state.startDate,
+          endDate: state.endDate,
+          pickupLocation: state.pickupLocation,
+          dropoffLocation: state.dropoffLocation,
+          pickupTime: state.pickupTime,
+          dropoffTime: state.dropoffTime,
+          extras: state.extras,
+          customer: state.customer,
+          totalAmount: state.total,
+        };
+      },
+    }),
+    {
+      name: 'gem-booking-storage',
+      storage: createJSONStorage(() => localStorage),
+      // Only persist booking context, not calculated values or step
+      partialize: (state) => ({
+        startDate: state.startDate,
+        endDate: state.endDate,
+        category: state.category,
+        pickupLocation: state.pickupLocation,
+        dropoffLocation: state.dropoffLocation,
+        pickupTime: state.pickupTime,
+        dropoffTime: state.dropoffTime,
+        extras: state.extras,
+      }),
     }
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-
-    const subtotal = vehicle.dailyRate * days;
-
-    let extrasTotal = 0;
-    if (extras.insurance) extrasTotal += EXTRAS_PRICES.insurance * days;
-    if (extras.gps) extrasTotal += EXTRAS_PRICES.gps * days;
-    if (extras.childSeat) extrasTotal += EXTRAS_PRICES.childSeat * days;
-    if (extras.additionalDriver) extrasTotal += EXTRAS_PRICES.additionalDriver * days;
-
-    const total = subtotal + extrasTotal;
-
-    set({ days, subtotal, extrasTotal, total });
-  },
-
-  resetBooking: () => set(initialState),
-
-  getBookingData: () => {
-    const state = get();
-    return {
-      vehicleId: state.vehicle?.id || '',
-      startDate: state.startDate,
-      endDate: state.endDate,
-      pickupLocation: state.pickupLocation,
-      dropoffLocation: state.dropoffLocation,
-      pickupTime: state.pickupTime,
-      dropoffTime: state.dropoffTime,
-      extras: state.extras,
-      customer: state.customer,
-      totalAmount: state.total,
-    };
-  },
-}));
+  )
+);
 
 // Selector hooks
 export const useBookingStep = () => useBookingStore((state) => state.currentStep);
@@ -238,3 +263,4 @@ export const useBookingTotals = () =>
     total: state.total,
     days: state.days,
   }));
+export const useBookingCategory = () => useBookingStore((state) => state.category);

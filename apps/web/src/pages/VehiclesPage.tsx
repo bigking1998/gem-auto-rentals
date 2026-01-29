@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, Grid, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Search, SlidersHorizontal, Grid, List, ChevronLeft, ChevronRight, Calendar, X } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import PageHeader from '@/components/layout/PageHeader';
@@ -10,6 +10,7 @@ import { VehicleGridSkeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
 import { api, type Vehicle as ApiVehicle } from '@/lib/api';
 import SEO from '@/components/SEO';
+import { useBookingDates, useBookingCategory, useBookingStore } from '@/stores/bookingStore';
 
 // Vehicle type that matches VehicleCard props
 interface Vehicle {
@@ -56,6 +57,17 @@ const sortOptions = [
 
 export default function VehiclesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Read booking context from store
+  const { startDate: storeStartDate, endDate: storeEndDate } = useBookingDates();
+  const storeCategory = useBookingCategory();
+  const { setDates: setStoreDates } = useBookingStore();
+
+  // Use URL params as override, fallback to store
+  const startDate = searchParams.get('start') || storeStartDate;
+  const endDate = searchParams.get('end') || storeEndDate;
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
@@ -65,7 +77,7 @@ export default function VehiclesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<VehicleFilters>({
-    category: searchParams.get('category') || undefined,
+    category: searchParams.get('category') || storeCategory || undefined,
   });
 
   const itemsPerPage = 9;
@@ -215,6 +227,47 @@ export default function VehiclesPage() {
               </div>
             </form>
           </div>
+
+          {/* Date Context Banner */}
+          {startDate && endDate && (
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Calendar className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Your selected dates</p>
+                  <p className="font-semibold text-gray-900">
+                    {new Date(startDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {' '}&mdash;{' '}
+                    {new Date(endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate('/')}
+                  className="text-sm font-medium text-primary hover:text-orange-600 transition-colors"
+                >
+                  Change dates
+                </button>
+                <button
+                  onClick={() => {
+                    setStoreDates('', '');
+                    // Clear URL params too
+                    const params = new URLSearchParams(searchParams);
+                    params.delete('start');
+                    params.delete('end');
+                    setSearchParams(params);
+                  }}
+                  className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                  title="Clear dates"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col lg:flex-row gap-8 pb-16">
             {/* Filter Sidebar */}

@@ -12,6 +12,7 @@ import PaymentStep from '@/components/booking/PaymentStep';
 import { cn } from '@/lib/utils';
 import { api, Vehicle } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
+import { useBookingDates } from '@/stores/bookingStore';
 
 // Session storage key for booking data
 export const BOOKING_VEHICLE_KEY = 'gem_booking_vehicle';
@@ -96,11 +97,15 @@ export default function BookingPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isInitialized } = useAuthStore();
 
+  // Get dates from store as fallback when URL params are empty
+  const { startDate: storeStartDate, endDate: storeEndDate } = useBookingDates();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<BookingData>({
     ...initialBookingData,
-    startDate: searchParams.get('start') || '',
-    endDate: searchParams.get('end') || '',
+    // Use URL params first, then store as fallback
+    startDate: searchParams.get('start') || storeStartDate || '',
+    endDate: searchParams.get('end') || storeEndDate || '',
   });
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
