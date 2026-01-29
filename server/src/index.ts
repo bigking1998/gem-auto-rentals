@@ -27,6 +27,7 @@ import invoiceRoutes from './routes/invoices.js';
 import integrationRoutes from './routes/integrations.js';
 import billingRoutes from './routes/billing.js';
 import trashRoutes from './routes/trash.js';
+import migrateRoutes from './routes/migrate.js';
 
 // Load environment variables
 dotenv.config();
@@ -129,6 +130,7 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/trash', trashRoutes);
+app.use('/api/migrate', migrateRoutes);
 
 // 404 handler
 app.use(notFound);
