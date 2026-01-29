@@ -224,8 +224,11 @@ export function VehicleForm({
     };
 
     const onFormSubmit = (data: VehicleFormData) => {
+        // Explicitly include features from watch (ensures they're always included)
         // Pass both existing images and pending files for new vehicles
-        onSubmit({ ...data, images, pendingFiles });
+        console.log('Form submit - features:', selectedFeatures);
+        console.log('Form submit - data:', data);
+        onSubmit({ ...data, features: selectedFeatures, images, pendingFiles });
     };
 
     return (

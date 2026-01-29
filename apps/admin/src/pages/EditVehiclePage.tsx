@@ -45,9 +45,16 @@ export default function EditVehiclePage() {
                 vin: vehicleData.vin === '' ? undefined : vehicleData.vin,
             };
 
-            await api.vehicles.update(id, sanitizedData);
+            // Log data being sent for debugging
+            console.log('Updating vehicle with data:', sanitizedData);
+
+            const updatedVehicle = await api.vehicles.update(id, sanitizedData);
+
+            // Update local state with the updated vehicle data
+            setVehicle(updatedVehicle);
+
             toast.success('Vehicle updated successfully');
-            navigate('/fleet');
+            // Stay on the same page - don't navigate away
         } catch (error: any) {
             console.error('Error updating vehicle:', error);
             toast.error(error.message || 'Failed to update vehicle');
