@@ -5,7 +5,7 @@ import prisma from '../lib/prisma.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../middleware/errorHandler.js';
 import { ActivityLogger } from '../lib/activityLogger.js';
-import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getPublicUrl } from '../lib/supabase.js';
+import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getPublicUrl } from '../lib/storage.js';
 
 const router = Router();
 

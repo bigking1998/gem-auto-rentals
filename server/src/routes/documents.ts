@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
 import prisma from '../lib/prisma.js';
-import { supabase, DOCUMENTS_BUCKET, isStorageConfigured, getSignedUrl } from '../lib/supabase.js';
+import { BUCKETS, isStorageConfigured, getSignedUrl, getSignedDownloadUrl, uploadFile } from '../lib/storage.js';
 import { authenticate, staffOnly } from '../middleware/auth.js';
 import { NotFoundError, BadRequestError } from '../middleware/errorHandler.js';
 
@@ -51,16 +51,16 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res, nex
     const sanitizedFilename = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filePath = `${userId}/${type}/${timestamp}-${sanitizedFilename}`;
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase!.storage
-      .from(DOCUMENTS_BUCKET)
-      .upload(filePath, file.buffer, {
-        contentType: file.mimetype,
-        upsert: false,
-      });
+    // Upload to storage
+    const uploadResult = await uploadFile(
+      BUCKETS.DOCUMENTS,
+      filePath,
+      file.buffer,
+      file.mimetype
+    );
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
+    if ('error' in uploadResult) {
+      console.error('Upload error:', uploadResult.error);
       throw BadRequestError('Failed to upload file. Please try again.');
     }
 
@@ -307,21 +307,21 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
     }
 
     // Get a download URL (longer expiry for downloads)
-    const { data, error } = await supabase!.storage
-      .from(DOCUMENTS_BUCKET)
-      .createSignedUrl(document.fileUrl, 300, { // 5 minutes
-        download: document.fileName,
-      });
+    const downloadUrl = await getSignedDownloadUrl(
+      document.fileUrl,
+      document.fileName,
+      300, // 5 minutes
+      BUCKETS.DOCUMENTS
+    );
 
-    if (error) {
-      console.error('Error creating download URL:', error);
+    if (!downloadUrl) {
       throw BadRequestError('Failed to generate download URL');
     }
 
     res.json({
       success: true,
       data: {
-        downloadUrl: data.signedUrl,
+        downloadUrl,
         fileName: document.fileName,
         mimeType: document.mimeType,
       },

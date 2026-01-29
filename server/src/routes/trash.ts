@@ -4,7 +4,7 @@ import prisma from '../lib/prisma.js';
 import { authenticate, adminOnly } from '../middleware/auth.js';
 import { NotFoundError } from '../middleware/errorHandler.js';
 import { logActivity } from '../lib/activityLogger.js';
-import { BUCKETS, deleteFile } from '../lib/supabase.js';
+import { BUCKETS, deleteFile } from '../lib/storage.js';
 
 const router = Router();
 

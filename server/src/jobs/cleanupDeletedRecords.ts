@@ -14,7 +14,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { supabase, BUCKETS, deleteFile } from '../lib/supabase.js';
+import { BUCKETS, deleteFile, isStorageConfigured } from '../lib/storage.js';
 
 const prisma = new PrismaClient();
 
@@ -50,13 +50,13 @@ function getCutoffDate(): Date {
 }
 
 /**
- * Delete files from Supabase Storage
+ * Delete files from storage
  */
 async function cleanupStorageFiles(
   filePaths: string[],
   bucket: typeof BUCKETS[keyof typeof BUCKETS]
 ): Promise<{ deleted: number; errors: string[] }> {
-  if (!supabase || filePaths.length === 0) {
+  if (!isStorageConfigured() || filePaths.length === 0) {
     return { deleted: 0, errors: [] };
   }
 

@@ -4,7 +4,7 @@ import multer from 'multer';
 import prisma from '../lib/prisma.js';
 import { authenticate, staffOnly } from '../middleware/auth.js';
 import { NotFoundError, BadRequestError } from '../middleware/errorHandler.js';
-import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getPublicUrl } from '../lib/supabase.js';
+import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getPublicUrl } from '../lib/storage.js';
 
 const router = Router();
 
