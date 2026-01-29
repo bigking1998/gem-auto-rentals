@@ -51,8 +51,8 @@ interface RecentBooking {
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-purple-100 text-purple-800',
-  ACTIVE: 'bg-green-100 text-green-800',
+  CONFIRMED: 'bg-green-100 text-green-800',
+  ACTIVE: 'bg-blue-100 text-blue-800',
   COMPLETED: 'bg-gray-100 text-gray-800',
   CANCELLED: 'bg-red-100 text-red-800',
 };
@@ -64,9 +64,9 @@ const quickActions = [
     label: 'Add Vehicle',
     description: 'Add a new vehicle to fleet',
     icon: Car,
-    color: 'bg-purple-500',
-    hoverBorder: 'hover:border-purple-500',
-    hoverBg: 'hover:bg-purple-50',
+    color: 'bg-blue-500',
+    hoverBorder: 'hover:border-blue-500',
+    hoverBg: 'hover:bg-blue-50',
     route: '/fleet',
     action: 'modal',
   },
@@ -292,13 +292,13 @@ export default function DashboardHome() {
               className={cn(
                 'flex items-center justify-between p-4 rounded-2xl border',
                 alert.type === 'warning' && 'bg-amber-50 border-amber-200',
-                alert.type === 'info' && 'bg-purple-50 border-purple-200',
+                alert.type === 'info' && 'bg-blue-50 border-blue-200',
                 alert.type === 'success' && 'bg-green-50 border-green-200'
               )}
             >
               <div className="flex items-center gap-3">
                 {alert.type === 'warning' && <AlertCircle className="w-5 h-5 text-amber-500" />}
-                {alert.type === 'info' && <AlertCircle className="w-5 h-5 text-purple-500" />}
+                {alert.type === 'info' && <AlertCircle className="w-5 h-5 text-blue-500" />}
                 {alert.type === 'success' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
                 <span className="text-sm font-medium text-gray-700">{alert.message}</span>
               </div>
@@ -307,7 +307,7 @@ export default function DashboardHome() {
                 className={cn(
                   'text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-xl transition-colors',
                   alert.type === 'warning' && 'text-amber-600 hover:bg-amber-100',
-                  alert.type === 'info' && 'text-purple-600 hover:bg-purple-100',
+                  alert.type === 'info' && 'text-blue-600 hover:bg-blue-100',
                   alert.type === 'success' && 'text-green-600 hover:bg-green-100'
                 )}
               >

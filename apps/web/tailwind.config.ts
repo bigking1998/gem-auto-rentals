@@ -111,8 +111,8 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'cta-gradient': 'linear-gradient(to right, #6366f1 0%, #8b5cf6 100%)',
+        'hero-gradient': 'linear-gradient(135deg, #FF871E 0%, #F59E0B 100%)',
+        'cta-gradient': 'linear-gradient(to right, #FF871E 0%, #F59E0B 100%)',
       },
     },
   },

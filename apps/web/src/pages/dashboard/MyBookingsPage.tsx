@@ -11,6 +11,7 @@ import {
   XCircle,
   RotateCcw,
   Loader2,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api, Booking } from '@/lib/api';
@@ -56,6 +57,7 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingReceipt, setDownloadingReceipt] = useState<string | null>(null);
 
   // Fetch bookings from API
   useEffect(() => {
@@ -108,6 +110,27 @@ export default function MyBookingsPage() {
     }
   };
 
+  const handleDownloadReceipt = async (booking: Booking) => {
+    // First, get the invoice for this booking
+    setDownloadingReceipt(booking.id);
+    try {
+      const invoices = await api.invoices.list();
+      const invoice = invoices.find((inv) => inv.booking?.id === booking.id);
+
+      if (!invoice) {
+        alert('Receipt not available yet. Please try again later.');
+        return;
+      }
+
+      await api.invoices.openInNewTab(invoice.id);
+    } catch (err) {
+      console.error('Error downloading receipt:', err);
+      alert('Failed to download receipt');
+    } finally {
+      setDownloadingReceipt(null);
+    }
+  };
+
   const filteredBookings = filterBookings(activeTab);
 
   const formatDate = (dateString: string) => {
@@ -127,7 +150,7 @@ export default function MyBookingsPage() {
           <p className="text-gray-500 mt-1">View and manage all your vehicle rentals</p>
         </div>
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
         </div>
       </div>
     );
@@ -170,7 +193,7 @@ export default function MyBookingsPage() {
               className={cn(
                 'flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 -mb-px',
                 activeTab === tab.id
-                  ? 'border-indigo-600 text-indigo-600'
+                  ? 'border-orange-600 text-orange-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               )}
             >
@@ -181,7 +204,7 @@ export default function MyBookingsPage() {
                   className={cn(
                     'px-2 py-0.5 text-xs font-semibold rounded-full',
                     activeTab === tab.id
-                      ? 'bg-indigo-100 text-indigo-700'
+                      ? 'bg-orange-100 text-orange-700'
                       : 'bg-gray-100 text-gray-600'
                   )}
                 >
@@ -216,7 +239,7 @@ export default function MyBookingsPage() {
             </p>
             <Link
               to="/vehicles"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
             >
               <Car className="w-5 h-5" />
               Browse Vehicles
@@ -303,14 +326,30 @@ export default function MyBookingsPage() {
                             Cancel
                           </button>
                         )}
-                        {booking.status === 'COMPLETED' && vehicle && (
-                          <Link
-                            to={`/vehicles/${vehicle.id}/book`}
-                            className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                            Book Again
-                          </Link>
+                        {booking.status === 'COMPLETED' && (
+                          <>
+                            <button
+                              onClick={() => handleDownloadReceipt(booking)}
+                              disabled={downloadingReceipt === booking.id}
+                              className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {downloadingReceipt === booking.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <FileText className="w-4 h-4" />
+                              )}
+                              Receipt
+                            </button>
+                            {vehicle && (
+                              <Link
+                                to={`/vehicles/${vehicle.id}/book`}
+                                className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                                Book Again
+                              </Link>
+                            )}
+                          </>
                         )}
                         <Link
                           to={`/dashboard/bookings/${booking.id}`}

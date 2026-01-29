@@ -407,8 +407,8 @@ export default function SecurityPage() {
               {twoFactorEnabled && (
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                   <div className="flex items-start gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                      <Key className="w-6 h-6 text-purple-600" />
+                    <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                      <Key className="w-6 h-6 text-amber-600" />
                     </div>
                     <div className="flex-1">
                       <h2 className="text-lg font-semibold text-gray-900">Backup Codes</h2>

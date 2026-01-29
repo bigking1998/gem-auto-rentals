@@ -94,9 +94,9 @@ const getNotificationColor = (type: Notification['type']) => {
     case 'message':
       return 'bg-blue-100 text-blue-600';
     case 'document':
-      return 'bg-indigo-100 text-indigo-600';
+      return 'bg-blue-100 text-blue-600';
     case 'system':
-      return 'bg-purple-100 text-purple-600';
+      return 'bg-gray-100 text-gray-600';
     default:
       return 'bg-gray-100 text-gray-600';
   }
@@ -475,8 +475,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-left"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                        <HelpCircle className="w-4 h-4 text-purple-600" />
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <HelpCircle className="w-4 h-4 text-blue-600" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">Help Center</p>

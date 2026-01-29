@@ -139,22 +139,22 @@ export default function ProfilePage() {
       {/* Loading State */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
         </div>
       ) : (
       <>
       {/* Profile Card */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* Avatar Section */}
-        <div className="relative h-32 bg-gradient-to-r from-indigo-500 to-purple-600">
+        <div className="relative h-32 bg-gradient-to-r from-orange-500 to-amber-500">
           <div className="absolute -bottom-12 left-6">
             <div className="relative">
               <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                <span className="text-3xl font-bold text-indigo-600">
+                <span className="text-3xl font-bold text-orange-600">
                   {profile.firstName[0]}{profile.lastName[0]}
                 </span>
               </div>
-              <button className="absolute bottom-0 right-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-indigo-700 transition-colors">
+              <button className="absolute bottom-0 right-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-orange-700 transition-colors">
                 <Camera className="w-4 h-4" />
               </button>
             </div>
@@ -166,7 +166,7 @@ export default function ProfilePage() {
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
             >
               Edit Profile
             </button>
@@ -182,8 +182,8 @@ export default function ProfilePage() {
                 onClick={handleSave}
                 disabled={isSaving}
                 className={cn(
-                  'px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg transition-colors',
-                  isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'
+                  'px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg transition-colors',
+                  isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-700'
                 )}
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
@@ -197,7 +197,7 @@ export default function ProfilePage() {
           {/* Personal Information */}
           <div>
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-              <User className="w-5 h-5 text-indigo-600" />
+              <User className="w-5 h-5 text-orange-600" />
               Personal Information
             </h3>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -210,7 +210,7 @@ export default function ProfilePage() {
                     type="text"
                     value={editedProfile.firstName}
                     onChange={(e) => updateField('firstName', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   />
                 ) : (
                   <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">
@@ -227,7 +227,7 @@ export default function ProfilePage() {
                     type="text"
                     value={editedProfile.lastName}
                     onChange={(e) => updateField('lastName', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   />
                 ) : (
                   <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">
@@ -241,7 +241,7 @@ export default function ProfilePage() {
           {/* Contact Information */}
           <div className="pt-4 border-t border-gray-100">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-              <Mail className="w-5 h-5 text-indigo-600" />
+              <Mail className="w-5 h-5 text-orange-600" />
               Contact Information
             </h3>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -255,7 +255,7 @@ export default function ProfilePage() {
                       type="email"
                       value={editedProfile.email}
                       onChange={(e) => updateField('email', e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   ) : (
                     <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">
@@ -273,7 +273,7 @@ export default function ProfilePage() {
                     type="tel"
                     value={editedProfile.phone}
                     onChange={(e) => updateField('phone', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   />
                 ) : (
                   <p className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-900">

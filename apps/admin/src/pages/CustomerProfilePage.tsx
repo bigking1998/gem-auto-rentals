@@ -61,8 +61,8 @@ interface Customer {
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-purple-100 text-purple-800',
-  ACTIVE: 'bg-green-100 text-green-800',
+  CONFIRMED: 'bg-green-100 text-green-800',
+  ACTIVE: 'bg-blue-100 text-blue-800',
   COMPLETED: 'bg-gray-100 text-gray-800',
   CANCELLED: 'bg-red-100 text-red-800',
 };
@@ -500,8 +500,8 @@ export default function CustomerProfilePage() {
                       className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                          <FileText className="w-6 h-6 text-purple-600" />
+                        <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                          <FileText className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">{documentTypeLabels[doc.type] || doc.type}</p>

@@ -24,7 +24,7 @@ import {
 const categoryColors: Record<string, string> = {
   ECONOMY: '#10b981',
   STANDARD: '#3b82f6',
-  PREMIUM: '#8b5cf6',
+  PREMIUM: '#ec4899',
   LUXURY: '#f59e0b',
   SUV: '#ef4444',
   VAN: '#06b6d4',

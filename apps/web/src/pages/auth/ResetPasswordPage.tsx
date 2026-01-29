@@ -104,7 +104,7 @@ export default function ResetPasswordPage() {
               to="/auth/forgot-password"
               className={cn(
                 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-all w-full',
-                'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
+                'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700'
               )}
             >
               Request New Link
@@ -134,7 +134,7 @@ export default function ResetPasswordPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Logo */}
           <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center">
               <Car className="w-7 h-7 text-white" />
             </div>
           </Link>
@@ -169,7 +169,7 @@ export default function ResetPasswordPage() {
                       }}
                       placeholder="Enter new password"
                       className={cn(
-                        'w-full pl-10 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+                        'w-full pl-10 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
                         errors.password ? 'border-red-300' : 'border-gray-200'
                       )}
                     />
@@ -229,7 +229,7 @@ export default function ResetPasswordPage() {
                       }}
                       placeholder="Confirm new password"
                       className={cn(
-                        'w-full pl-10 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+                        'w-full pl-10 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
                         errors.confirmPassword ? 'border-red-300' : 'border-gray-200'
                       )}
                     />
@@ -257,10 +257,10 @@ export default function ResetPasswordPage() {
                   disabled={isLoading}
                   className={cn(
                     'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-all',
-                    'bg-gradient-to-r from-indigo-600 to-purple-600',
+                    'bg-gradient-to-r from-orange-500 to-amber-600',
                     isLoading
                       ? 'opacity-70 cursor-not-allowed'
-                      : 'hover:from-indigo-700 hover:to-purple-700'
+                      : 'hover:from-orange-600 hover:to-amber-700'
                   )}
                 >
                   {isLoading ? (
@@ -296,7 +296,7 @@ export default function ResetPasswordPage() {
                 to="/auth/login"
                 className={cn(
                   'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-all w-full',
-                  'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
+                  'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700'
                 )}
               >
                 Continue to Login

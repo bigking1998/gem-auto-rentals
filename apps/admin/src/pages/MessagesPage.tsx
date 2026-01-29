@@ -24,7 +24,7 @@ import { cn, formatDate } from '@/lib/utils';
 import { api, Conversation, ConversationStatus, ApiError, Customer, Priority } from '@/lib/api';
 
 const statusColors: Record<ConversationStatus, string> = {
-  OPEN: 'bg-purple-100 text-purple-800',
+  OPEN: 'bg-blue-100 text-blue-800',
   PENDING: 'bg-yellow-100 text-yellow-800',
   IN_PROGRESS: 'bg-orange-100 text-orange-800',
   RESOLVED: 'bg-green-100 text-green-800',
@@ -429,7 +429,7 @@ export default function MessagesPage() {
                 {selectedConversation.status === 'RESOLVED' && (
                   <button
                     onClick={() => handleUpdateStatus(selectedConversation.id, 'OPEN')}
-                    className="px-3 py-1.5 text-sm text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                   >
                     Reopen
                   </button>

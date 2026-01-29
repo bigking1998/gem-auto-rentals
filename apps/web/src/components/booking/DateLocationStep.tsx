@@ -38,7 +38,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
         {/* Pick-up Section */}
         <div className="bg-gray-50 rounded-xl p-5">
           <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <span className="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm">
+            <span className="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm">
               1
             </span>
             Pick-up Details
@@ -55,7 +55,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
                 value={data.startDate}
                 onChange={(e) => onChange({ startDate: e.target.value })}
                 min={today}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -67,7 +67,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
               <select
                 value={data.pickupTime}
                 onChange={(e) => onChange({ pickupTime: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 {timeSlots.map((time) => (
                   <option key={time} value={time}>
@@ -85,7 +85,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
               <select
                 value={data.pickupLocation}
                 onChange={(e) => onChange({ pickupLocation: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 {locations.map((loc) => (
                   <option key={loc} value={loc}>
@@ -100,7 +100,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
         {/* Return Section */}
         <div className="bg-gray-50 rounded-xl p-5">
           <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <span className="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm">
+            <span className="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm">
               2
             </span>
             Return Details
@@ -117,7 +117,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
                 value={data.endDate}
                 onChange={(e) => onChange({ endDate: e.target.value })}
                 min={data.startDate || today}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -129,7 +129,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
               <select
                 value={data.dropoffTime}
                 onChange={(e) => onChange({ dropoffTime: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 {timeSlots.map((time) => (
                   <option key={time} value={time}>
@@ -147,7 +147,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
               <select
                 value={data.dropoffLocation}
                 onChange={(e) => onChange({ dropoffLocation: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 {locations.map((loc) => (
                   <option key={loc} value={loc}>
@@ -168,7 +168,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
                   dropoffLocation: e.target.checked ? data.pickupLocation : data.dropoffLocation,
                 })
               }
-              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+              className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
             />
             <span className="text-sm text-gray-600">
               Return to same location

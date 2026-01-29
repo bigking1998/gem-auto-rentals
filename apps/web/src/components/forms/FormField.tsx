@@ -68,7 +68,7 @@ export function FormField<T extends FieldValues>({
           {...register(name, rules)}
           className={cn(
             'w-full px-4 py-2.5 border rounded-lg transition-colors',
-            'focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+            'focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
             'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
             icon && 'pl-10',
             rightIcon && 'pr-12',
@@ -141,7 +141,7 @@ export function FormSelect<T extends FieldValues>({
         {...register(name, rules)}
         className={cn(
           'w-full px-4 py-2.5 border rounded-lg transition-colors',
-          'focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+          'focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
           'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
           error
             ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
@@ -198,7 +198,7 @@ export function FormCheckbox<T extends FieldValues>({
           {...register(name, rules)}
           className={cn(
             'w-4 h-4 mt-0.5 rounded border-gray-300',
-            'text-indigo-600 focus:ring-indigo-500',
+            'text-orange-600 focus:ring-orange-500',
             'disabled:cursor-not-allowed'
           )}
         />
@@ -256,7 +256,7 @@ export function FormTextarea<T extends FieldValues>({
         {...register(name, rules)}
         className={cn(
           'w-full px-4 py-2.5 border rounded-lg transition-colors resize-none',
-          'focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+          'focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
           'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
           error
             ? 'border-red-300 focus:ring-red-500 focus:border-red-500'

@@ -120,7 +120,7 @@ export default function DocumentsPage() {
         </div>
         <button
           onClick={() => setShowUploadModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
         >
           <Plus className="w-5 h-5" />
           Upload Document
@@ -156,7 +156,7 @@ export default function DocumentsPage() {
             </p>
             <button
               onClick={() => setShowUploadModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
             >
               <Upload className="w-5 h-5" />
               Upload Your First Document
@@ -257,7 +257,7 @@ export default function DocumentsPage() {
                           View
                         </button>
                         {(doc.status === 'rejected' || doc.status === 'expired') && (
-                          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+                          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors">
                             <Upload className="w-4 h-4" />
                             Re-upload
                           </button>
@@ -297,7 +297,7 @@ export default function DocumentsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Document Type
               </label>
-              <select className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              <select className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                 {documentTypes.map((type) => (
                   <option key={type.value} value={type.value}>
                     {type.label}
@@ -313,7 +313,7 @@ export default function DocumentsPage() {
               </label>
               <input
                 type="date"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -322,7 +322,7 @@ export default function DocumentsPage() {
               className={cn(
                 'border-2 border-dashed rounded-xl p-8 text-center transition-colors',
                 dragActive
-                  ? 'border-indigo-500 bg-indigo-50'
+                  ? 'border-orange-500 bg-orange-50'
                   : 'border-gray-200 hover:border-gray-300'
               )}
               onDragEnter={() => setDragActive(true)}
@@ -332,7 +332,7 @@ export default function DocumentsPage() {
             >
               <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600 mb-1">
-                <span className="text-indigo-600 font-medium cursor-pointer hover:underline">
+                <span className="text-orange-600 font-medium cursor-pointer hover:underline">
                   Click to upload
                 </span>{' '}
                 or drag and drop
@@ -350,7 +350,7 @@ export default function DocumentsPage() {
               >
                 Cancel
               </button>
-              <button className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+              <button className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors">
                 Upload Document
               </button>
             </div>

@@ -230,6 +230,37 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+// ============ Review Types ============
+export interface Review {
+  id: string;
+  userId: string;
+  vehicleId: string;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string | null;
+  };
+}
+
+export interface ReviewsResponse extends PaginatedResponse<Review> {
+  averageRating: number | null;
+}
+
+export interface CanReviewResponse {
+  canReview: boolean;
+  hasExistingReview: boolean;
+  existingReview: {
+    id: string;
+    rating: number;
+    comment?: string | null;
+  } | null;
+}
+
 // ============ Booking Types ============
 export interface Booking {
   id: string;
@@ -341,6 +372,79 @@ export const api = {
 
     getAvailability: (id: string, startDate: string, endDate: string): Promise<{ available: boolean }> =>
       request(`/vehicles/${id}/availability`, { params: { startDate, endDate } }),
+
+    previewPricing: (params: { startDate?: string; endDate?: string; category?: string }): Promise<{
+      availableCount: number;
+      minDailyRate: number | null;
+      maxDailyRate: number | null;
+      avgDailyRate: number | null;
+      days: number;
+      estimatedMinTotal: number | null;
+      estimatedMaxTotal: number | null;
+      featuredVehicles: Array<{
+        id: string;
+        make: string;
+        model: string;
+        year: number;
+        category: string;
+        dailyRate: number;
+        images: string[];
+        seats: number;
+        transmission: string;
+      }>;
+    }> => request('/vehicles/preview-pricing', { params }),
+  },
+
+  // Reviews
+  reviews: {
+    list: (vehicleId: string, params?: { page?: number; limit?: number }): Promise<ReviewsResponse> =>
+      request(`/vehicles/${vehicleId}/reviews`, { params }),
+
+    submit: (vehicleId: string, data: { rating: number; comment?: string }): Promise<Review> =>
+      request(`/vehicles/${vehicleId}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    delete: (vehicleId: string): Promise<{ message: string }> =>
+      request(`/vehicles/${vehicleId}/reviews`, { method: 'DELETE' }),
+
+    canReview: (vehicleId: string): Promise<CanReviewResponse> =>
+      request(`/vehicles/${vehicleId}/can-review`),
+  },
+
+  // Favorites
+  favorites: {
+    list: (): Promise<Array<{
+      id: string;
+      vehicleId: string;
+      createdAt: string;
+      vehicle: {
+        id: string;
+        make: string;
+        model: string;
+        year: number;
+        category: string;
+        dailyRate: number;
+        status: string;
+        images: string[];
+        seats: number;
+        transmission: string;
+        fuelType: string;
+      };
+    }>> => request('/favorites'),
+
+    add: (vehicleId: string): Promise<{ id: string; vehicleId: string }> =>
+      request(`/favorites/${vehicleId}`, { method: 'POST' }),
+
+    remove: (vehicleId: string): Promise<{ message: string }> =>
+      request(`/favorites/${vehicleId}`, { method: 'DELETE' }),
+
+    check: (vehicleId: string): Promise<{ isFavorited: boolean }> =>
+      request(`/favorites/check/${vehicleId}`),
+
+    getIds: (): Promise<string[]> =>
+      request('/favorites/ids'),
   },
 
   // Bookings
@@ -414,6 +518,42 @@ export const api = {
 
     get: (bookingId: string): Promise<{ id: string; amount: number | string; status: string; method?: string }> =>
       request(`/payments/${bookingId}`),
+  },
+
+  // Billing (Customer Payment Methods)
+  billing: {
+    createSetupIntent: (): Promise<{ clientSecret: string }> =>
+      request('/billing/setup-intent', { method: 'POST' }),
+
+    listPaymentMethods: (): Promise<Array<{
+      id: string;
+      type: string;
+      last4: string;
+      expMonth: number;
+      expYear: number;
+      brand: string;
+      isDefault: boolean;
+    }>> => request('/billing/payment-methods'),
+
+    addPaymentMethod: (paymentMethodId: string, setAsDefault?: boolean): Promise<{
+      id: string;
+      type: string;
+      last4: string;
+      expMonth: number;
+      expYear: number;
+      brand: string;
+      isDefault: boolean;
+    }> =>
+      request('/billing/payment-methods', {
+        method: 'POST',
+        body: JSON.stringify({ paymentMethodId, setAsDefault }),
+      }),
+
+    deletePaymentMethod: (id: string): Promise<{ message: string }> =>
+      request(`/billing/payment-methods/${id}`, { method: 'DELETE' }),
+
+    setDefaultPaymentMethod: (id: string): Promise<{ message: string }> =>
+      request(`/billing/payment-methods/${id}/default`, { method: 'POST' }),
   },
 
   // Profile
@@ -540,6 +680,54 @@ export const api = {
 
     getDownloadUrl: (id: string): Promise<{ downloadUrl: string; fileName: string; mimeType: string }> =>
       request(`/documents/${id}/download`),
+  },
+
+  // Invoices
+  invoices: {
+    list: (): Promise<Array<{
+      id: string;
+      invoiceNumber: string;
+      status: string;
+      totalAmount: number;
+      issueDate: string;
+      dueDate: string;
+      paidAt: string | null;
+      booking: {
+        id: string;
+        startDate: string;
+        endDate: string;
+        vehicle: {
+          make: string;
+          model: string;
+          year: number;
+        };
+      } | null;
+    }>> => request('/invoices/my'),
+
+    download: (id: string): string => {
+      // Return the URL for downloading/viewing the invoice
+      const token = localStorage.getItem('auth_token');
+      return `${API_BASE_URL}/invoices/${id}/download${token ? `?token=${token}` : ''}`;
+    },
+
+    openInNewTab: async (id: string): Promise<void> => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE_URL}/invoices/${id}/download`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download invoice');
+      }
+
+      const html = await response.text();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+
+      // Clean up the object URL after a short delay
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    },
   },
 };
 

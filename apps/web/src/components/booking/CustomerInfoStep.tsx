@@ -42,7 +42,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
         {/* Personal Information */}
         <div className="bg-gray-50 rounded-xl p-5">
           <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <User className="w-5 h-5 text-indigo-600" />
+            <User className="w-5 h-5 text-orange-600" />
             Personal Information
           </h3>
 
@@ -56,7 +56,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
                 value={data.customer.firstName}
                 onChange={(e) => updateCustomer('firstName', e.target.value)}
                 placeholder="John"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -69,7 +69,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
                 value={data.customer.lastName}
                 onChange={(e) => updateCustomer('lastName', e.target.value)}
                 placeholder="Doe"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -83,7 +83,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
                 value={data.customer.email}
                 onChange={(e) => updateCustomer('email', e.target.value)}
                 placeholder="john.doe@example.com"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -97,7 +97,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
                 value={data.customer.phone}
                 onChange={(e) => updateCustomer('phone', e.target.value)}
                 placeholder="+1 (555) 123-4567"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -110,7 +110,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
                 type="date"
                 value={data.customer.dateOfBirth}
                 onChange={(e) => updateCustomer('dateOfBirth', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
         {/* Address Information */}
         <div className="bg-gray-50 rounded-xl p-5">
           <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-indigo-600" />
+            <MapPin className="w-5 h-5 text-orange-600" />
             Address
           </h3>
 
@@ -133,7 +133,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
                 value={data.customer.address}
                 onChange={(e) => updateCustomer('address', e.target.value)}
                 placeholder="123 Main Street"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -146,7 +146,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
                 value={data.customer.city}
                 onChange={(e) => updateCustomer('city', e.target.value)}
                 placeholder="New York"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -159,7 +159,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
                 value={data.customer.zipCode}
                 onChange={(e) => updateCustomer('zipCode', e.target.value)}
                 placeholder="10001"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -170,7 +170,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
               <select
                 value={data.customer.country}
                 onChange={(e) => updateCustomer('country', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 {countries.map((country) => (
                   <option key={country} value={country}>
@@ -185,7 +185,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
         {/* Driver's License */}
         <div className="bg-gray-50 rounded-xl p-5">
           <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-indigo-600" />
+            <CreditCard className="w-5 h-5 text-orange-600" />
             Driver&apos;s License
           </h3>
 
@@ -198,7 +198,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
               value={data.customer.driversLicense}
               onChange={(e) => updateCustomer('driversLicense', e.target.value)}
               placeholder="DL12345678"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
             <p className="text-xs text-gray-500 mt-1.5">
               You&apos;ll need to present your physical license at pick-up.
@@ -211,15 +211,15 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
-              className="w-5 h-5 mt-0.5 text-indigo-600 rounded focus:ring-indigo-500"
+              className="w-5 h-5 mt-0.5 text-orange-600 rounded focus:ring-orange-500"
             />
             <span className="text-sm text-blue-900">
               I agree to the{' '}
-              <a href="/terms" className="text-indigo-600 hover:underline">
+              <a href="/terms" className="text-orange-600 hover:underline">
                 Terms & Conditions
               </a>{' '}
               and{' '}
-              <a href="/privacy" className="text-indigo-600 hover:underline">
+              <a href="/privacy" className="text-orange-600 hover:underline">
                 Privacy Policy
               </a>
               . I confirm that I am at least 21 years old and hold a valid driver&apos;s license.

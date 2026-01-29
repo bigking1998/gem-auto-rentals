@@ -54,7 +54,7 @@ export default function BookingConfirmationPage() {
             </p>
             <Link
               to="/vehicles"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               <Car className="w-5 h-5" />
               Browse Vehicles
@@ -99,7 +99,7 @@ export default function BookingConfirmationPage() {
             <p className="text-gray-500 text-lg">
               Your reservation has been successfully processed.
             </p>
-            <div className="mt-4 inline-block bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg">
+            <div className="mt-4 inline-block bg-orange-100 text-orange-700 px-4 py-2 rounded-lg">
               <span className="text-sm font-medium">Confirmation #:</span>{' '}
               <span className="font-bold">{confirmationNumber}</span>
             </div>
@@ -125,7 +125,7 @@ export default function BookingConfirmationPage() {
                     {vehicle.year} {vehicle.make} {vehicle.model}
                   </h2>
                   <p className="text-gray-500">{vehicle.category}</p>
-                  <p className="text-indigo-600 font-semibold mt-1">
+                  <p className="text-orange-600 font-semibold mt-1">
                     ${vehicle.dailyRate}/day • {days} days
                   </p>
                 </div>
@@ -138,7 +138,7 @@ export default function BookingConfirmationPage() {
                 <h3 className="text-sm font-medium text-gray-500 mb-3">PICK-UP</h3>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-gray-900">
-                    <Calendar className="w-4 h-4 text-indigo-600" />
+                    <Calendar className="w-4 h-4 text-orange-600" />
                     {new Date(booking.startDate).toLocaleDateString('en-US', {
                       weekday: 'short',
                       month: 'long',
@@ -147,11 +147,11 @@ export default function BookingConfirmationPage() {
                     })}
                   </div>
                   <div className="flex items-center gap-2 text-gray-900">
-                    <Clock className="w-4 h-4 text-indigo-600" />
+                    <Clock className="w-4 h-4 text-orange-600" />
                     {booking.pickupTime}
                   </div>
                   <div className="flex items-center gap-2 text-gray-900">
-                    <MapPin className="w-4 h-4 text-indigo-600" />
+                    <MapPin className="w-4 h-4 text-orange-600" />
                     {booking.pickupLocation}
                   </div>
                 </div>
@@ -161,7 +161,7 @@ export default function BookingConfirmationPage() {
                 <h3 className="text-sm font-medium text-gray-500 mb-3">RETURN</h3>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-gray-900">
-                    <Calendar className="w-4 h-4 text-indigo-600" />
+                    <Calendar className="w-4 h-4 text-orange-600" />
                     {new Date(booking.endDate).toLocaleDateString('en-US', {
                       weekday: 'short',
                       month: 'long',
@@ -170,11 +170,11 @@ export default function BookingConfirmationPage() {
                     })}
                   </div>
                   <div className="flex items-center gap-2 text-gray-900">
-                    <Clock className="w-4 h-4 text-indigo-600" />
+                    <Clock className="w-4 h-4 text-orange-600" />
                     {booking.dropoffTime}
                   </div>
                   <div className="flex items-center gap-2 text-gray-900">
-                    <MapPin className="w-4 h-4 text-indigo-600" />
+                    <MapPin className="w-4 h-4 text-orange-600" />
                     {booking.dropoffLocation}
                   </div>
                 </div>
@@ -186,15 +186,15 @@ export default function BookingConfirmationPage() {
               <h3 className="text-sm font-medium text-gray-500 mb-3">DRIVER DETAILS</h3>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="flex items-center gap-2 text-gray-900">
-                  <User className="w-4 h-4 text-indigo-600" />
+                  <User className="w-4 h-4 text-orange-600" />
                   {booking.customer.firstName} {booking.customer.lastName}
                 </div>
                 <div className="flex items-center gap-2 text-gray-900">
-                  <Mail className="w-4 h-4 text-indigo-600" />
+                  <Mail className="w-4 h-4 text-orange-600" />
                   {booking.customer.email}
                 </div>
                 <div className="flex items-center gap-2 text-gray-900">
-                  <Phone className="w-4 h-4 text-indigo-600" />
+                  <Phone className="w-4 h-4 text-orange-600" />
                   {booking.customer.phone}
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function BookingConfirmationPage() {
                     </span>
                   )}
                   {booking.extras.additionalDriver && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
                       <UserPlus className="w-4 h-4" />
                       Additional Driver
                     </span>
@@ -234,10 +234,10 @@ export default function BookingConfirmationPage() {
             )}
 
             {/* Total */}
-            <div className="p-6 bg-indigo-50">
+            <div className="p-6 bg-orange-50">
               <div className="flex items-center justify-between">
-                <span className="text-lg font-medium text-indigo-900">Total Paid</span>
-                <span className="text-3xl font-bold text-indigo-600">${total}</span>
+                <span className="text-lg font-medium text-orange-900">Total Paid</span>
+                <span className="text-3xl font-bold text-orange-600">${total}</span>
               </div>
             </div>
           </motion.div>
@@ -274,7 +274,7 @@ export default function BookingConfirmationPage() {
             </button>
             <button
               onClick={() => navigate('/')}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
             >
               <Home className="w-5 h-5" />
               Return to Home

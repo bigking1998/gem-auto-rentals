@@ -108,12 +108,12 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
               className={cn(
                 'relative border rounded-xl p-5 cursor-pointer transition-all',
                 isSelected
-                  ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
+                  ? 'border-orange-600 bg-orange-50 ring-1 ring-orange-600'
                   : 'border-gray-200 hover:border-gray-300 bg-white'
               )}
             >
               {extra.popular && (
-                <span className="absolute -top-2.5 right-4 px-2.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full">
+                <span className="absolute -top-2.5 right-4 px-2.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-full">
                   Recommended
                 </span>
               )}
@@ -124,7 +124,7 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
                   className={cn(
                     'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5',
                     isSelected
-                      ? 'bg-indigo-600 border-indigo-600'
+                      ? 'bg-orange-600 border-orange-600'
                       : 'border-gray-300'
                   )}
                 >
@@ -135,7 +135,7 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
                 <div
                   className={cn(
                     'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
-                    isSelected ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'
+                    isSelected ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-500'
                   )}
                 >
                   <extra.icon className="w-6 h-6" />
@@ -166,7 +166,7 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
                         className={cn(
                           'inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full',
                           isSelected
-                            ? 'bg-indigo-100 text-indigo-700'
+                            ? 'bg-orange-100 text-orange-700'
                             : 'bg-gray-100 text-gray-600'
                         )}
                       >
@@ -184,14 +184,14 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
 
       {/* Extras Summary */}
       {calculateExtrasTotal() > 0 && (
-        <div className="mt-6 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+        <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
-            <span className="font-medium text-indigo-900">Selected Extras Total</span>
-            <span className="text-xl font-bold text-indigo-600">
+            <span className="font-medium text-orange-900">Selected Extras Total</span>
+            <span className="text-xl font-bold text-orange-600">
               ${calculateExtrasTotal()}
             </span>
           </div>
-          <p className="text-sm text-indigo-700 mt-1">
+          <p className="text-sm text-orange-700 mt-1">
             for {days} days
           </p>
         </div>

@@ -38,14 +38,14 @@ interface MaintenanceSchedule {
 
 const statusColors: Record<string, string> = {
   AVAILABLE: 'bg-green-100 text-green-800',
-  RENTED: 'bg-purple-100 text-purple-800',
+  RENTED: 'bg-blue-100 text-blue-800',
   MAINTENANCE: 'bg-orange-100 text-orange-800',
   RETIRED: 'bg-gray-100 text-gray-800',
 };
 
 const categoryColors: Record<string, string> = {
   ECONOMY: 'bg-green-100 text-green-800',
-  STANDARD: 'bg-purple-100 text-purple-800',
+  STANDARD: 'bg-blue-100 text-blue-800',
   PREMIUM: 'bg-rose-100 text-rose-800',
   LUXURY: 'bg-amber-100 text-amber-800',
   SUV: 'bg-orange-100 text-orange-800',
@@ -496,11 +496,11 @@ export default function FleetManagement() {
           className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-              <Car className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Car className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-purple-600">
+              <p className="text-2xl font-bold text-blue-600">
                 {vehicles.filter((v) => v.status === 'RENTED').length}
               </p>
               <p className="text-sm text-gray-500">Rented</p>

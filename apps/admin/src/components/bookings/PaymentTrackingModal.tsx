@@ -39,7 +39,7 @@ interface PaymentTrackingModalProps {
 const statusConfig = {
   PENDING: { color: 'text-yellow-600', bg: 'bg-yellow-100', icon: Clock, label: 'Pending' },
   PAID: { color: 'text-green-600', bg: 'bg-green-100', icon: CheckCircle2, label: 'Paid' },
-  REFUNDED: { color: 'text-purple-600', bg: 'bg-purple-100', icon: RefreshCw, label: 'Refunded' },
+  REFUNDED: { color: 'text-blue-600', bg: 'bg-blue-100', icon: RefreshCw, label: 'Refunded' },
   FAILED: { color: 'text-red-600', bg: 'bg-red-100', icon: AlertCircle, label: 'Failed' },
   PARTIAL: { color: 'text-orange-600', bg: 'bg-orange-100', icon: DollarSign, label: 'Partial' },
 };
@@ -357,7 +357,7 @@ export function PaymentTrackingModal({
                                 setRefundAmount(payment.amount);
                                 setShowRefund(payment.id);
                               }}
-                              className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                             >
                               Refund
                             </button>
@@ -374,7 +374,7 @@ export function PaymentTrackingModal({
                                   type="number"
                                   value={refundAmount}
                                   onChange={(e) => setRefundAmount(parseFloat(e.target.value) || 0)}
-                                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   placeholder="Refund amount"
                                   min="0"
                                   max={payment.amount}
@@ -390,7 +390,7 @@ export function PaymentTrackingModal({
                               <button
                                 onClick={() => handleRefund(payment.id)}
                                 disabled={refundAmount <= 0 || refundAmount > payment.amount}
-                                className="px-3 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 Process Refund
                               </button>

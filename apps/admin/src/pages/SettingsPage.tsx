@@ -42,7 +42,7 @@ const tabs = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security', label: 'Security', icon: Lock },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
+  // { id: 'billing', label: 'Billing', icon: CreditCard }, // SaaS billing not needed - admin doesn't pay for own software
   { id: 'company', label: 'Company', icon: Building },
   { id: 'integrations', label: 'Integrations', icon: Globe },
 ];
@@ -50,7 +50,7 @@ const tabs = [
 export default function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
-  const validTabs = ['profile', 'notifications', 'security', 'billing', 'company', 'integrations'];
+  const validTabs = ['profile', 'notifications', 'security', 'company', 'integrations'];
   const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
 
