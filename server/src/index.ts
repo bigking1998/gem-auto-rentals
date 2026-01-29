@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
 import { isDatabaseConnected, waitForDatabase } from './lib/prisma.js';
+import { isStorageConfigured } from './lib/storage.js';
 
 // Route imports
 import authRoutes from './routes/auth.js';
@@ -129,9 +130,16 @@ const cacheControl = (maxAge: number) => {
 
 // Health check - checks database connection status
 app.get('/health', async (_req, res) => {
+  const storageConfigured = isStorageConfigured();
+
   // Check if database is already connected (from startup initialization)
   if (isDatabaseConnected()) {
-    res.json({ status: 'ok', database: 'connected', timestamp: new Date().toISOString() });
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      storage: storageConfigured ? 'configured' : 'not_configured',
+      timestamp: new Date().toISOString()
+    });
     return;
   }
 
@@ -140,6 +148,7 @@ app.get('/health', async (_req, res) => {
   res.json({
     status: 'ok',
     database: connected ? 'connected' : 'connecting',
+    storage: storageConfigured ? 'configured' : 'not_configured',
     timestamp: new Date().toISOString()
   });
 });
