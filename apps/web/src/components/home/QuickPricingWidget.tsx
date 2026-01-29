@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, Car, Search, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
-import DatePicker from '@/components/ui/DatePicker';
+import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@gem/ui';
+import AvailabilityCalendar from '@/components/vehicles/AvailabilityCalendar';
 
 const categories = [
   { value: '', label: 'All Categories' },
@@ -33,14 +35,20 @@ export default function QuickPricingWidget() {
   const [pricing, setPricing] = useState<PricingData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get tomorrow's date as minimum
-  const getTomorrow = () => {
-    const date = new Date();
-    date.setDate(date.getDate() + 1);
-    return date;
+  // Helper to parse "YYYY-MM-DD" as local date
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
   };
 
-  const minDate = getTomorrow();
+  // Helper to format date as "YYYY-MM-DD"
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   // Fetch pricing data
   const fetchPricing = useCallback(async () => {
@@ -75,17 +83,6 @@ export default function QuickPricingWidget() {
     return () => clearTimeout(timer);
   }, [fetchPricing]);
 
-  // Handle start date change
-  const handleStartDateChange = (date: string) => {
-    setStartDate(date);
-    // Auto-set end date if not set or if before new start
-    if (!endDate || date >= endDate) {
-      const newEnd = new Date(date);
-      newEnd.setDate(newEnd.getDate() + 1);
-      setEndDate(newEnd.toISOString().split('T')[0]);
-    }
-  };
-
   // Handle search
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -105,16 +102,6 @@ export default function QuickPricingWidget() {
 
   const days = calculateDays();
 
-  // Get min date for end date picker
-  const getEndMinDate = () => {
-    if (startDate) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + 1);
-      return date;
-    }
-    return minDate;
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -129,13 +116,46 @@ export default function QuickPricingWidget() {
             <Calendar className="inline w-4 h-4 mr-1" />
             Pick-up Date
           </label>
-          <DatePicker
-            value={startDate}
-            onChange={handleStartDateChange}
-            minDate={minDate}
-            placeholder="Select date"
-            darkMode
-          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "w-full h-[48px] flex items-center justify-start text-left font-medium px-4 rounded-xl border transition-all",
+                !startDate
+                  ? "text-white/50 border-white/20 bg-white/10 hover:bg-white/15"
+                  : "text-white border-primary bg-primary/20"
+              )}>
+                <Calendar className="mr-2 h-4 w-4 shrink-0 text-white/60" />
+                <span className="truncate">
+                  {startDate ? parseLocalDate(startDate)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Select Date"}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <AvailabilityCalendar
+                selectedStart={parseLocalDate(startDate)}
+                selectedEnd={parseLocalDate(endDate)}
+                onSelectStart={(date) => {
+                  setStartDate(formatLocalDate(date));
+                  // Auto-set end date if not set or if before new start
+                  const newStartStr = formatLocalDate(date);
+                  if (!endDate || newStartStr >= endDate) {
+                    const newEnd = new Date(date);
+                    newEnd.setDate(newEnd.getDate() + 1);
+                    setEndDate(formatLocalDate(newEnd));
+                  }
+                }}
+                onSelectEnd={(date) => {
+                  if (date) {
+                    setEndDate(formatLocalDate(date));
+                  } else {
+                    setEndDate('');
+                  }
+                }}
+                minDate={new Date()}
+                selectionMode="start"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Return Date */}
@@ -144,13 +164,37 @@ export default function QuickPricingWidget() {
             <Calendar className="inline w-4 h-4 mr-1" />
             Return Date
           </label>
-          <DatePicker
-            value={endDate}
-            onChange={setEndDate}
-            minDate={getEndMinDate()}
-            placeholder="Select date"
-            darkMode
-          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "w-full h-[48px] flex items-center justify-start text-left font-medium px-4 rounded-xl border transition-all",
+                !endDate
+                  ? "text-white/50 border-white/20 bg-white/10 hover:bg-white/15"
+                  : "text-white border-primary bg-primary/20"
+              )}>
+                <Calendar className="mr-2 h-4 w-4 shrink-0 text-white/60" />
+                <span className="truncate">
+                  {endDate ? parseLocalDate(endDate)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Select Date"}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <AvailabilityCalendar
+                selectedStart={parseLocalDate(startDate)}
+                selectedEnd={parseLocalDate(endDate)}
+                onSelectStart={(date) => setStartDate(formatLocalDate(date))}
+                onSelectEnd={(date) => {
+                  if (date) {
+                    setEndDate(formatLocalDate(date));
+                  } else {
+                    setEndDate('');
+                  }
+                }}
+                minDate={startDate ? parseLocalDate(startDate) || new Date() : new Date()}
+                selectionMode="end"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Category */}
