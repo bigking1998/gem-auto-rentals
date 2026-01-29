@@ -12,17 +12,17 @@ export default function DashboardLayout() {
 
   const fetchBadgeCounts = useCallback(async () => {
     try {
-      // Fetch pending bookings count (data.total contains the count)
-      const bookingsResponse = await api.bookings.list({ status: 'PENDING' });
-      const pendingBookings = (bookingsResponse.data as { total?: number })?.total || 0;
+      // Fetch total bookings count
+      const bookingsResponse = await api.bookings.list({ limit: 1 });
+      const totalBookings = (bookingsResponse.data as { total?: number })?.total || 0;
 
-      // Fetch unread conversations count
-      const unreadResponse = await api.conversations.getUnreadCount();
-      const unreadMessages = unreadResponse?.count || 0;
+      // Fetch open conversations count
+      const conversationsResponse = await api.conversations.list({ status: 'OPEN', limit: 1 });
+      const openConversations = (conversationsResponse.data as { total?: number })?.total || 0;
 
       setBadges({
-        pendingBookings: pendingBookings > 0 ? pendingBookings : undefined,
-        unreadMessages: unreadMessages > 0 ? unreadMessages : undefined,
+        pendingBookings: totalBookings > 0 ? totalBookings : undefined,
+        unreadMessages: openConversations > 0 ? openConversations : undefined,
       });
     } catch (error) {
       console.error('Failed to fetch badge counts:', error);
