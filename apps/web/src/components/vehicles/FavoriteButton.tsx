@@ -59,6 +59,7 @@ export default function FavoriteButton({
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       disabled={isLoading}
       className={cn(

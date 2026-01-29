@@ -27,6 +27,11 @@ export const useFavoritesStore = create<FavoritesState & FavoritesActions>()(
       isInitialized: false,
 
       addFavorite: async (vehicleId: string) => {
+        // Prevent duplicate additions
+        if (get().favoriteIds.includes(vehicleId)) {
+          return;
+        }
+
         // Optimistic update
         set((state) => ({
           favoriteIds: [...state.favoriteIds, vehicleId],

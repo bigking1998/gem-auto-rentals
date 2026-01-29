@@ -22,7 +22,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const initials = `${review.user.firstName[0]}${review.user.lastName[0]}`.toUpperCase();
+  const initials = `${review.user.firstName?.[0] || ''}${review.user.lastName?.[0] || ''}`.toUpperCase() || '?';
 
   const openLightbox = (index: number) => {
     setCurrentImageIndex(index);
@@ -53,10 +53,13 @@ export default function ReviewCard({ review }: ReviewCardProps) {
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+    const weeks = Math.floor(diffDays / 7);
+    if (diffDays < 30) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+    const months = Math.floor(diffDays / 30);
+    if (diffDays < 365) return `${months} month${months === 1 ? '' : 's'} ago`;
+    const years = Math.floor(diffDays / 365);
+    return `${years} year${years === 1 ? '' : 's'} ago`;
   };
 
   return (
@@ -134,13 +137,17 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
           onClick={closeLightbox}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image lightbox"
         >
           {/* Close button */}
           <button
             onClick={closeLightbox}
             className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+            aria-label="Close lightbox"
           >
-            <X className="w-8 h-8" />
+            <X className="w-8 h-8" aria-hidden="true" />
           </button>
 
           {/* Navigation - Previous */}
@@ -151,8 +158,9 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                 goToPrevious();
               }}
               className="absolute left-4 text-white hover:text-gray-300 transition-colors p-2"
+              aria-label="Previous image"
             >
-              <ChevronLeft className="w-8 h-8" />
+              <ChevronLeft className="w-8 h-8" aria-hidden="true" />
             </button>
           )}
 
@@ -172,8 +180,9 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                 goToNext();
               }}
               className="absolute right-4 text-white hover:text-gray-300 transition-colors p-2"
+              aria-label="Next image"
             >
-              <ChevronRight className="w-8 h-8" />
+              <ChevronRight className="w-8 h-8" aria-hidden="true" />
             </button>
           )}
 

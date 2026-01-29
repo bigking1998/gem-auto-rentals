@@ -28,16 +28,19 @@ interface FavoriteVehicle {
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<FavoriteVehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const removeFavorite = useFavoritesStore((state) => state.removeFavorite);
 
   useEffect(() => {
     async function fetchFavorites() {
       try {
+        setError(null);
         const data = await api.favorites.list();
         setFavorites(data);
       } catch (err) {
         console.error('Failed to fetch favorites:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load favorites');
       } finally {
         setIsLoading(false);
       }
@@ -46,7 +49,8 @@ export default function FavoritesPage() {
     fetchFavorites();
   }, []);
 
-  const handleRemove = async (vehicleId: string) => {
+  const handleRemove = async (favorite: FavoriteVehicle) => {
+    const vehicleId = favorite.vehicleId;
     setRemovingId(vehicleId);
     try {
       await removeFavorite(vehicleId);
@@ -62,6 +66,20 @@ export default function FavoritesPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+        <p className="text-red-600 font-medium mb-4">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
@@ -148,11 +166,11 @@ export default function FavoritesPage() {
                   </div>
 
                   <button
-                    onClick={() => handleRemove(favorite.vehicle.id)}
-                    disabled={removingId === favorite.vehicle.id}
+                    onClick={() => handleRemove(favorite)}
+                    disabled={removingId === favorite.vehicleId}
                     className="flex items-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
-                    {removingId === favorite.vehicle.id ? (
+                    {removingId === favorite.vehicleId ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <Trash2 className="w-4 h-4" />

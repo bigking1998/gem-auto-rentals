@@ -151,11 +151,11 @@ app.use('/api/vehicles', cacheControl(60), vehicleRoutes);
 // Auth - no caching (sensitive)
 app.use('/api/auth', authRoutes);
 
-// Bookings - short cache (5 seconds) for list, no cache for mutations
-app.use('/api/bookings', cacheControl(5), bookingRoutes);
+// Bookings - no caching (contains mutations and user-specific data)
+app.use('/api/bookings', bookingRoutes);
 
-// Customers - short cache
-app.use('/api/customers', cacheControl(5), customerRoutes);
+// Customers - no caching (sensitive user data)
+app.use('/api/customers', customerRoutes);
 
 // Payments - no caching (sensitive)
 app.use('/api/payments', paymentRoutes);

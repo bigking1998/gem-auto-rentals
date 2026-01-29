@@ -6,18 +6,20 @@ import viteCompression from 'vite-plugin-compression';
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
-    // Gzip compression for production builds
-    viteCompression({
-      algorithm: 'gzip',
-      ext: '.gz',
-      threshold: 1024, // Only compress files > 1KB
-    }),
-    // Brotli compression (better compression ratio)
-    viteCompression({
-      algorithm: 'brotliCompress',
-      ext: '.br',
-      threshold: 1024,
-    }),
+    // Gzip compression for production builds only
+    ...(mode === 'production' ? [
+      viteCompression({
+        algorithm: 'gzip',
+        ext: '.gz',
+        threshold: 1024, // Only compress files > 1KB
+      }),
+      // Brotli compression (better compression ratio)
+      viteCompression({
+        algorithm: 'brotliCompress',
+        ext: '.br',
+        threshold: 1024,
+      }),
+    ] : []),
   ],
   resolve: {
     alias: {
@@ -45,7 +47,7 @@ export default defineConfig(({ mode }) => ({
     terserOptions: {
       compress: {
         drop_console: mode === 'production', // Remove console.logs in production
-        drop_debugger: true,
+        drop_debugger: mode === 'production', // Remove debugger statements in production
       },
     },
     // Chunk splitting for better caching

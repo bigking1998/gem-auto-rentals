@@ -274,7 +274,10 @@ router.get('/', authenticate, adminOnly, async (req, res, next) => {
       })
       .parse(req.query);
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    // Validate pagination values
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
     const now = new Date();
 
     let whereClause = {};
@@ -298,7 +301,7 @@ router.get('/', authenticate, adminOnly, async (req, res, next) => {
         where: whereClause,
         orderBy: { createdAt: 'desc' },
         skip,
-        take: parseInt(limit),
+        take: limitNum,
         include: {
           _count: { select: { usages: true } },
         },
@@ -316,9 +319,9 @@ router.get('/', authenticate, adminOnly, async (req, res, next) => {
           usageCount: p._count.usages,
         })),
         total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(total / parseInt(limit)),
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
       },
     });
   } catch (error) {

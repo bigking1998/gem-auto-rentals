@@ -364,9 +364,16 @@ export async function sendAbandonmentRecoveryEmail(
     return { success: true, messageId: 'dev-mode-no-email' };
   }
 
-  // Calculate days
+  // Calculate days with validation
   const start = new Date(details.startDate);
   const end = new Date(details.endDate);
+
+  // Validate dates are valid and end is after start
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+    console.error('Invalid dates for abandonment email:', { startDate: details.startDate, endDate: details.endDate });
+    return { success: false, error: 'Invalid date range' };
+  }
+
   const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   const estimatedTotal = days * details.dailyRate;
 

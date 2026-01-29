@@ -28,10 +28,12 @@ interface VehicleData {
   offers: {
     price: number;
     priceCurrency: string;
+    priceValidUntil?: string; // ISO date string - should be passed from parent
   };
   vehicleSeatingCapacity: number;
   fuelType: string;
   vehicleTransmission: string;
+  available?: boolean; // Actual vehicle availability
 }
 
 interface BreadcrumbItem {
@@ -90,6 +92,12 @@ export function OrganizationSchema({ data }: { data: OrganizationData }) {
 
 // Vehicle/Product Schema
 export function VehicleSchema({ data }: { data: VehicleData }) {
+  // Use passed priceValidUntil or a stable default (computed at build/page-load time)
+  const priceValidUntil = data.offers.priceValidUntil;
+  const availability = data.available !== false
+    ? 'https://schema.org/InStock'
+    : 'https://schema.org/OutOfStock';
+
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -107,8 +115,8 @@ export function VehicleSchema({ data }: { data: VehicleData }) {
       '@type': 'Offer',
       price: data.offers.price,
       priceCurrency: data.offers.priceCurrency,
-      availability: 'https://schema.org/InStock',
-      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      availability,
+      ...(priceValidUntil && { priceValidUntil }),
     },
     additionalProperty: [
       {

@@ -1,12 +1,58 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, Component, ReactNode } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { useAuthStore } from './stores/authStore';
 
 // Eager load - needed immediately for auth flow
 import LoginPage from './pages/LoginPage';
 import DashboardLayout from './components/layout/DashboardLayout';
+
+// Error boundary for lazy-loaded components
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class LazyLoadErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, error: undefined });
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="text-center">
+            <AlertTriangle className="w-10 h-10 text-orange-500 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Failed to load page</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              There was a problem loading this page. Please try again.
+            </p>
+            <button
+              onClick={this.handleRetry}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Lazy load all dashboard pages for code splitting
 const DashboardHome = lazy(() => import('./pages/DashboardHome'));
@@ -116,20 +162,20 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Wrap lazy-loaded routes in Suspense */}
-          <Route index element={<Suspense fallback={<PageLoader />}><DashboardHome /></Suspense>} />
-          <Route path="fleet" element={<Suspense fallback={<PageLoader />}><FleetManagement /></Suspense>} />
-          <Route path="fleet/new" element={<Suspense fallback={<PageLoader />}><AddVehiclePage /></Suspense>} />
-          <Route path="fleet/:id" element={<Suspense fallback={<PageLoader />}><EditVehiclePage /></Suspense>} />
-          <Route path="bookings" element={<Suspense fallback={<PageLoader />}><BookingsPage /></Suspense>} />
-          <Route path="customers" element={<Suspense fallback={<PageLoader />}><CustomersPage /></Suspense>} />
-          <Route path="customers/:id" element={<Suspense fallback={<PageLoader />}><CustomerProfilePage /></Suspense>} />
-          <Route path="analytics" element={<Suspense fallback={<PageLoader />}><AnalyticsPage /></Suspense>} />
-          <Route path="settings" element={<Suspense fallback={<PageLoader />}><SettingsPage /></Suspense>} />
-          <Route path="messages" element={<Suspense fallback={<PageLoader />}><MessagesPage /></Suspense>} />
-          <Route path="security" element={<Suspense fallback={<PageLoader />}><SecurityPage /></Suspense>} />
-          <Route path="trash" element={<Suspense fallback={<PageLoader />}><TrashPage /></Suspense>} />
-          <Route path="help" element={<Suspense fallback={<PageLoader />}><HelpPage /></Suspense>} />
+          {/* Wrap lazy-loaded routes in Suspense with Error Boundary */}
+          <Route index element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><DashboardHome /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="fleet" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><FleetManagement /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="fleet/new" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><AddVehiclePage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="fleet/:id" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><EditVehiclePage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="bookings" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><BookingsPage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="customers" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><CustomersPage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="customers/:id" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><CustomerProfilePage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="analytics" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><AnalyticsPage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="settings" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><SettingsPage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="messages" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><MessagesPage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="security" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><SecurityPage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="trash" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><TrashPage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route path="help" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><HelpPage /></Suspense></LazyLoadErrorBoundary>} />
         </Route>
 
         {/* Catch all - redirect to dashboard or login */}

@@ -36,10 +36,14 @@ router.get('/history', authenticate, async (req, res, next) => {
       })
       .parse(req.query);
 
+    // Validate pagination values
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+
     const history = await loyaltyService.getTransactionHistory(
       userId,
-      parseInt(page),
-      parseInt(limit)
+      pageNum,
+      limitNum
     );
 
     res.json({

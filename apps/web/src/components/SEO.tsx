@@ -26,7 +26,9 @@ export default function SEO({
   noIndex = false,
 }: SEOProps) {
   const fullTitle = title ? `${title} | ${DEFAULT_TITLE}` : DEFAULT_TITLE;
-  const canonical = canonicalUrl || (typeof window !== 'undefined' ? window.location.href : SITE_URL);
+  // Use deterministic fallback to avoid SSR/client mismatch
+  // Pages that need dynamic canonical URLs should pass canonicalUrl prop
+  const canonical = canonicalUrl ?? SITE_URL;
 
   return (
     <Helmet>
@@ -55,7 +57,7 @@ export default function SEO({
 
       {/* Additional SEO */}
       <meta name="author" content="Gem Auto Rentals" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      {/* Note: viewport meta should be in index.html, not here */}
       <meta httpEquiv="Content-Language" content="en" />
     </Helmet>
   );

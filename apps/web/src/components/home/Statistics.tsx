@@ -64,7 +64,8 @@ export default function Statistics() {
 
         // Convert average rating to percentage for satisfaction rate
         // (4.8 out of 5 = 96%)
-        const satisfactionRate = Math.round((data.averageRating / 5) * 1000) / 10;
+        const rating = data.averageRating ?? 0;
+        const satisfactionRate = rating > 0 ? Math.round((rating / 5) * 1000) / 10 : 0;
 
         setStats([
           {

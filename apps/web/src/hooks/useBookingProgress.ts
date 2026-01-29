@@ -56,8 +56,8 @@ export function useBookingProgress(data: BookingProgressData | null) {
   }, [user?.email]);
 
   useEffect(() => {
-    // Only track for authenticated users or if we have their email
-    // (guests with email can be tracked too)
+    // Track for anyone with valid booking data
+    // (both authenticated users and guests can be tracked for abandonment recovery)
     if (!data) {
       return;
     }

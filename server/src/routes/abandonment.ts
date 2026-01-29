@@ -7,12 +7,15 @@ const router = Router();
 
 // Validation schema for tracking abandonment
 const trackAbandonmentSchema = z.object({
-  vehicleId: z.string().min(1, 'Vehicle ID is required'),
+  vehicleId: z.string().uuid('Invalid vehicle ID'),
   startDate: z.string().transform((s) => new Date(s)),
   endDate: z.string().transform((s) => new Date(s)),
   extras: z.record(z.any()).optional(),
-  step: z.number().min(1).max(4),
+  step: z.number().int().min(1).max(4),
   email: z.string().email().optional(),
+}).refine((data) => data.endDate > data.startDate, {
+  message: 'End date must be after start date',
+  path: ['endDate'],
 });
 
 // POST /api/abandonment/track - Track booking progress (for abandonment recovery)
@@ -136,6 +139,15 @@ router.post('/complete', authenticate, async (req, res, next) => {
 router.get('/recover/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    // Validate ID format to prevent NoSQL injection or invalid queries
+    if (!id || !/^[a-zA-Z0-9-_]+$/.test(id)) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid recovery ID format',
+      });
+      return;
+    }
 
     const abandonment = await prisma.abandonedBooking.findUnique({
       where: { id },

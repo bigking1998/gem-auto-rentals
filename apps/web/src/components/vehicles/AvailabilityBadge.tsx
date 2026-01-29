@@ -55,11 +55,13 @@ export default function AvailabilityBadge({
         config.className,
         className
       )}
+      role="status"
+      aria-label={!showLabel ? config.label : undefined}
     >
       {status === 'loading' ? (
-        <Icon className="w-3 h-3 animate-spin" />
+        <Icon className="w-3 h-3 animate-spin" aria-hidden="true" />
       ) : (
-        <span className={cn('w-2 h-2 rounded-full', config.dotClassName)} />
+        <span className={cn('w-2 h-2 rounded-full', config.dotClassName)} aria-hidden="true" />
       )}
       {showLabel && <span>{config.label}</span>}
     </span>

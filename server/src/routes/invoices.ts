@@ -507,6 +507,7 @@ router.post('/from-booking/:bookingId', authenticate, authorize('ADMIN', 'MANAGE
 // CUSTOMER-FACING ENDPOINTS (for web app)
 // ==========================================
 
+// NOTE: This route MUST be defined before /:id routes to prevent 'my' being treated as an ID
 // GET /api/invoices/my - Get current user's invoices
 router.get('/my', authenticate, async (req, res, next) => {
   try {
@@ -607,6 +608,17 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
       return `$${(Number(amount) || 0).toFixed(2)}`;
     };
 
+    // Helper to escape HTML for XSS prevention
+    const escapeHtml = (str: string | undefined | null): string => {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
     const html = `
 <!DOCTYPE html>
 <html>
@@ -656,9 +668,9 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
   <div class="info-grid">
     <div class="info-block">
       <p class="section-title">Bill To</p>
-      <p><strong>${invoice.customer.firstName} ${invoice.customer.lastName}</strong></p>
-      <p>${invoice.customer.email}</p>
-      ${invoice.customer.phone ? `<p>${invoice.customer.phone}</p>` : ''}
+      <p><strong>${escapeHtml(invoice.customer.firstName)} ${escapeHtml(invoice.customer.lastName)}</strong></p>
+      <p>${escapeHtml(invoice.customer.email)}</p>
+      ${invoice.customer.phone ? `<p>${escapeHtml(invoice.customer.phone)}</p>` : ''}
     </div>
     <div class="info-block" style="text-align: right;">
       <p class="section-title">Invoice Details</p>
@@ -690,7 +702,7 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
     <tbody>
       ${lineItems.map(item => `
         <tr>
-          <td>${item.description}</td>
+          <td>${escapeHtml(item.description)}</td>
           <td class="amount">${item.quantity}</td>
           <td class="amount">${formatCurrency(item.unitPrice)}</td>
           <td class="amount">${formatCurrency(item.amount)}</td>
@@ -725,7 +737,7 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
   ${invoice.notes ? `
   <div class="section" style="margin-top: 40px;">
     <p class="section-title">Notes</p>
-    <p style="font-size: 14px; color: #4b5563;">${invoice.notes}</p>
+    <p style="font-size: 14px; color: #4b5563;">${escapeHtml(invoice.notes)}</p>
   </div>
   ` : ''}
 

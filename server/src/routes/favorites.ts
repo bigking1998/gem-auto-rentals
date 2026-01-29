@@ -57,28 +57,16 @@ router.post('/:vehicleId', authenticate, async (req, res, next) => {
       throw NotFoundError('Vehicle not found');
     }
 
-    // Check if already favorited
-    const existing = await prisma.favorite.findUnique({
+    // Use upsert to prevent race conditions (check-then-create)
+    const favorite = await prisma.favorite.upsert({
       where: {
         userId_vehicleId: { userId, vehicleId },
       },
-    });
-
-    if (existing) {
-      res.json({
-        success: true,
-        data: existing,
-        message: 'Vehicle already in favorites',
-      });
-      return;
-    }
-
-    // Create favorite
-    const favorite = await prisma.favorite.create({
-      data: {
+      create: {
         userId,
         vehicleId,
       },
+      update: {}, // No update needed if already exists
       include: {
         vehicle: {
           select: {

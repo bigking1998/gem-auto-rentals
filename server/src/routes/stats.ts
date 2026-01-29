@@ -445,7 +445,7 @@ router.get('/public', async (_req, res, next) => {
     const statsData = {
       totalCustomers,
       totalRentals: completedBookings,
-      averageRating: Math.round((averageRating._avg.rating || 4.8) * 10) / 10, // Default to 4.8 if no reviews
+      averageRating: averageRating._avg.rating != null ? Math.round(averageRating._avg.rating * 10) / 10 : null,
       yearsInBusiness,
       vehicleCount,
     };

@@ -25,7 +25,7 @@ export default function AboutPage() {
                             transition={{ duration: 0.6 }}
                             className="max-w-3xl"
                         >
-                            <h1 className="text-4xl lg:text-6xl font-bold mb-6">About Gem Auto Sales</h1>
+                            <h1 className="text-4xl lg:text-6xl font-bold mb-6">About Gem Auto Rentals</h1>
                             <p className="text-xl text-gray-300 leading-relaxed">
                                 "We will make a positive difference in the lives of our customers from the United States, Caribbean, West Indies, and beyond."
                             </p>

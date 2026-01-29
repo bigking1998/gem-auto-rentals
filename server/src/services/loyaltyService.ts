@@ -26,10 +26,13 @@ const DOLLARS_PER_POINT = 1;
 export const loyaltyService = {
   /**
    * Get or create a loyalty account for a user
+   * Uses upsert to prevent race conditions on simultaneous account creation
    */
   async getOrCreateAccount(userId: string) {
-    let account = await prisma.loyaltyAccount.findUnique({
+    const account = await prisma.loyaltyAccount.upsert({
       where: { userId },
+      create: { userId },
+      update: {}, // No update needed if exists
       include: {
         transactions: {
           orderBy: { createdAt: 'desc' },
@@ -37,18 +40,6 @@ export const loyaltyService = {
         },
       },
     });
-
-    if (!account) {
-      account = await prisma.loyaltyAccount.create({
-        data: { userId },
-        include: {
-          transactions: {
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-          },
-        },
-      });
-    }
 
     return account;
   },
@@ -127,6 +118,7 @@ export const loyaltyService = {
 
   /**
    * Award points to a user (e.g., after completing a booking)
+   * Uses atomic increment to prevent race conditions
    */
   async awardPoints(
     userId: string,
@@ -134,10 +126,20 @@ export const loyaltyService = {
     description: string,
     bookingId?: string
   ) {
-    const account = await this.getOrCreateAccount(userId);
+    // Get or create account first
+    await this.getOrCreateAccount(userId);
 
-    // Create transaction and update account in a transaction
+    // Use transaction with atomic operations to prevent race conditions
     const result = await prisma.$transaction(async (tx) => {
+      // Fetch fresh account data inside transaction
+      const account = await tx.loyaltyAccount.findUnique({
+        where: { userId },
+      });
+
+      if (!account) {
+        throw new Error('Loyalty account not found');
+      }
+
       // Create the transaction record
       const transaction = await tx.loyaltyTransaction.create({
         data: {
@@ -149,15 +151,16 @@ export const loyaltyService = {
         },
       });
 
-      // Update account points and tier
+      // Calculate new tier based on updated lifetime points
       const newLifetimePoints = account.lifetimePoints + points;
       const newTier = this.calculateTier(newLifetimePoints);
 
+      // Use atomic increment to update account
       const updatedAccount = await tx.loyaltyAccount.update({
         where: { id: account.id },
         data: {
-          points: account.points + points,
-          lifetimePoints: newLifetimePoints,
+          points: { increment: points },
+          lifetimePoints: { increment: points },
           tier: newTier,
         },
       });
@@ -170,15 +173,26 @@ export const loyaltyService = {
 
   /**
    * Award bonus points (for promos, referrals, etc.)
+   * Uses atomic increment to prevent race conditions
    */
   async awardBonusPoints(
     userId: string,
     points: number,
     description: string
   ) {
-    const account = await this.getOrCreateAccount(userId);
+    // Get or create account first
+    await this.getOrCreateAccount(userId);
 
     const result = await prisma.$transaction(async (tx) => {
+      // Fetch fresh account data inside transaction
+      const account = await tx.loyaltyAccount.findUnique({
+        where: { userId },
+      });
+
+      if (!account) {
+        throw new Error('Loyalty account not found');
+      }
+
       const transaction = await tx.loyaltyTransaction.create({
         data: {
           accountId: account.id,
@@ -194,8 +208,8 @@ export const loyaltyService = {
       const updatedAccount = await tx.loyaltyAccount.update({
         where: { id: account.id },
         data: {
-          points: account.points + points,
-          lifetimePoints: newLifetimePoints,
+          points: { increment: points },
+          lifetimePoints: { increment: points },
           tier: newTier,
         },
       });
@@ -208,6 +222,7 @@ export const loyaltyService = {
 
   /**
    * Redeem points for a discount
+   * Uses atomic decrement with check inside transaction to prevent race conditions
    */
   async redeemPoints(
     userId: string,
@@ -215,13 +230,24 @@ export const loyaltyService = {
     description: string,
     bookingId?: string
   ) {
-    const account = await this.getOrCreateAccount(userId);
-
-    if (account.points < points) {
-      throw new Error(`Insufficient points. Available: ${account.points}, Required: ${points}`);
-    }
+    // Get or create account first
+    await this.getOrCreateAccount(userId);
 
     const result = await prisma.$transaction(async (tx) => {
+      // Fetch fresh account data inside transaction to check current balance
+      const account = await tx.loyaltyAccount.findUnique({
+        where: { userId },
+      });
+
+      if (!account) {
+        throw new Error('Loyalty account not found');
+      }
+
+      // Check balance inside transaction to prevent race conditions
+      if (account.points < points) {
+        throw new Error(`Insufficient points. Available: ${account.points}, Required: ${points}`);
+      }
+
       const transaction = await tx.loyaltyTransaction.create({
         data: {
           accountId: account.id,
@@ -235,7 +261,7 @@ export const loyaltyService = {
       const updatedAccount = await tx.loyaltyAccount.update({
         where: { id: account.id },
         data: {
-          points: account.points - points,
+          points: { decrement: points },
         },
       });
 
@@ -277,6 +303,7 @@ export const loyaltyService = {
 
   /**
    * Admin: Adjust points manually
+   * Uses atomic operations to prevent race conditions
    */
   async adjustPoints(
     userId: string,
@@ -284,14 +311,25 @@ export const loyaltyService = {
     description: string,
     adminUserId: string
   ) {
-    const account = await this.getOrCreateAccount(userId);
-
-    const newPoints = account.points + points;
-    if (newPoints < 0) {
-      throw new Error('Cannot adjust to negative points balance');
-    }
+    // Get or create account first
+    await this.getOrCreateAccount(userId);
 
     const result = await prisma.$transaction(async (tx) => {
+      // Fetch fresh account data inside transaction
+      const account = await tx.loyaltyAccount.findUnique({
+        where: { userId },
+      });
+
+      if (!account) {
+        throw new Error('Loyalty account not found');
+      }
+
+      // Check for negative balance inside transaction
+      const newPoints = account.points + points;
+      if (newPoints < 0) {
+        throw new Error('Cannot adjust to negative points balance');
+      }
+
       const transaction = await tx.loyaltyTransaction.create({
         data: {
           accountId: account.id,
@@ -310,8 +348,8 @@ export const loyaltyService = {
       const updatedAccount = await tx.loyaltyAccount.update({
         where: { id: account.id },
         data: {
-          points: newPoints,
-          lifetimePoints: newLifetimePoints,
+          points: points > 0 ? { increment: points } : { decrement: Math.abs(points) },
+          lifetimePoints: points > 0 ? { increment: points } : undefined,
           tier: newTier,
         },
       });

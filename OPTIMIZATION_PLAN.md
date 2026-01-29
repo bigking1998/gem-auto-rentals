@@ -140,6 +140,9 @@ interface SEOProps {
 **Schema Types to Implement:**
 
 1. **AutoRental (Organization)** - On all pages
+
+> **Important:** Replace all placeholder values below with actual production data before deployment. The schema must contain real business information for SEO validity.
+
 ```json
 {
   "@context": "https://schema.org",
@@ -147,10 +150,18 @@ interface SEOProps {
   "name": "Gem Auto Rentals",
   "url": "https://gemrentalcars.com",
   "logo": "https://gemrentalcars.com/logo.png",
-  "description": "Premium car rental services",
+  "description": "Premium car rental service offering a wide range of vehicles from economy to luxury. Affordable rates, flexible booking, and exceptional service in Mulberry, Florida.",
   "priceRange": "$$",
-  "address": { ... },
-  "telephone": "+1-XXX-XXX-XXXX"
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "1311 E CANAL ST",
+    "addressLocality": "MULBERRY",
+    "addressRegion": "FL",
+    "postalCode": "33860",
+    "addressCountry": "US"
+  },
+  "telephone": "863-277-7879",
+  "email": "gemautosalesinc@gmail.com"
 }
 ```
 

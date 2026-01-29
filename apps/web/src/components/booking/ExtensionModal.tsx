@@ -42,7 +42,11 @@ export default function ExtensionModal({
     if (isOpen && booking.endDate) {
       const endDate = new Date(booking.endDate);
       endDate.setDate(endDate.getDate() + 1);
-      setNewEndDate(endDate.toISOString().split('T')[0]);
+      // Use locale-safe local date string to avoid timezone shifts
+      const year = endDate.getFullYear();
+      const month = String(endDate.getMonth() + 1).padStart(2, '0');
+      const day = String(endDate.getDate()).padStart(2, '0');
+      setNewEndDate(`${year}-${month}-${day}`);
     }
   }, [isOpen, booking.endDate]);
 
@@ -72,10 +76,11 @@ export default function ExtensionModal({
           conflictDate: result.conflictDate,
         });
       } else {
+        // Defensively handle missing pricing data
         setPreview({
           available: true,
-          additionalDays: result.pricing!.additionalDays,
-          additionalAmount: result.pricing!.additionalAmount,
+          additionalDays: result.pricing?.additionalDays ?? 0,
+          additionalAmount: result.pricing?.additionalAmount ?? 0,
         });
       }
     } catch (err) {
@@ -91,17 +96,22 @@ export default function ExtensionModal({
     setIsPaying(true);
     setError(null);
 
+    let extensionId: string | null = null;
+
     try {
       // Create extension request
       const extensionResult = await api.extensions.request(booking.id, newEndDate);
+      extensionId = extensionResult.extension.id;
 
       // Pay for extension
-      await api.extensions.pay(booking.id, extensionResult.extension.id);
+      await api.extensions.pay(booking.id, extensionId);
 
       // Success
       onExtended(newEndDate);
       onClose();
     } catch (err) {
+      // If payment failed but extension was created, the extension remains pending
+      // User can retry payment or it will be cleaned up by backend
       setError(err instanceof Error ? err.message : 'Failed to extend rental');
     } finally {
       setIsPaying(false);
@@ -119,6 +129,8 @@ export default function ExtensionModal({
 
   const minDate = new Date(booking.endDate);
   minDate.setDate(minDate.getDate() + 1);
+  // Use locale-safe local date string for min attribute
+  const minDateStr = `${minDate.getFullYear()}-${String(minDate.getMonth() + 1).padStart(2, '0')}-${String(minDate.getDate()).padStart(2, '0')}`;
 
   return (
     <AnimatePresence>
@@ -139,13 +151,17 @@ export default function ExtensionModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="relative w-full max-w-md mx-4 bg-white rounded-xl shadow-xl overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="extend-modal-title"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Extend Your Rental</h2>
+              <h2 id="extend-modal-title" className="text-lg font-semibold text-gray-900">Extend Your Rental</h2>
               <button
                 onClick={onClose}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -170,11 +186,12 @@ export default function ExtensionModal({
 
               {/* Date Picker */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="new-return-date" className="block text-sm font-medium text-gray-700 mb-2">
                   New Return Date
                 </label>
                 <div className="relative">
                   <input
+                    id="new-return-date"
                     type="date"
                     value={newEndDate}
                     onChange={(e) => {
@@ -182,10 +199,10 @@ export default function ExtensionModal({
                       setPreview(null);
                       setError(null);
                     }}
-                    min={minDate.toISOString().split('T')[0]}
+                    min={minDateStr}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                   />
-                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" aria-hidden="true" />
                 </div>
               </div>
 

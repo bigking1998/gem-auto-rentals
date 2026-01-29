@@ -118,90 +118,95 @@ router.post('/:id/extend', authenticate, async (req, res, next) => {
     const { id } = req.params;
     const { newEndDate } = z
       .object({
-        newEndDate: z.string().transform((s) => new Date(s)),
+        newEndDate: z.string().transform((s) => {
+          const date = new Date(s);
+          if (isNaN(date.getTime())) {
+            throw new Error('Invalid date');
+          }
+          return date;
+        }),
       })
       .parse(req.body);
 
     const userId = req.user!.id;
 
-    // Get the booking
-    const booking = await prisma.booking.findFirst({
-      where: {
-        id,
-        userId,
-        status: 'ACTIVE',
-        deletedAt: null,
-      },
+    // Use transaction to prevent TOCTOU race conditions
+    const result = await prisma.$transaction(async (tx) => {
+      // Get the booking
+      const booking = await tx.booking.findFirst({
+        where: {
+          id,
+          userId,
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
+      });
+
+      if (!booking) {
+        return { error: 'Active booking not found', status: 404 };
+      }
+
+      // Validate new end date
+      if (newEndDate <= booking.endDate) {
+        return { error: 'New end date must be after current end date', status: 400 };
+      }
+
+      // Check for conflicts
+      const conflictingBooking = await tx.booking.findFirst({
+        where: {
+          vehicleId: booking.vehicleId,
+          id: { not: booking.id },
+          status: { in: ['CONFIRMED', 'ACTIVE'] },
+          deletedAt: null,
+          startDate: { lte: newEndDate },
+          endDate: { gte: booking.endDate },
+        },
+      });
+
+      if (conflictingBooking) {
+        return { error: 'Vehicle is not available for the requested extension period', status: 400 };
+      }
+
+      // Check for existing pending extension
+      const existingExtension = await tx.bookingExtension.findFirst({
+        where: {
+          bookingId: booking.id,
+          paymentStatus: 'PENDING',
+        },
+      });
+
+      if (existingExtension) {
+        return { error: 'You already have a pending extension request', status: 400 };
+      }
+
+      // Calculate additional amount
+      const additionalDays = Math.ceil(
+        (newEndDate.getTime() - booking.endDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const additionalAmount = additionalDays * Number(booking.dailyRate);
+
+      // Create extension request
+      const extension = await tx.bookingExtension.create({
+        data: {
+          bookingId: booking.id,
+          originalEndDate: booking.endDate,
+          newEndDate,
+          additionalAmount,
+        },
+      });
+
+      return { extension };
     });
 
-    if (!booking) {
-      res.status(404).json({
+    if ('error' in result) {
+      res.status(result.status).json({
         success: false,
-        error: 'Active booking not found',
+        error: result.error,
       });
       return;
     }
 
-    // Validate new end date
-    if (newEndDate <= booking.endDate) {
-      res.status(400).json({
-        success: false,
-        error: 'New end date must be after current end date',
-      });
-      return;
-    }
-
-    // Check for conflicts
-    const conflictingBooking = await prisma.booking.findFirst({
-      where: {
-        vehicleId: booking.vehicleId,
-        id: { not: booking.id },
-        status: { in: ['CONFIRMED', 'ACTIVE'] },
-        deletedAt: null,
-        startDate: { lte: newEndDate },
-        endDate: { gte: booking.endDate },
-      },
-    });
-
-    if (conflictingBooking) {
-      res.status(400).json({
-        success: false,
-        error: 'Vehicle is not available for the requested extension period',
-      });
-      return;
-    }
-
-    // Check for existing pending extension
-    const existingExtension = await prisma.bookingExtension.findFirst({
-      where: {
-        bookingId: booking.id,
-        paymentStatus: 'PENDING',
-      },
-    });
-
-    if (existingExtension) {
-      res.status(400).json({
-        success: false,
-        error: 'You already have a pending extension request',
-      });
-      return;
-    }
-
-    // Calculate additional amount
-    const additionalDays = Math.ceil(
-      (newEndDate.getTime() - booking.endDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    const additionalAmount = additionalDays * Number(booking.dailyRate);
-
-    // Create extension request
-    const extension = await prisma.bookingExtension.create({
-      data: {
-        bookingId: booking.id,
-        originalEndDate: booking.endDate,
-        newEndDate,
-        additionalAmount,
-      },
-    });
+    const { extension } = result;
 
     res.json({
       success: true,

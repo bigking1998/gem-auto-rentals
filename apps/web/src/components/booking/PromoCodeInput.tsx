@@ -38,11 +38,17 @@ export default function PromoCodeInput({
         return;
       }
 
+      // Validate required fields before calling onPromoApplied
+      if (!result.code || !result.type || result.discountAmount === undefined) {
+        setError('Invalid response from server');
+        return;
+      }
+
       onPromoApplied({
-        code: result.code!,
-        type: result.type!,
-        amount: result.discountAmount!,
-        description: result.discountDescription!,
+        code: result.code,
+        type: result.type,
+        amount: result.discountAmount,
+        description: result.discountDescription || '',
       });
       setCode('');
       setIsOpen(false);
@@ -79,8 +85,9 @@ export default function PromoCodeInput({
           <button
             onClick={handleRemove}
             className="p-2 text-green-600 hover:text-green-800 hover:bg-green-100 rounded-lg transition-colors"
+            aria-label="Remove promo code"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -100,13 +107,14 @@ export default function PromoCodeInput({
       ) : (
         <AnimatePresence>
           <motion.div
+            key="promo-input-form"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             className="bg-gray-50 rounded-lg p-4"
           >
             <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-gray-700">
+              <label htmlFor="promo-code-input" className="text-sm font-medium text-gray-700">
                 Enter Promo Code
               </label>
               <button
@@ -116,13 +124,15 @@ export default function PromoCodeInput({
                   setError(null);
                 }}
                 className="text-gray-400 hover:text-gray-600"
+                aria-label="Close promo code form"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
             <div className="flex gap-2">
               <input
+                id="promo-code-input"
                 type="text"
                 value={code}
                 onChange={(e) => {

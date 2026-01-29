@@ -20,6 +20,8 @@ The following files have been created and will be deployed with your next build:
 - HTML always revalidated (ensures users get latest app version)
 - Security headers added (XSS protection, clickjacking prevention)
 
+> **Important:** Long-term caching (1 year) for static assets requires content-hashed filenames. Ensure your build pipeline (Vite/webpack/rollup) generates hashed filenames like `index-abc123.js` and updates HTML/asset manifests to reference them. Without content hashing, users may receive stale cached assets after deployments.
+
 ---
 
 ## Phase 2: Cloudflare Dashboard Settings
@@ -45,7 +47,15 @@ Configure these settings:
 |---------|-------|-------|
 | HTTP/2 | ✅ ON | Should be on by default |
 | HTTP/3 (with QUIC) | ✅ ON | Fastest protocol |
-| 0-RTT Connection Resumption | ✅ ON | Faster repeat visits |
+| 0-RTT Connection Resumption | ⚠️ ON (with caution) | Faster repeat visits - see security note below |
+
+> **Security Note for 0-RTT:** 0-RTT Connection Resumption enables replay attacks on non-idempotent HTTP methods (POST, PUT, DELETE). Only enable if you have implemented anti-replay protections such as:
+> - Requiring idempotency keys for all mutating operations
+> - Server-side replay detection caches
+> - Strict authentication and CSRF token validation
+> - Avoiding non-idempotent operations during the 0-RTT window
+>
+> If your application cannot implement these mitigations, disable 0-RTT to prevent potential replay attacks.
 
 5. Go to **Speed → Optimization → Other**
 
@@ -95,7 +105,7 @@ Go to **Caching → Cache Rules** and create these rules:
   - Value: `/assets/`
 - **Then:**
   - Cache eligibility: `Eligible for cache`
-  - Edge TTL: `Override: 1 month`
+  - Edge TTL: `Override: 1 year`
   - Browser TTL: `Override: 1 year`
 
 #### Rule 3: Cache JS/CSS Files
@@ -106,8 +116,19 @@ Go to **Caching → Cache Rules** and create these rules:
   - Value: `.js` OR `.css`
 - **Then:**
   - Cache eligibility: `Eligible for cache`
-  - Edge TTL: `Override: 1 month`
+  - Edge TTL: `Override: 1 year`
   - Browser TTL: `Override: 1 year`
+
+#### Rule 4: Cache Images
+- **Rule name:** Cache Images
+- **When incoming requests match:**
+  - Field: `URI Path`
+  - Operator: `ends with`
+  - Value: `.png` OR `.jpg` OR `.jpeg` OR `.webp` OR `.svg` OR `.gif` OR `.ico`
+- **Then:**
+  - Cache eligibility: `Eligible for cache`
+  - Edge TTL: `Override: 30 days`
+  - Browser TTL: `Override: 30 days`
 
 ---
 
@@ -153,6 +174,7 @@ curl -I https://gemrentalcars.com/
 Should see security headers like `X-Content-Type-Options`, `X-Frame-Options`
 
 ### Test 2: Check Asset Caching
+> **Note:** Replace `index-abc123.js` with an actual asset filename from your deployed app (check your build output or browser DevTools Network tab).
 ```bash
 curl -I https://gemrentalcars.com/assets/index-abc123.js
 ```
@@ -205,9 +227,12 @@ Should see `Content-Encoding: br` (Brotli)
 - [ ] Enable Smart Tiered Cache
 - [ ] Create Cache Rule: Bypass API
 - [ ] Create Cache Rule: Cache Static Assets
+- [ ] Create Cache Rule: Cache JS/CSS Files
+- [ ] Create Cache Rule: Cache Images
 - [ ] Set SSL to Full (strict)
 - [ ] Enable Always Use HTTPS
 - [ ] Enable TLS 1.3
+- [ ] Verify build generates content-hashed filenames for JS/CSS/fonts and HTML references are updated
 
 ---
 

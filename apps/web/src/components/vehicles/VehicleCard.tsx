@@ -87,7 +87,7 @@ const VehicleCard = memo(function VehicleCard({
             {category}
           </span>
         </div>
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-3 right-3 z-10" onClick={(e) => e.stopPropagation()}>
           <FavoriteButton vehicleId={id} />
         </div>
       </Link>

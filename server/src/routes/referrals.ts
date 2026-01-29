@@ -34,29 +34,36 @@ router.get('/my-code', authenticate, async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // If no active code, create a new one
+    // If no active code, create a new one using transaction for atomicity
     if (!referral) {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + CODE_VALIDITY_DAYS);
 
-      // Generate unique code
-      let code: string;
-      let attempts = 0;
-      do {
-        code = generateReferralCode();
-        attempts++;
-        const existing = await prisma.referral.findUnique({ where: { code } });
-        if (!existing) break;
-      } while (attempts < 10);
+      // Use transaction to handle race conditions and unique code generation
+      referral = await prisma.$transaction(async (tx) => {
+        // Generate unique code with retry logic inside transaction
+        let code: string;
+        let attempts = 0;
+        do {
+          code = generateReferralCode();
+          attempts++;
+          const existing = await tx.referral.findUnique({ where: { code } });
+          if (!existing) break;
+        } while (attempts < 10);
 
-      referral = await prisma.referral.create({
-        data: {
-          referrerId: userId,
-          code: code!,
-          expiresAt,
-          referrerReward: REFERRER_REWARD,
-          refereeReward: REFEREE_REWARD,
-        },
+        if (attempts >= 10) {
+          throw new Error('Failed to generate unique referral code');
+        }
+
+        return tx.referral.create({
+          data: {
+            referrerId: userId,
+            code: code!,
+            expiresAt,
+            referrerReward: REFERRER_REWARD,
+            refereeReward: REFEREE_REWARD,
+          },
+        });
       });
     }
 

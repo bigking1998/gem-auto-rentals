@@ -111,7 +111,7 @@ export default function ReviewList({
                   />
                 ))}
               </div>
-              <span className="font-bold text-gray-900">{averageRating?.toFixed(1)}</span>
+              <span className="font-bold text-gray-900">{averageRating != null ? averageRating.toFixed(1) : 'N/A'}</span>
               <span className="text-gray-500 text-sm">({total} reviews)</span>
             </div>
           )}

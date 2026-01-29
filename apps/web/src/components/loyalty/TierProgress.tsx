@@ -60,7 +60,7 @@ export default function TierProgress({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className={cn('p-3 rounded-full', colors.bg, colors.text)}>
-            {tierIcons[currentTier]}
+            {tierIcons[currentTier] || <Award className="w-6 h-6" />}
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">{currentTier} Member</h3>
@@ -80,7 +80,14 @@ export default function TierProgress({
             </span>
           </div>
 
-          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-3 bg-gray-100 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={Math.round(progressToNextTier)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Progress to ${nextTier}: ${Math.round(progressToNextTier)}%`}
+          >
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progressToNextTier}%` }}

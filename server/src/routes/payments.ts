@@ -169,39 +169,55 @@ router.post('/confirm', authenticate, async (req, res, next) => {
     ]);
 
     // Send booking confirmation email on successful payment
+    // Only send if booking doesn't already have confirmationEmailSent flag
+    // (webhook may also send, so we use atomic update to prevent duplicates)
     if (paymentStatus === 'SUCCEEDED') {
-      const bookingWithDetails = await prisma.booking.findUnique({
-        where: { id: payment.bookingId },
-        include: {
-          user: { select: { email: true, firstName: true } },
-          vehicle: { select: { make: true, model: true, year: true } },
+      // Use atomic update to prevent duplicate emails from webhook race condition
+      const bookingToUpdate = await prisma.booking.updateMany({
+        where: {
+          id: payment.bookingId,
+          confirmationEmailSent: { not: true },
+        },
+        data: {
+          confirmationEmailSent: true,
         },
       });
 
-      if (bookingWithDetails && bookingWithDetails.user) {
-        const formatDate = (date: Date) => {
-          return date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          });
-        };
-
-        sendBookingConfirmationEmail(
-          bookingWithDetails.user.email,
-          bookingWithDetails.user.firstName,
-          {
-            bookingId: bookingWithDetails.id,
-            vehicleName: `${bookingWithDetails.vehicle.year} ${bookingWithDetails.vehicle.make} ${bookingWithDetails.vehicle.model}`,
-            startDate: formatDate(bookingWithDetails.startDate),
-            endDate: formatDate(bookingWithDetails.endDate),
-            pickupLocation: bookingWithDetails.pickupLocation,
-            totalAmount: `$${Number(bookingWithDetails.totalAmount).toFixed(2)}`,
-          }
-        ).catch((err) => {
-          console.error('Failed to send booking confirmation email:', err);
+      // Only send email if we successfully set the flag (count > 0 means it wasn't already sent)
+      if (bookingToUpdate.count > 0) {
+        const bookingWithDetails = await prisma.booking.findUnique({
+          where: { id: payment.bookingId },
+          include: {
+            user: { select: { email: true, firstName: true } },
+            vehicle: { select: { make: true, model: true, year: true } },
+          },
         });
+
+        if (bookingWithDetails && bookingWithDetails.user) {
+          const formatDate = (date: Date) => {
+            return date.toLocaleDateString('en-US', {
+              weekday: 'short',
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            });
+          };
+
+          sendBookingConfirmationEmail(
+            bookingWithDetails.user.email,
+            bookingWithDetails.user.firstName,
+            {
+              bookingId: bookingWithDetails.id,
+              vehicleName: `${bookingWithDetails.vehicle.year} ${bookingWithDetails.vehicle.make} ${bookingWithDetails.vehicle.model}`,
+              startDate: formatDate(bookingWithDetails.startDate),
+              endDate: formatDate(bookingWithDetails.endDate),
+              pickupLocation: bookingWithDetails.pickupLocation,
+              totalAmount: `$${Number(bookingWithDetails.totalAmount).toFixed(2)}`,
+            }
+          ).catch((err) => {
+            console.error('Failed to send booking confirmation email:', err);
+          });
+        }
       }
     }
 
@@ -380,43 +396,58 @@ router.post(
           });
 
           if (payment) {
-            await prisma.booking.update({
-              where: { id: payment.bookingId },
-              data: { status: 'CONFIRMED' },
-            });
-
-            // Send booking confirmation email
-            const booking = await prisma.booking.findUnique({
-              where: { id: payment.bookingId },
-              include: {
-                user: { select: { email: true, firstName: true } },
-                vehicle: { select: { make: true, model: true, year: true } },
+            // Use atomic update to prevent duplicate emails from /confirm endpoint race
+            const bookingToUpdate = await prisma.booking.updateMany({
+              where: {
+                id: payment.bookingId,
+                confirmationEmailSent: { not: true },
+              },
+              data: {
+                status: 'CONFIRMED',
+                confirmationEmailSent: true,
               },
             });
 
-            if (booking && booking.user) {
-              const formatDate = (date: Date) => {
-                return date.toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                });
-              };
+            // Only send email if we successfully set the flag (count > 0 means it wasn't already sent)
+            if (bookingToUpdate.count > 0) {
+              const booking = await prisma.booking.findUnique({
+                where: { id: payment.bookingId },
+                include: {
+                  user: { select: { email: true, firstName: true } },
+                  vehicle: { select: { make: true, model: true, year: true } },
+                },
+              });
 
-              sendBookingConfirmationEmail(
-                booking.user.email,
-                booking.user.firstName,
-                {
-                  bookingId: booking.id,
-                  vehicleName: `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`,
-                  startDate: formatDate(booking.startDate),
-                  endDate: formatDate(booking.endDate),
-                  pickupLocation: booking.pickupLocation,
-                  totalAmount: `$${Number(booking.totalAmount).toFixed(2)}`,
-                }
-              ).catch((err) => {
-                console.error('Failed to send booking confirmation email:', err);
+              if (booking && booking.user) {
+                const formatDate = (date: Date) => {
+                  return date.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  });
+                };
+
+                sendBookingConfirmationEmail(
+                  booking.user.email,
+                  booking.user.firstName,
+                  {
+                    bookingId: booking.id,
+                    vehicleName: `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`,
+                    startDate: formatDate(booking.startDate),
+                    endDate: formatDate(booking.endDate),
+                    pickupLocation: booking.pickupLocation,
+                    totalAmount: `$${Number(booking.totalAmount).toFixed(2)}`,
+                  }
+                ).catch((err) => {
+                  console.error('Failed to send booking confirmation email:', err);
+                });
+              }
+            } else {
+              // Just update status if email was already sent
+              await prisma.booking.update({
+                where: { id: payment.bookingId },
+                data: { status: 'CONFIRMED' },
               });
             }
           }
