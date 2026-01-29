@@ -198,15 +198,27 @@ export function VehicleForm({
     const toggleFeature = (feature: string) => {
         const current = selectedFeatures;
         if (current.includes(feature)) {
-            setValue('features', current.filter((f) => f !== feature));
+            setValue('features', current.filter((f) => f !== feature), {
+                shouldDirty: true,
+                shouldTouch: true,
+                shouldValidate: true
+            });
         } else {
-            setValue('features', [...current, feature]);
+            setValue('features', [...current, feature], {
+                shouldDirty: true,
+                shouldTouch: true,
+                shouldValidate: true
+            });
         }
     };
 
     const addCustomFeature = () => {
         if (customFeature.trim() && !selectedFeatures.includes(customFeature.trim())) {
-            setValue('features', [...selectedFeatures, customFeature.trim()]);
+            setValue('features', [...selectedFeatures, customFeature.trim()], {
+                shouldDirty: true,
+                shouldTouch: true,
+                shouldValidate: true
+            });
             setCustomFeature('');
         }
     };
