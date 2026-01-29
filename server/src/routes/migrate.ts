@@ -354,6 +354,180 @@ router.delete('/user', async (req, res: Response) => {
   }
 });
 
+// Receive data via POST and insert directly (for migrations from local machine)
+router.post('/import-data', async (req, res: Response) => {
+  const authKey = req.headers['x-migration-key'];
+  if (authKey !== 'migrate-gem-2024') {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const { table, records } = req.body;
+  if (!table || !records || !Array.isArray(records)) {
+    res.status(400).json({ error: 'table and records[] required' });
+    return;
+  }
+
+  const results = { inserted: 0, errors: 0, errorMessages: [] as string[] };
+
+  try {
+    for (const record of records) {
+      try {
+        // Handle JSON fields that might need special treatment
+        const data = { ...record };
+
+        // Handle JSON null values for known JSON fields
+        if ('extras' in data && data.extras === null) data.extras = Prisma.JsonNull;
+        if ('metadata' in data && data.metadata === null) data.metadata = Prisma.JsonNull;
+        if ('operatingHours' in data && data.operatingHours === null) data.operatingHours = Prisma.JsonNull;
+        if ('lineItems' in data && data.lineItems === null) data.lineItems = Prisma.JsonNull;
+
+        // Use upsert to handle existing records
+        switch (table) {
+          case 'User':
+            await prisma.user.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Vehicle':
+            await prisma.vehicle.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Booking':
+            await prisma.booking.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Payment':
+            await prisma.payment.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Document':
+            await prisma.document.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Review':
+            await prisma.review.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'MaintenanceRecord':
+            await prisma.maintenanceRecord.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'UserPreferences':
+            await prisma.userPreferences.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'CompanySettings':
+            await prisma.companySettings.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Conversation':
+            await prisma.conversation.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Message':
+            await prisma.message.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'ActivityLog':
+            await prisma.activityLog.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Notification':
+            await prisma.notification.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Invoice':
+            await prisma.invoice.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          case 'Integration':
+            await prisma.integration.upsert({
+              where: { id: record.id },
+              update: data,
+              create: data,
+            });
+            break;
+          default:
+            throw new Error(`Unknown table: ${table}`);
+        }
+        results.inserted++;
+      } catch (e: any) {
+        results.errors++;
+        results.errorMessages.push(`${record.id}: ${e.message}`);
+      }
+    }
+
+    res.json({ success: true, table, results });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Clear table for fresh import
+router.post('/clear-table', async (req, res: Response) => {
+  const authKey = req.headers['x-migration-key'];
+  if (authKey !== 'migrate-gem-2024') {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const { table } = req.body;
+  if (!table) {
+    res.status(400).json({ error: 'table required' });
+    return;
+  }
+
+  try {
+    // Use raw query to truncate
+    await prisma.$executeRawUnsafe(`TRUNCATE TABLE public."${table}" CASCADE`);
+    res.json({ success: true, message: `Table ${table} cleared` });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Set user as admin (one-time setup)
 router.post('/make-admin', async (req, res: Response) => {
   const authKey = req.headers['x-migration-key'];
