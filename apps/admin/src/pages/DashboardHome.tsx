@@ -140,7 +140,7 @@ const revenueData = [
 
 export default function DashboardHome() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Changed to false so UI shows immediately
   const [stats, setStats] = useState<DashboardStats>({
     activeRentals: 0,
     todaysRevenue: 0,
@@ -158,7 +158,7 @@ export default function DashboardHome() {
   }, []);
 
   const fetchDashboardData = async () => {
-    setIsLoading(true);
+    setIsLoading(true); // Show loading state on individual components
     try {
       // Fetch dashboard stats from API
       const dashboardData = await api.stats.dashboard();
@@ -261,17 +261,6 @@ export default function DashboardHome() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
-          <p className="text-gray-500">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -346,11 +335,18 @@ export default function DashboardHome() {
             }}
           >
             <div className="flex items-start justify-between">
-              <div>
+              <div className="flex-1">
                 <p className="text-sm text-gray-500 mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stat.isCurrency ? formatCurrency(stat.value) : stat.value}
-                </p>
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
+                    <span className="text-xl font-bold text-gray-300">Loading...</span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stat.isCurrency ? formatCurrency(stat.value) : stat.value}
+                  </p>
+                )}
               </div>
               <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform', stat.color)}>
                 <stat.icon className="w-6 h-6 text-white" />
@@ -478,7 +474,12 @@ export default function DashboardHome() {
             </button>
           </div>
           <div className="space-y-3">
-            {recentBookings.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8 text-gray-500">
+                <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-2" />
+                <p>Loading bookings...</p>
+              </div>
+            ) : recentBookings.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <CalendarCheck className="w-10 h-10 mx-auto mb-2 text-gray-300" />
                 <p>No recent bookings</p>
