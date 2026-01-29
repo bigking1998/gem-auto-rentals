@@ -16,9 +16,9 @@ export default function DashboardLayout() {
       const bookingsResponse = await api.bookings.list({ limit: 1 });
       const totalBookings = (bookingsResponse.data as { total?: number })?.total || 0;
 
-      // Fetch open conversations count
+      // Fetch open conversations count (total is in pagination object)
       const conversationsResponse = await api.conversations.list({ status: 'OPEN', limit: 1 });
-      const openConversations = (conversationsResponse.data as { total?: number })?.total || 0;
+      const openConversations = conversationsResponse.pagination?.total || 0;
 
       setBadges({
         pendingBookings: totalBookings > 0 ? totalBookings : undefined,
