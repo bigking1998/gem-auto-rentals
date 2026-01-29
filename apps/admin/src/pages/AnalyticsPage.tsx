@@ -308,6 +308,23 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Demo Mode Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3"
+      >
+        <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+          <span className="text-amber-600 font-bold text-sm">DEMO</span>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-amber-800">Demo Mode Active</p>
+          <p className="text-xs text-amber-600">
+            Revenue data may include demo/test payments. Contact support to reset data before launch.
+          </p>
+        </div>
+      </motion.div>
+
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

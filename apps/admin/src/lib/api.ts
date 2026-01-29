@@ -565,6 +565,34 @@ export interface Integration {
 // ============ Trash / Recycle Bin Types ============
 export type TrashEntityType = 'users' | 'vehicles' | 'bookings' | 'documents' | 'conversations' | 'invoices' | 'reviews' | 'maintenance';
 
+// ============ Document Types ============
+export type DocumentType = 'DRIVERS_LICENSE_FRONT' | 'DRIVERS_LICENSE_BACK' | 'ID_CARD' | 'PASSPORT' | 'PROOF_OF_ADDRESS' | 'INSURANCE';
+export type DocumentStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+
+export interface Document {
+  id: string;
+  userId: string;
+  bookingId?: string;
+  type: DocumentType;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+  status: DocumentStatus;
+  notes?: string;
+  verifiedAt?: string;
+  verifiedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  signedUrl?: string;
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
 export interface TrashSummary {
   users: number;
   vehicles: number;
@@ -917,6 +945,27 @@ export const api = {
 
     deleteAvatar: (id: string): Promise<{ message: string }> =>
       request(`/customers/${id}/avatar`, { method: 'DELETE' }),
+  },
+
+  // Documents
+  documents: {
+    list: (params?: { userId?: string; type?: DocumentType; status?: DocumentStatus; bookingId?: string }): Promise<Document[]> =>
+      request('/documents', { params }),
+
+    get: (id: string): Promise<Document> =>
+      request(`/documents/${id}`),
+
+    verify: (id: string, status: 'VERIFIED' | 'REJECTED', notes?: string): Promise<Document> =>
+      request(`/documents/${id}/verify`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, notes }),
+      }),
+
+    delete: (id: string): Promise<{ message: string }> =>
+      request(`/documents/${id}`, { method: 'DELETE' }),
+
+    getDownloadUrl: (id: string): Promise<{ downloadUrl: string; fileName: string; mimeType: string }> =>
+      request(`/documents/${id}/download`),
   },
 
   // Conversations (Messages)

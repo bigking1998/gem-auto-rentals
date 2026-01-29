@@ -233,6 +233,114 @@ router.post('/confirm', authenticate, async (req, res, next) => {
   }
 });
 
+// POST /api/payments/demo - Demo payment for testing (creates real records but no Stripe charge)
+router.post('/demo', authenticate, async (req, res, next) => {
+  try {
+    const { bookingId } = z
+      .object({
+        bookingId: z.string().cuid(),
+      })
+      .parse(req.body);
+
+    // Get booking
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        payment: true,
+        vehicle: {
+          select: { make: true, model: true, year: true },
+        },
+        user: {
+          select: { email: true, firstName: true },
+        },
+      },
+    });
+
+    if (!booking) {
+      throw NotFoundError('Booking not found');
+    }
+
+    // Verify ownership
+    if (booking.userId !== req.user!.id) {
+      throw ForbiddenError('You can only pay for your own bookings');
+    }
+
+    // Check booking status
+    if (booking.status !== 'PENDING') {
+      throw BadRequestError('This booking cannot be paid for');
+    }
+
+    // Check if already paid
+    if (booking.payment?.status === 'SUCCEEDED') {
+      throw BadRequestError('This booking has already been paid');
+    }
+
+    // Create demo payment record and confirm booking
+    const [payment] = await prisma.$transaction([
+      prisma.payment.upsert({
+        where: { bookingId },
+        create: {
+          bookingId,
+          amount: booking.totalAmount,
+          status: 'SUCCEEDED',
+          method: 'DEMO', // Mark as demo payment
+          stripePaymentIntentId: `demo_${Date.now()}_${bookingId}`,
+        },
+        update: {
+          status: 'SUCCEEDED',
+          method: 'DEMO',
+          stripePaymentIntentId: `demo_${Date.now()}_${bookingId}`,
+        },
+      }),
+      prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: 'CONFIRMED',
+          confirmationEmailSent: true,
+        },
+      }),
+    ]);
+
+    // Send confirmation email
+    if (booking.user) {
+      const formatDate = (date: Date) => {
+        return date.toLocaleDateString('en-US', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        });
+      };
+
+      sendBookingConfirmationEmail(
+        booking.user.email,
+        booking.user.firstName,
+        {
+          bookingId: booking.id,
+          vehicleName: `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`,
+          startDate: formatDate(booking.startDate),
+          endDate: formatDate(booking.endDate),
+          pickupLocation: booking.pickupLocation,
+          totalAmount: `$${Number(booking.totalAmount).toFixed(2)}`,
+        }
+      ).catch((err) => {
+        console.error('Failed to send booking confirmation email:', err);
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        payment,
+        bookingStatus: 'CONFIRMED',
+        isDemo: true,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/payments/:bookingId
 router.get('/:bookingId', authenticate, async (req, res, next) => {
   try {

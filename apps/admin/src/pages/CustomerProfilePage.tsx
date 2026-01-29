@@ -36,11 +36,11 @@ interface CustomerBooking {
 
 interface CustomerDocument {
   id: string;
-  type: 'DRIVERS_LICENSE' | 'ID_CARD' | 'PASSPORT' | 'PROOF_OF_ADDRESS' | 'INSURANCE';
-  name: string;
+  type: string;
+  fileName: string;
   uploadedAt: Date;
-  verified: boolean;
-  url?: string;
+  status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  signedUrl?: string;
 }
 
 interface Customer {
@@ -68,11 +68,18 @@ const statusColors: Record<string, string> = {
 };
 
 const documentTypeLabels: Record<string, string> = {
-  DRIVERS_LICENSE: "Driver's License",
+  DRIVERS_LICENSE_FRONT: "Driver's License (Front)",
+  DRIVERS_LICENSE_BACK: "Driver's License (Back)",
   ID_CARD: 'ID Card',
   PASSPORT: 'Passport',
   PROOF_OF_ADDRESS: 'Proof of Address',
   INSURANCE: 'Insurance',
+};
+
+const documentStatusColors: Record<string, string> = {
+  PENDING: 'bg-yellow-100 text-yellow-700',
+  VERIFIED: 'bg-green-100 text-green-700',
+  REJECTED: 'bg-red-100 text-red-700',
 };
 
 export default function CustomerProfilePage() {
@@ -92,11 +99,12 @@ export default function CustomerProfilePage() {
     setIsLoading(true);
     setError(null);
     try {
-      // Fetch customer profile from API
-      const userData = await api.customers.get(customerId);
-
-      // Fetch customer's bookings
-      const bookingsResponse = await api.bookings.list({ userId: customerId, limit: 50 });
+      // Fetch customer profile, bookings, and documents in parallel
+      const [userData, bookingsResponse, documentsResponse] = await Promise.all([
+        api.customers.get(customerId),
+        api.bookings.list({ userId: customerId, limit: 50 }),
+        api.documents.list({ userId: customerId }),
+      ]);
 
       // Process bookings
       const processedBookings: CustomerBooking[] = bookingsResponse.items.map((b) => ({
@@ -108,6 +116,16 @@ export default function CustomerProfilePage() {
         endDate: new Date(b.endDate),
         status: b.status,
         amount: Number(b.totalAmount),
+      }));
+
+      // Process documents
+      const processedDocuments: CustomerDocument[] = documentsResponse.map((d) => ({
+        id: d.id,
+        type: d.type,
+        fileName: d.fileName,
+        uploadedAt: new Date(d.createdAt),
+        status: d.status,
+        signedUrl: d.signedUrl,
       }));
 
       // Calculate totals
@@ -126,7 +144,7 @@ export default function CustomerProfilePage() {
         totalBookings: processedBookings.length,
         totalSpent,
         bookings: processedBookings,
-        documents: [], // TODO: Add documents API endpoint
+        documents: processedDocuments,
       };
 
       setCustomer(customerProfile);
@@ -139,10 +157,36 @@ export default function CustomerProfilePage() {
     }
   };
 
-  const handleVerifyDocument = async (documentId: string) => {
-    // TODO: Implement document verification API endpoint
-    toast.error('Document verification is not yet implemented');
-    console.log('Would verify document:', documentId);
+  const handleVerifyDocument = async (documentId: string, action: 'VERIFIED' | 'REJECTED') => {
+    try {
+      await api.documents.verify(documentId, action);
+      toast.success(`Document ${action.toLowerCase()}`);
+      // Refresh the data
+      if (id) {
+        fetchCustomerData(id);
+      }
+    } catch (err) {
+      console.error('Error verifying document:', err);
+      toast.error('Failed to verify document');
+    }
+  };
+
+  const handleDownloadDocument = async (documentId: string) => {
+    try {
+      const { downloadUrl } = await api.documents.getDownloadUrl(documentId);
+      window.open(downloadUrl, '_blank');
+    } catch (err) {
+      console.error('Error downloading document:', err);
+      toast.error('Failed to download document');
+    }
+  };
+
+  const handleViewDocument = (signedUrl?: string) => {
+    if (signedUrl) {
+      window.open(signedUrl, '_blank');
+    } else {
+      toast.error('Document URL not available');
+    }
   };
 
   const handleDeleteCustomer = async () => {
@@ -506,29 +550,50 @@ export default function CustomerProfilePage() {
                         <div>
                           <p className="font-semibold text-gray-900">{documentTypeLabels[doc.type] || doc.type}</p>
                           <p className="text-sm text-gray-500">
-                            Uploaded {formatDate(doc.uploadedAt)}
+                            {doc.fileName} • Uploaded {formatDate(doc.uploadedAt)}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        {doc.verified ? (
-                          <span className="flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Verified
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleVerifyDocument(doc.id)}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-200"
-                          >
-                            <Shield className="w-3 h-3" />
-                            Verify
-                          </button>
+                        <span className={cn(
+                          'flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full',
+                          documentStatusColors[doc.status]
+                        )}>
+                          {doc.status === 'VERIFIED' && <CheckCircle2 className="w-3 h-3" />}
+                          {doc.status === 'PENDING' && <Clock className="w-3 h-3" />}
+                          {doc.status === 'REJECTED' && <AlertCircle className="w-3 h-3" />}
+                          {doc.status}
+                        </span>
+                        {doc.status === 'PENDING' && (
+                          <>
+                            <button
+                              onClick={() => handleVerifyDocument(doc.id, 'VERIFIED')}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-xl hover:bg-green-700 transition-colors"
+                            >
+                              <CheckCircle2 className="w-3 h-3" />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleVerifyDocument(doc.id, 'REJECTED')}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-xl hover:bg-red-700 transition-colors"
+                            >
+                              <AlertCircle className="w-3 h-3" />
+                              Reject
+                            </button>
+                          </>
                         )}
-                        <button className="p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                        <button
+                          onClick={() => handleViewDocument(doc.signedUrl)}
+                          className="p-2 rounded-xl hover:bg-gray-200 transition-colors"
+                          title="View document"
+                        >
                           <Eye className="w-4 h-4 text-gray-500" />
                         </button>
-                        <button className="p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                        <button
+                          onClick={() => handleDownloadDocument(doc.id)}
+                          className="p-2 rounded-xl hover:bg-gray-200 transition-colors"
+                          title="Download document"
+                        >
                           <Download className="w-4 h-4 text-gray-500" />
                         </button>
                       </div>

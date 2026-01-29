@@ -560,6 +560,12 @@ export const api = {
 
     get: (bookingId: string): Promise<{ id: string; amount: number | string; status: string; method?: string }> =>
       request(`/payments/${bookingId}`),
+
+    demo: (bookingId: string): Promise<{ payment: { status: string }; bookingStatus: string; isDemo: boolean }> =>
+      request('/payments/demo', {
+        method: 'POST',
+        body: JSON.stringify({ bookingId }),
+      }),
   },
 
   // Billing (Customer Payment Methods)

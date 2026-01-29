@@ -96,17 +96,22 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res, nex
 // GET /api/documents - List user's documents
 router.get('/', authenticate, async (req, res, next) => {
   try {
-    const { type, status, bookingId } = z.object({
+    const { type, status, bookingId, userId } = z.object({
       type: documentTypeSchema.optional(),
       status: z.enum(['PENDING', 'VERIFIED', 'REJECTED']).optional(),
       bookingId: z.string().optional(),
+      userId: z.string().optional(),
     }).parse(req.query);
 
     const where: Record<string, unknown> = {};
+    const isStaff = ['ADMIN', 'MANAGER', 'SUPPORT'].includes(req.user!.role);
 
     // Non-staff can only see their own documents
-    if (!['ADMIN', 'MANAGER', 'SUPPORT'].includes(req.user!.role)) {
+    if (!isStaff) {
       where.userId = req.user!.id;
+    } else if (userId) {
+      // Staff can filter by specific user
+      where.userId = userId;
     }
 
     if (type) where.type = type;

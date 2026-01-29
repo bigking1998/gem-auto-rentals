@@ -242,6 +242,7 @@ export default function DashboardHome() {
       icon: DollarSign,
       color: 'bg-green-500',
       isCurrency: true,
+      isDemo: true,
     },
     {
       label: 'Pending Bookings',
@@ -279,6 +280,23 @@ export default function DashboardHome() {
           </button>
         </div>
       </div>
+
+      {/* Demo Mode Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3"
+      >
+        <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+          <span className="text-amber-600 font-bold text-sm">DEMO</span>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-amber-800">Demo Mode Active</p>
+          <p className="text-xs text-amber-600">
+            Revenue and payment data may include demo/test transactions. Contact support to reset data before launch.
+          </p>
+        </div>
+      </motion.div>
 
       {/* Alerts Section */}
       {alerts.length > 0 && (
@@ -336,7 +354,12 @@ export default function DashboardHome() {
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-gray-500 mb-1">{stat.label}</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-sm text-gray-500">{stat.label}</p>
+                  {'isDemo' in stat && stat.isDemo && (
+                    <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded">DEMO</span>
+                  )}
+                </div>
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
@@ -423,7 +446,10 @@ export default function DashboardHome() {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Weekly Revenue</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-900">Weekly Revenue</h2>
+                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">DEMO</span>
+              </div>
               <p className="text-sm text-gray-500">Last 7 days performance</p>
             </div>
             <select className="text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">

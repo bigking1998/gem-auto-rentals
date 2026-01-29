@@ -68,13 +68,20 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Demo mode - skip actual Stripe processing
+    // Demo mode - create demo payment record without Stripe
     if (useDemoMode) {
       setIsProcessing(true);
-      // Simulate payment processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setIsProcessing(false);
-      onSubmit();
+      setPaymentError(null);
+      try {
+        // Call demo payment endpoint to create real records
+        await api.payments.demo(bookingId);
+        onSubmit();
+      } catch (err) {
+        console.error('Demo payment failed:', err);
+        setPaymentError('Demo payment failed. Please try again.');
+      } finally {
+        setIsProcessing(false);
+      }
       return;
     }
 
