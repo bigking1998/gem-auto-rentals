@@ -4,8 +4,8 @@ import prisma from '../lib/prisma.js';
 
 const router = Router();
 
-// Source: Use environment variable (set only when migration is needed)
-const SUPABASE_URL = process.env.SUPABASE_MIGRATION_URL || '';
+// Source database URL: Use environment variable (set only when migration is needed)
+const SOURCE_DATABASE_URL = process.env.SOURCE_DATABASE_URL || '';
 
 // Helper to handle JSON null values for Prisma
 function handleJsonNull(value: Prisma.JsonValue): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput {
@@ -15,17 +15,23 @@ function handleJsonNull(value: Prisma.JsonValue): Prisma.InputJsonValue | Prisma
   return value as Prisma.InputJsonValue;
 }
 
-// One-time migration endpoint
-router.post('/from-supabase', async (req, res: Response) => {
-  // Simple auth check
+// One-time migration endpoint from external database
+router.post('/from-source', async (req, res: Response) => {
+  // Auth check using environment variable (required - no default)
   const authKey = req.headers['x-migration-key'];
-  if (authKey !== 'migrate-gem-2024') {
+  const expectedKey = process.env.MIGRATION_KEY;
+  if (!expectedKey || authKey !== expectedKey) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
 
+  if (!SOURCE_DATABASE_URL) {
+    res.status(400).json({ error: 'SOURCE_DATABASE_URL not configured' });
+    return;
+  }
+
   const sourcePrisma = new PrismaClient({
-    datasources: { db: { url: SUPABASE_URL } },
+    datasources: { db: { url: SOURCE_DATABASE_URL } },
   });
 
   const results: Record<string, { migrated: number; errors: number }> = {};
@@ -333,7 +339,8 @@ router.post('/from-supabase', async (req, res: Response) => {
 // Delete user by email (cleanup utility)
 router.delete('/user', async (req, res: Response) => {
   const authKey = req.headers['x-migration-key'];
-  if (authKey !== 'migrate-gem-2024') {
+  const expectedKey = process.env.MIGRATION_KEY;
+  if (!expectedKey || authKey !== expectedKey) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
@@ -357,7 +364,8 @@ router.delete('/user', async (req, res: Response) => {
 // Receive data via POST and insert directly (for migrations from local machine)
 router.post('/import-data', async (req, res: Response) => {
   const authKey = req.headers['x-migration-key'];
-  if (authKey !== 'migrate-gem-2024') {
+  const expectedKey = process.env.MIGRATION_KEY;
+  if (!expectedKey || authKey !== expectedKey) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
@@ -505,10 +513,30 @@ router.post('/import-data', async (req, res: Response) => {
   }
 });
 
+// Whitelist of allowed tables for migration operations
+const ALLOWED_TABLES = [
+  'User',
+  'Vehicle',
+  'Booking',
+  'Payment',
+  'Document',
+  'Review',
+  'MaintenanceRecord',
+  'UserPreferences',
+  'CompanySettings',
+  'Conversation',
+  'Message',
+  'ActivityLog',
+  'Notification',
+  'Invoice',
+  'Integration',
+] as const;
+
 // Clear table for fresh import
 router.post('/clear-table', async (req, res: Response) => {
   const authKey = req.headers['x-migration-key'];
-  if (authKey !== 'migrate-gem-2024') {
+  const expectedKey = process.env.MIGRATION_KEY;
+  if (!expectedKey || authKey !== expectedKey) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
@@ -519,8 +547,14 @@ router.post('/clear-table', async (req, res: Response) => {
     return;
   }
 
+  // Validate table name against whitelist to prevent SQL injection
+  if (!ALLOWED_TABLES.includes(table)) {
+    res.status(400).json({ error: 'Invalid table name' });
+    return;
+  }
+
   try {
-    // Use raw query to truncate
+    // Safe: table is validated against whitelist
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE public."${table}" CASCADE`);
     res.json({ success: true, message: `Table ${table} cleared` });
   } catch (error: any) {
@@ -531,7 +565,8 @@ router.post('/clear-table', async (req, res: Response) => {
 // Set user as admin (one-time setup)
 router.post('/make-admin', async (req, res: Response) => {
   const authKey = req.headers['x-migration-key'];
-  if (authKey !== 'migrate-gem-2024') {
+  const expectedKey = process.env.MIGRATION_KEY;
+  if (!expectedKey || authKey !== expectedKey) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }

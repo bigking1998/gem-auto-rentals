@@ -198,8 +198,8 @@ router.post('/:id/extend', authenticate, async (req, res, next) => {
       return { extension };
     });
 
-    if ('error' in result) {
-      res.status(result.status).json({
+    if ('error' in result && 'status' in result) {
+      res.status(result.status as number).json({
         success: false,
         error: result.error,
       });

@@ -390,7 +390,7 @@ let publicStatsCache: {
   data: {
     totalCustomers: number;
     totalRentals: number;
-    averageRating: number;
+    averageRating: number | null;
     yearsInBusiness: number;
     vehicleCount: number;
   } | null;
