@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
-import prisma from './lib/prisma.js';
+import { isDatabaseConnected, waitForDatabase } from './lib/prisma.js';
 
 // Route imports
 import authRoutes from './routes/auth.js';
@@ -94,17 +94,21 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Health check - warms up database connection
+// Health check - checks database connection status
 app.get('/health', async (_req, res) => {
-  try {
-    // Run a simple query to warm up the database connection
-    await prisma.$queryRaw`SELECT 1`;
+  // Check if database is already connected (from startup initialization)
+  if (isDatabaseConnected()) {
     res.json({ status: 'ok', database: 'connected', timestamp: new Date().toISOString() });
-  } catch (error) {
-    console.error('Health check database error:', error);
-    // Still return 200 so the server is considered "up" but indicate DB issue
-    res.json({ status: 'ok', database: 'connecting', timestamp: new Date().toISOString() });
+    return;
   }
+
+  // Wait for the database initialization to complete
+  const connected = await waitForDatabase();
+  res.json({
+    status: 'ok',
+    database: connected ? 'connected' : 'connecting',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // API Routes

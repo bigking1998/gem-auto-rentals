@@ -23,9 +23,13 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
+// Track database connection state
+let dbConnectionPromise: Promise<boolean> | null = null;
+let isDbConnected = false;
+
 // Initialize database connection on startup
-async function initializeDatabase() {
-  const maxRetries = 5;
+async function initializeDatabase(): Promise<boolean> {
+  const maxRetries = 8; // More retries for Supabase cold starts
   let retries = 0;
 
   while (retries < maxRetries) {
@@ -33,14 +37,15 @@ async function initializeDatabase() {
       // Test the connection with a simple query
       await prisma.$queryRaw`SELECT 1`;
       console.log('Database connection established successfully');
+      isDbConnected = true;
       globalForPrisma.isConnected = true;
-      return;
+      return true;
     } catch (error) {
       retries++;
       console.error(`Database connection attempt ${retries}/${maxRetries} failed:`, error);
       if (retries < maxRetries) {
-        // Wait before retrying (exponential backoff: 1s, 2s, 4s, 8s, 16s)
-        const delay = Math.min(1000 * Math.pow(2, retries - 1), 16000);
+        // Wait before retrying (longer delays for Supabase: 2s, 4s, 6s, 8s, 10s, 12s, 14s, 16s)
+        const delay = Math.min(2000 * retries, 16000);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -48,10 +53,28 @@ async function initializeDatabase() {
 
   console.error('Failed to establish database connection after maximum retries');
   // Don't throw - let the server start anyway and handle errors per-request
+  return false;
 }
 
-// Start connection initialization
-initializeDatabase().catch(console.error);
+// Start connection initialization and store the promise
+dbConnectionPromise = initializeDatabase().catch((err) => {
+  console.error('Database initialization error:', err);
+  return false;
+});
+
+// Export function to check if database is connected
+export function isDatabaseConnected(): boolean {
+  return isDbConnected;
+}
+
+// Export function to wait for database connection
+export async function waitForDatabase(): Promise<boolean> {
+  if (isDbConnected) return true;
+  if (dbConnectionPromise) {
+    return dbConnectionPromise;
+  }
+  return false;
+}
 
 export default prisma;
 
