@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { CalendarRange, ShieldCheck, Star, Car } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ShieldCheck, Star } from 'lucide-react';
+import QuickPricingWidget from './QuickPricingWidget';
 
 export default function HeroSection() {
   return (
@@ -56,34 +56,15 @@ export default function HeroSection() {
             Flexible bookings, comprehensive insurance, and 24/7 support.
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4"
-          >
-            <Link
-              to="/vehicles"
-              className="inline-flex items-center justify-center bg-primary hover:bg-orange-600 text-white font-bold h-14 px-8 text-lg shadow-xl shadow-orange-500/20 rounded-xl transition-all"
-            >
-              <Car className="mr-2 h-5 w-5" />
-              Browse Vehicles
-            </Link>
-            <Link
-              to="/vehicles"
-              className="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 text-white border border-white/30 h-14 px-8 text-lg backdrop-blur-sm rounded-xl transition-all"
-            >
-              <CalendarRange className="mr-2 h-5 w-5" />
-              Book Now
-            </Link>
-          </motion.div>
+          {/* Quick Pricing Widget */}
+          <QuickPricingWidget />
 
           {/* Trust Indicators */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-8 md:mt-16 flex flex-wrap gap-6 md:gap-8"
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="mt-8 flex flex-wrap gap-6 md:gap-8"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
