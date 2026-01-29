@@ -34,13 +34,13 @@ export async function wakeUpServer(): Promise<void> {
   if (serverWakeUpPromise) return serverWakeUpPromise;
 
   serverWakeUpPromise = (async () => {
-    const maxRetries = 12; // 12 retries with faster delays
+    const maxRetries = 15; // More retries to wait for DB connection
     let retryCount = 0;
 
     while (retryCount < maxRetries) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
 
         const response = await fetch(`${SERVER_BASE_URL}/health`, {
           signal: controller.signal,
@@ -49,17 +49,23 @@ export async function wakeUpServer(): Promise<void> {
         clearTimeout(timeoutId);
 
         if (response.ok) {
-          isServerAwake = true;
-          serverWakeUpPromise = null;
-          return;
+          // Check if database is connected (not just server responding)
+          const data = await response.json();
+          if (data.database === 'connected') {
+            isServerAwake = true;
+            serverWakeUpPromise = null;
+            return;
+          }
+          // Database still connecting, wait and retry
+          console.log('Server up but database connecting, waiting...');
         }
       } catch (error) {
         // Ignore errors and retry
       }
 
       retryCount++;
-      // Faster exponential backoff: 1s, 2s, 3s, 4s, 5s, then 5s for remaining attempts
-      const delayMs = Math.min(1000 * retryCount, 5000);
+      // Backoff: 2s, 3s, 4s, 5s, then 5s for remaining attempts
+      const delayMs = Math.min(2000 + retryCount * 1000, 5000);
       await sleep(delayMs);
     }
 
