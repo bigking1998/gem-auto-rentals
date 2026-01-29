@@ -615,7 +615,7 @@ export interface BillingPlan {
 }
 
 // ============ Conversation Types ============
-export type ConversationStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+export type ConversationStatus = 'OPEN' | 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 export type Priority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
 export type MessageSender = 'CUSTOMER' | 'ADMIN' | 'SYSTEM';
 

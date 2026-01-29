@@ -25,6 +25,7 @@ import { api, Conversation, ConversationStatus, ApiError, Customer, Priority } f
 
 const statusColors: Record<ConversationStatus, string> = {
   OPEN: 'bg-purple-100 text-purple-800',
+  PENDING: 'bg-yellow-100 text-yellow-800',
   IN_PROGRESS: 'bg-orange-100 text-orange-800',
   RESOLVED: 'bg-green-100 text-green-800',
   CLOSED: 'bg-gray-100 text-gray-800',
@@ -37,11 +38,12 @@ const priorityColors: Record<string, string> = {
   URGENT: 'text-red-500',
 };
 
-type TabFilter = 'all' | 'open' | 'resolved';
+type TabFilter = 'all' | 'open' | 'pending' | 'resolved';
 
 const tabs: { id: TabFilter; label: string; icon: typeof Inbox }[] = [
   { id: 'all', label: 'All', icon: Inbox },
   { id: 'open', label: 'Open', icon: Mail },
+  { id: 'pending', label: 'Pending', icon: Circle },
   { id: 'resolved', label: 'Resolved', icon: CheckCircle2 },
 ];
 
@@ -74,6 +76,7 @@ export default function MessagesPage() {
     try {
       const statusFilter: ConversationStatus | undefined =
         activeTab === 'open' ? 'OPEN' :
+        activeTab === 'pending' ? 'PENDING' :
         activeTab === 'resolved' ? 'RESOLVED' :
         undefined;
 
