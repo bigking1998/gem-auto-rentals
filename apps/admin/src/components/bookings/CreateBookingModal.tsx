@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Loader2, Search, Calendar, MapPin, Car, User, DollarSign } from 'lucide-react';
 import { api, Customer, Vehicle } from '@/lib/api';
 import { toast } from 'sonner';
@@ -14,7 +14,12 @@ const extras = [
   { id: 'insurance', label: 'Insurance', description: 'Full coverage protection', price: 25 },
   { id: 'gps', label: 'GPS Navigation', description: 'Built-in navigation system', price: 10 },
   { id: 'childSeat', label: 'Child Seat', description: 'Safety seat for children', price: 15 },
-  { id: 'additionalDriver', label: 'Additional Driver', description: 'Add another driver', price: 20 },
+  {
+    id: 'additionalDriver',
+    label: 'Additional Driver',
+    description: 'Add another driver',
+    price: 20,
+  },
 ];
 
 export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBookingModalProps) {
@@ -53,6 +58,19 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
     }
   }, [isOpen]);
 
+  const searchCustomers = useCallback(async () => {
+    setIsSearchingCustomers(true);
+    try {
+      const result = await api.customers.list({ search: customerSearch, limit: 10 });
+      setCustomers(result.items);
+      setShowCustomerDropdown(true);
+    } catch (error) {
+      console.error('Failed to search customers:', error);
+    } finally {
+      setIsSearchingCustomers(false);
+    }
+  }, [customerSearch]);
+
   // Search customers with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,7 +81,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [customerSearch]);
+  }, [customerSearch, searchCustomers]);
 
   const fetchVehicles = async () => {
     setIsLoadingVehicles(true);
@@ -77,19 +95,6 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
     }
   };
 
-  const searchCustomers = async () => {
-    setIsSearchingCustomers(true);
-    try {
-      const result = await api.customers.list({ search: customerSearch, limit: 10 });
-      setCustomers(result.items);
-      setShowCustomerDropdown(true);
-    } catch (error) {
-      console.error('Failed to search customers:', error);
-    } finally {
-      setIsSearchingCustomers(false);
-    }
-  };
-
   const selectCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     setCustomerSearch(`${customer.firstName} ${customer.lastName}`);
@@ -97,7 +102,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
   };
 
   const toggleExtra = (extraId: string) => {
-    setSelectedExtras(prev => ({
+    setSelectedExtras((prev) => ({
       ...prev,
       [extraId]: !prev[extraId],
     }));
@@ -119,7 +124,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
     let total = selectedVehicle.dailyRate * days;
 
     // Add extras
-    extras.forEach(extra => {
+    extras.forEach((extra) => {
       if (selectedExtras[extra.id]) {
         total += extra.price * days;
       }
@@ -131,7 +136,14 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedCustomer || !selectedVehicle || !startDate || !endDate || !pickupLocation || !dropoffLocation) {
+    if (
+      !selectedCustomer ||
+      !selectedVehicle ||
+      !startDate ||
+      !endDate ||
+      !pickupLocation ||
+      !dropoffLocation
+    ) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -190,32 +202,34 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-xl">
           {/* Header */}
-          <div className="sticky top-0 bg-white z-10 flex items-center justify-between p-6 border-b">
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white p-6">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Create New Booking</h2>
-              <p className="text-sm text-gray-500 mt-1">Fill in the details to create a reservation</p>
+              <p className="mt-1 text-sm text-gray-500">
+                Fill in the details to create a reservation
+              </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
           {/* Body */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 p-6">
             {/* Customer Selection */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <User className="w-4 h-4" />
+                <User className="h-4 w-4" />
                 Customer *
               </label>
               <div className="relative">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={customerSearch}
@@ -225,26 +239,29 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                     }}
                     onFocus={() => customers.length > 0 && setShowCustomerDropdown(true)}
                     placeholder="Search by name or email..."
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                   {isSearchingCustomers && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                    <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
                   )}
                 </div>
                 {showCustomerDropdown && customers.length > 0 && (
-                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
                     {customers.map((customer) => (
                       <button
                         key={customer.id}
                         type="button"
                         onClick={() => selectCustomer(customer)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
                       >
-                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-medium text-sm">
-                          {customer.firstName[0]}{customer.lastName[0]}
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-sm font-medium text-orange-600">
+                          {customer.firstName[0]}
+                          {customer.lastName[0]}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{customer.firstName} {customer.lastName}</p>
+                          <p className="font-medium text-gray-900">
+                            {customer.firstName} {customer.lastName}
+                          </p>
                           <p className="text-sm text-gray-500">{customer.email}</p>
                         </div>
                       </button>
@@ -253,8 +270,8 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                 )}
               </div>
               {selectedCustomer && (
-                <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg text-sm text-orange-700">
-                  <User className="w-4 h-4" />
+                <div className="flex items-center gap-2 rounded-lg bg-orange-50 p-2 text-sm text-orange-700">
+                  <User className="h-4 w-4" />
                   Selected: {selectedCustomer.firstName} {selectedCustomer.lastName}
                 </div>
               )}
@@ -263,38 +280,38 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
             {/* Vehicle Selection */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Car className="w-4 h-4" />
+                <Car className="h-4 w-4" />
                 Vehicle *
               </label>
               {isLoadingVehicles ? (
                 <div className="flex items-center justify-center py-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
+                <div className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto p-1">
                   {vehicles.map((vehicle) => (
                     <button
                       key={vehicle.id}
                       type="button"
                       onClick={() => setSelectedVehicle(vehicle)}
                       className={cn(
-                        'p-3 rounded-xl border text-left transition-all',
+                        'rounded-xl border p-3 text-left transition-all',
                         selectedVehicle?.id === vehicle.id
                           ? 'border-orange-500 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       )}
                     >
-                      <p className="font-medium text-gray-900 text-sm">
+                      <p className="text-sm font-medium text-gray-900">
                         {vehicle.year} {vehicle.make} {vehicle.model}
                       </p>
                       <p className="text-xs text-gray-500">{vehicle.category}</p>
-                      <p className="text-sm font-semibold text-orange-600 mt-1">
+                      <p className="mt-1 text-sm font-semibold text-orange-600">
                         {formatCurrency(vehicle.dailyRate)}/day
                       </p>
                     </button>
                   ))}
                   {vehicles.length === 0 && (
-                    <div className="col-span-2 text-center py-4 text-gray-500">
+                    <div className="col-span-2 py-4 text-center text-gray-500">
                       No available vehicles
                     </div>
                   )}
@@ -306,7 +323,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="h-4 w-4" />
                   Start Date *
                 </label>
                 <input
@@ -314,12 +331,12 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   min={new Date().toISOString().slice(0, 16)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="h-4 w-4" />
                   End Date *
                 </label>
                 <input
@@ -327,7 +344,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   min={startDate || new Date().toISOString().slice(0, 16)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
             </div>
@@ -336,7 +353,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="h-4 w-4" />
                   Pickup Location *
                 </label>
                 <input
@@ -344,12 +361,12 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                   value={pickupLocation}
                   onChange={(e) => setPickupLocation(e.target.value)}
                   placeholder="e.g., Miami Airport"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="h-4 w-4" />
                   Dropoff Location *
                 </label>
                 <input
@@ -357,7 +374,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                   value={dropoffLocation}
                   onChange={(e) => setDropoffLocation(e.target.value)}
                   placeholder="e.g., Miami Downtown"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
             </div>
@@ -372,17 +389,19 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                     type="button"
                     onClick={() => toggleExtra(extra.id)}
                     className={cn(
-                      'p-3 rounded-xl border text-left transition-all',
+                      'rounded-xl border p-3 text-left transition-all',
                       selectedExtras[extra.id]
                         ? 'border-orange-500 bg-orange-50'
                         : 'border-gray-200 hover:border-gray-300'
                     )}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-gray-900 text-sm">{extra.label}</p>
-                      <span className="text-xs font-semibold text-orange-600">+{formatCurrency(extra.price)}/day</span>
+                      <p className="text-sm font-medium text-gray-900">{extra.label}</p>
+                      <span className="text-xs font-semibold text-orange-600">
+                        +{formatCurrency(extra.price)}/day
+                      </span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">{extra.description}</p>
+                    <p className="mt-0.5 text-xs text-gray-500">{extra.description}</p>
                   </button>
                 ))}
               </div>
@@ -396,54 +415,68 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Any special requests or notes..."
                 rows={2}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                className="w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
 
             {/* Price Summary */}
             {selectedVehicle && days > 0 && (
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
-                  <DollarSign className="w-4 h-4" />
+              <div className="space-y-2 rounded-xl bg-gray-50 p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <DollarSign className="h-4 w-4" />
                   Price Summary
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">
                     {formatCurrency(selectedVehicle.dailyRate)} x {days} day{days > 1 ? 's' : ''}
                   </span>
-                  <span className="font-medium">{formatCurrency(selectedVehicle.dailyRate * days)}</span>
+                  <span className="font-medium">
+                    {formatCurrency(selectedVehicle.dailyRate * days)}
+                  </span>
                 </div>
-                {extras.filter(e => selectedExtras[e.id]).map((extra) => (
-                  <div key={extra.id} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{extra.label} x {days} day{days > 1 ? 's' : ''}</span>
-                    <span className="font-medium">{formatCurrency(extra.price * days)}</span>
-                  </div>
-                ))}
-                <div className="border-t pt-2 mt-2 flex justify-between">
+                {extras
+                  .filter((e) => selectedExtras[e.id])
+                  .map((extra) => (
+                    <div key={extra.id} className="flex justify-between text-sm">
+                      <span className="text-gray-600">
+                        {extra.label} x {days} day{days > 1 ? 's' : ''}
+                      </span>
+                      <span className="font-medium">{formatCurrency(extra.price * days)}</span>
+                    </div>
+                  ))}
+                <div className="mt-2 flex justify-between border-t pt-2">
                   <span className="font-semibold text-gray-900">Total</span>
-                  <span className="font-bold text-lg text-orange-600">{formatCurrency(total)}</span>
+                  <span className="text-lg font-bold text-orange-600">{formatCurrency(total)}</span>
                 </div>
               </div>
             )}
           </form>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-white border-t p-4 flex justify-end gap-3">
+          <div className="sticky bottom-0 flex justify-end gap-3 border-t bg-white p-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+              className="rounded-xl border border-gray-200 px-5 py-2.5 text-gray-700 transition-all hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting || !selectedCustomer || !selectedVehicle || !startDate || !endDate || !pickupLocation || !dropoffLocation}
-              className="px-5 py-2.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              disabled={
+                isSubmitting ||
+                !selectedCustomer ||
+                !selectedVehicle ||
+                !startDate ||
+                !endDate ||
+                !pickupLocation ||
+                !dropoffLocation
+              }
+              className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-white transition-all hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Creating...
                 </>
               ) : (

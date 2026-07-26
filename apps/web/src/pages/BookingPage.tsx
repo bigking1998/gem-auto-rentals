@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowLeft, ArrowRight, Calendar, Package, User, FileText, CreditCard, Loader2, AlertCircle } from 'lucide-react';
+import {
+  Check,
+  ArrowLeft,
+  ArrowRight,
+  Calendar,
+  Package,
+  User,
+  FileText,
+  CreditCard,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import DateLocationStep from '@/components/booking/DateLocationStep';
@@ -211,14 +222,16 @@ export default function BookingPage() {
         return calculateDays() > 0;
       case 2:
         return true; // Extras are optional
-      case 3:
+      case 3: {
         // Basic customer info validation
         const { firstName, lastName, email, phone, driversLicense } = bookingData.customer;
         return firstName && lastName && email && phone && driversLicense;
-      case 4:
+      }
+      case 4: {
         // Documents validation
         const docs = bookingData.documents;
         return docs?.license_front?.uploaded && docs?.license_back?.uploaded;
+      }
       default:
         return true;
     }
@@ -288,8 +301,8 @@ export default function BookingPage() {
         bookingId,
         vehicle,
         total: calculateTotal(),
-        days: calculateDays()
-      }
+        days: calculateDays(),
+      },
     });
   };
 
@@ -299,11 +312,11 @@ export default function BookingPage() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <Header variant="booking" />
-        <main className="flex-1 flex items-center justify-center py-12 pt-32">
+        <main className="flex flex-1 items-center justify-center py-12 pt-32">
           <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <Loader2 className="text-primary mx-auto mb-4 h-12 w-12 animate-spin" />
             <p className="text-gray-600">Loading vehicle details...</p>
           </div>
         </main>
@@ -315,16 +328,16 @@ export default function BookingPage() {
   // Show error state
   if (error || !vehicle) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <Header variant="booking" />
-        <main className="flex-1 flex items-center justify-center py-12 pt-32">
-          <div className="text-center max-w-md">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Unable to Load Booking</h2>
-            <p className="text-gray-600 mb-6">{error || 'Vehicle not found'}</p>
+        <main className="flex flex-1 items-center justify-center py-12 pt-32">
+          <div className="max-w-md text-center">
+            <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <h2 className="mb-2 text-xl font-bold text-gray-900">Unable to Load Booking</h2>
+            <p className="mb-6 text-gray-600">{error || 'Vehicle not found'}</p>
             <button
               onClick={() => navigate('/vehicles')}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors"
+              className="bg-primary rounded-lg px-6 py-3 text-white transition-colors hover:bg-orange-600"
             >
               Browse Vehicles
             </button>
@@ -336,43 +349,50 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-gray-50">
       <Header variant="booking" />
 
       <main className="flex-1 py-12 pt-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Progress Steps */}
-          <div className="max-w-4xl mx-auto mb-12">
+          <div className="mx-auto mb-12 max-w-4xl">
             <div className="relative flex items-center justify-between">
               {/* Connector Lines */}
-              <div className="absolute left-0 top-1/2 -mt-px w-full h-0.5 bg-gray-100 -z-10" />
+              <div className="absolute left-0 top-1/2 -z-10 -mt-px h-0.5 w-full bg-gray-100" />
 
               {steps.map((step) => {
                 const isCompleted = currentStep > step.id;
                 const isCurrent = currentStep === step.id;
 
                 return (
-                  <div key={step.id} className="relative flex flex-col items-center bg-gray-50 px-2">
+                  <div
+                    key={step.id}
+                    className="relative flex flex-col items-center bg-gray-50 px-2"
+                  >
                     <div
                       className={cn(
-                        'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-sm',
+                        'flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-sm transition-all duration-300',
                         isCompleted
-                          ? 'bg-green-500 border-green-500 text-white'
+                          ? 'border-green-500 bg-green-500 text-white'
                           : isCurrent
-                            ? 'bg-primary border-primary text-white scale-110 shadow-primary/25 shadow-lg'
-                            : 'bg-white border-gray-200 text-gray-300'
+                            ? 'bg-primary border-primary shadow-primary/25 scale-110 text-white shadow-lg'
+                            : 'border-gray-200 bg-white text-gray-300'
                       )}
                     >
                       {isCompleted ? (
-                        <Check className="w-5 h-5" />
+                        <Check className="h-5 w-5" />
                       ) : (
-                        <step.icon className="w-5 h-5" />
+                        <step.icon className="h-5 w-5" />
                       )}
                     </div>
                     <span
                       className={cn(
                         'mt-3 text-xs font-bold tracking-wide transition-colors duration-300',
-                        isCurrent ? 'text-gray-900' : isCompleted ? 'text-gray-700' : 'text-gray-400'
+                        isCurrent
+                          ? 'text-gray-900'
+                          : isCompleted
+                            ? 'text-gray-700'
+                            : 'text-gray-400'
                       )}
                     >
                       {step.title}
@@ -383,10 +403,10 @@ export default function BookingPage() {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid gap-8 lg:grid-cols-3">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentStep}
@@ -396,10 +416,7 @@ export default function BookingPage() {
                     transition={{ duration: 0.3 }}
                   >
                     {currentStep === 1 && (
-                      <DateLocationStep
-                        data={bookingData}
-                        onChange={updateBookingData}
-                      />
+                      <DateLocationStep data={bookingData} onChange={updateBookingData} />
                     )}
                     {currentStep === 2 && (
                       <ExtrasStep
@@ -410,16 +427,10 @@ export default function BookingPage() {
                       />
                     )}
                     {currentStep === 3 && (
-                      <CustomerInfoStep
-                        data={bookingData}
-                        onChange={updateBookingData}
-                      />
+                      <CustomerInfoStep data={bookingData} onChange={updateBookingData} />
                     )}
                     {currentStep === 4 && (
-                      <DocumentUploadStep
-                        data={bookingData}
-                        onChange={updateBookingData}
-                      />
+                      <DocumentUploadStep data={bookingData} onChange={updateBookingData} />
                     )}
                     {currentStep === 5 && bookingId && (
                       <PaymentStep
@@ -443,18 +454,18 @@ export default function BookingPage() {
 
                 {/* Navigation */}
                 {currentStep < 5 && (
-                  <div className="flex items-center justify-between px-8 py-6 border-t border-gray-100 bg-gray-50/50">
+                  <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-8 py-6">
                     <button
                       onClick={prevStep}
                       disabled={currentStep === 1}
                       className={cn(
-                        'flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200',
+                        'flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200',
                         currentStep === 1
-                          ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                          ? 'cursor-not-allowed text-gray-300'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                       )}
                     >
-                      <ArrowLeft className="w-4 h-4" />
+                      <ArrowLeft className="h-4 w-4" />
                       Back
                     </button>
 
@@ -462,21 +473,21 @@ export default function BookingPage() {
                       onClick={nextStep}
                       disabled={!canProceed() || isSubmitting}
                       className={cn(
-                        'flex items-center gap-2 px-8 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 shadow-lg shadow-primary/20 transform active:scale-95',
-                        (!canProceed() || isSubmitting)
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
-                          : 'bg-primary text-white hover:bg-orange-600 hover:shadow-primary/30'
+                        'shadow-primary/20 flex transform items-center gap-2 rounded-xl px-8 py-2.5 text-sm font-bold shadow-lg transition-all duration-200 active:scale-95',
+                        !canProceed() || isSubmitting
+                          ? 'cursor-not-allowed bg-gray-100 text-gray-400 shadow-none'
+                          : 'bg-primary hover:shadow-primary/30 text-white hover:bg-orange-600'
                       )}
                     >
                       {isSubmitting ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin" />
                           Creating Booking...
                         </>
                       ) : (
                         <>
                           Continue
-                          <ArrowRight className="w-4 h-4" />
+                          <ArrowRight className="h-4 w-4" />
                         </>
                       )}
                     </button>
@@ -487,26 +498,26 @@ export default function BookingPage() {
 
             {/* Order Summary Sidebar */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-6 sticky top-28 transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/60">
-                <h3 className="font-bold text-lg text-gray-900 mb-6 flex items-center gap-2">
+              <div className="sticky top-28 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl shadow-gray-200/50 transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/60">
+                <h3 className="mb-6 flex items-center gap-2 text-lg font-bold text-gray-900">
                   <span>Order Summary</span>
-                  <div className="h-1 w-1 rounded-full bg-primary/50" />
+                  <div className="bg-primary/50 h-1 w-1 rounded-full" />
                 </h3>
 
                 {/* Vehicle Info */}
-                <div className="flex gap-4 mb-6 pb-6 border-b border-gray-100">
-                  <div className="relative w-24 h-20 rounded-xl overflow-hidden shadow-sm">
+                <div className="mb-6 flex gap-4 border-b border-gray-100 pb-6">
+                  <div className="relative h-20 w-24 overflow-hidden rounded-xl shadow-sm">
                     <img
                       src={vehicle.images[0]}
                       alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 leading-tight mb-1">
+                    <h4 className="mb-1 font-bold leading-tight text-gray-900">
                       {vehicle.year} {vehicle.make} {vehicle.model}
                     </h4>
-                    <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
+                    <span className="inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-gray-600">
                       {vehicle.category}
                     </span>
                   </div>
@@ -514,10 +525,10 @@ export default function BookingPage() {
 
                 {/* Dates */}
                 {bookingData.startDate && bookingData.endDate && (
-                  <div className="space-y-3 mb-6 pb-6 border-b border-gray-100 bg-gray-50/50 p-4 rounded-xl">
+                  <div className="mb-6 space-y-3 rounded-xl border-b border-gray-100 bg-gray-50/50 p-4 pb-6">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500 font-medium">Pick-up</span>
-                      <span className="text-gray-900 font-semibold">
+                      <span className="font-medium text-gray-500">Pick-up</span>
+                      <span className="font-semibold text-gray-900">
                         {new Date(bookingData.startDate).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -525,58 +536,60 @@ export default function BookingPage() {
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500 font-medium">Return</span>
-                      <span className="text-gray-900 font-semibold">
+                      <span className="font-medium text-gray-500">Return</span>
+                      <span className="font-semibold text-gray-900">
                         {new Date(bookingData.endDate).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                         })}
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm pt-2 border-t border-gray-200/50">
-                      <span className="text-gray-500 font-medium">Duration</span>
+                    <div className="flex justify-between border-t border-gray-200/50 pt-2 text-sm">
+                      <span className="font-medium text-gray-500">Duration</span>
                       <span className="text-primary font-bold">{days} days</span>
                     </div>
                   </div>
                 )}
 
                 {/* Pricing */}
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-sm group">
-                    <span className="text-gray-600 font-medium group-hover:text-gray-900 transition-colors">
+                <div className="mb-6 space-y-3">
+                  <div className="group flex justify-between text-sm">
+                    <span className="font-medium text-gray-600 transition-colors group-hover:text-gray-900">
                       Car Rental
                     </span>
-                    <span className="text-gray-900 font-semibold">${Number(vehicle.dailyRate) * days}</span>
+                    <span className="font-semibold text-gray-900">
+                      ${Number(vehicle.dailyRate) * days}
+                    </span>
                   </div>
 
                   {bookingData.extras.insurance && (
                     <div className="flex justify-between text-sm text-green-600">
-                      <span className="font-medium flex items-center gap-1.5">
-                        <Check className="w-3.5 h-3.5" /> Insurance
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Check className="h-3.5 w-3.5" /> Insurance
                       </span>
                       <span className="font-semibold">+${25 * days}</span>
                     </div>
                   )}
                   {bookingData.extras.gps && (
                     <div className="flex justify-between text-sm text-green-600">
-                      <span className="font-medium flex items-center gap-1.5">
-                        <Check className="w-3.5 h-3.5" /> GPS
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Check className="h-3.5 w-3.5" /> GPS
                       </span>
                       <span className="font-semibold">+${10 * days}</span>
                     </div>
                   )}
                   {bookingData.extras.childSeat && (
                     <div className="flex justify-between text-sm text-green-600">
-                      <span className="font-medium flex items-center gap-1.5">
-                        <Check className="w-3.5 h-3.5" /> Child Seat
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Check className="h-3.5 w-3.5" /> Child Seat
                       </span>
                       <span className="font-semibold">+${8 * days}</span>
                     </div>
                   )}
                   {bookingData.extras.additionalDriver && (
                     <div className="flex justify-between text-sm text-green-600">
-                      <span className="font-medium flex items-center gap-1.5">
-                        <Check className="w-3.5 h-3.5" /> Add. Driver
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Check className="h-3.5 w-3.5" /> Add. Driver
                       </span>
                       <span className="font-semibold">+${15 * days}</span>
                     </div>
@@ -584,42 +597,44 @@ export default function BookingPage() {
                 </div>
 
                 {/* Total */}
-                <div className="flex justify-between items-end pt-6 border-t-2 border-dashed border-gray-100">
-                  <span className="text-sm font-semibold text-gray-500 mb-1">Total Amount</span>
+                <div className="flex items-end justify-between border-t-2 border-dashed border-gray-100 pt-6">
+                  <span className="mb-1 text-sm font-semibold text-gray-500">Total Amount</span>
                   <span className="text-3xl font-bold text-gray-900">${total}</span>
                 </div>
 
                 {/* Progress Indicator */}
-                <div className="mt-8 pt-6 border-t border-gray-100">
-                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider mb-2">
+                <div className="mt-8 border-t border-gray-100 pt-6">
+                  <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider">
                     <span className="text-gray-400">Completion</span>
-                    <span className="text-primary">{Math.round((currentStep / steps.length) * 100)}%</span>
+                    <span className="text-primary">
+                      {Math.round((currentStep / steps.length) * 100)}%
+                    </span>
                   </div>
-                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
                     <div
-                      className="h-full bg-primary rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(249,115,22,0.5)]"
+                      className="bg-primary h-full rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)] transition-all duration-500 ease-out"
                       style={{ width: `${(currentStep / steps.length) * 100}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Trust Badges */}
-                <div className="mt-6 space-y-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
-                  <div className="flex items-center gap-2.5 text-xs text-gray-600 font-medium">
-                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                      <Check className="w-3 h-3 text-green-600" />
+                <div className="mt-6 space-y-3 rounded-xl border border-gray-100/50 bg-gray-50/50 p-4">
+                  <div className="flex items-center gap-2.5 text-xs font-medium text-gray-600">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                      <Check className="h-3 w-3 text-green-600" />
                     </div>
                     Free cancellation (24h)
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs text-gray-600 font-medium">
-                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                      <Check className="w-3 h-3 text-green-600" />
+                  <div className="flex items-center gap-2.5 text-xs font-medium text-gray-600">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                      <Check className="h-3 w-3 text-green-600" />
                     </div>
                     No hidden fees
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs text-gray-600 font-medium">
-                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                      <Check className="w-3 h-3 text-green-600" />
+                  <div className="flex items-center gap-2.5 text-xs font-medium text-gray-600">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                      <Check className="h-3 w-3 text-green-600" />
                     </div>
                     Secure SSL payment
                   </div>

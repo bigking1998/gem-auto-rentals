@@ -1,6 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, DollarSign, Car, Users, Calendar, Download, FileText, FileSpreadsheet, ChevronDown, Loader2 } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Car,
+  Users,
+  Calendar,
+  Download,
+  FileText,
+  FileSpreadsheet,
+  ChevronDown,
+  Loader2,
+} from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { exportToCSV, exportToPDF, formatCurrencyForExport } from '@/lib/export';
 import { api, type RevenueStats, type FleetStats } from '@/lib/api';
@@ -53,12 +65,7 @@ export default function AnalyticsPage() {
   const [bookingData, setBookingData] = useState<BookingStats | null>(null);
   const [customerData, setCustomerData] = useState<CustomerStats | null>(null);
 
-  // Fetch data on mount and when period changes
-  useEffect(() => {
-    fetchAllData();
-  }, [timePeriod]);
-
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [revenue, fleet, bookings, customers] = await Promise.all([
@@ -85,7 +92,12 @@ export default function AnalyticsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [timePeriod]);
+
+  // Fetch data on mount and when period changes
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
 
   // Format revenue data for charts (aggregate by week for readability)
   const monthlyRevenue = useMemo(() => {
@@ -146,38 +158,41 @@ export default function AnalyticsPage() {
   }, [fleetData]);
 
   // Stats cards data
-  const stats = useMemo(() => [
-    {
-      label: 'Total Revenue',
-      value: revenueData?.totals?.revenue || 0,
-      change: 12.5, // Would need historical comparison to calculate
-      trend: 'up' as const,
-      icon: DollarSign,
-      isCurrency: true,
-    },
-    {
-      label: 'Total Bookings',
-      value: revenueData?.totals?.bookings || 0,
-      change: 8.2,
-      trend: 'up' as const,
-      icon: Calendar,
-    },
-    {
-      label: 'Total Customers',
-      value: customerData?.totalCustomers || 0,
-      change: customerData?.newCustomers || 0,
-      trend: 'up' as const,
-      icon: Users,
-    },
-    {
-      label: 'Fleet Utilization',
-      value: Math.round(fleetData?.utilizationRate || 0),
-      change: fleetData?.utilizationRate ? (fleetData.utilizationRate > 50 ? 2.1 : -2.1) : 0,
-      trend: (fleetData?.utilizationRate || 0) > 50 ? 'up' as const : 'down' as const,
-      icon: Car,
-      suffix: '%',
-    },
-  ], [revenueData, fleetData, customerData]);
+  const stats = useMemo(
+    () => [
+      {
+        label: 'Total Revenue',
+        value: revenueData?.totals?.revenue || 0,
+        change: 12.5, // Would need historical comparison to calculate
+        trend: 'up' as const,
+        icon: DollarSign,
+        isCurrency: true,
+      },
+      {
+        label: 'Total Bookings',
+        value: revenueData?.totals?.bookings || 0,
+        change: 8.2,
+        trend: 'up' as const,
+        icon: Calendar,
+      },
+      {
+        label: 'Total Customers',
+        value: customerData?.totalCustomers || 0,
+        change: customerData?.newCustomers || 0,
+        trend: 'up' as const,
+        icon: Users,
+      },
+      {
+        label: 'Fleet Utilization',
+        value: Math.round(fleetData?.utilizationRate || 0),
+        change: fleetData?.utilizationRate ? (fleetData.utilizationRate > 50 ? 2.1 : -2.1) : 0,
+        trend: (fleetData?.utilizationRate || 0) > 50 ? ('up' as const) : ('down' as const),
+        icon: Car,
+        suffix: '%',
+      },
+    ],
+    [revenueData, fleetData, customerData]
+  );
 
   // Export to CSV function
   const handleExportCSV = () => {
@@ -185,10 +200,10 @@ export default function AnalyticsPage() {
 
     // Export Revenue Data
     exportToCSV(
-      monthlyRevenue.map(item => ({
+      monthlyRevenue.map((item) => ({
         period: item.label,
         revenue: item.revenue,
-        revenueFormatted: formatCurrencyForExport(item.revenue)
+        revenueFormatted: formatCurrencyForExport(item.revenue),
       })),
       `gem-auto-rentals-revenue-${new Date().toISOString().split('T')[0]}`,
       [
@@ -202,54 +217,51 @@ export default function AnalyticsPage() {
   const handleExportPDF = () => {
     setShowExportMenu(false);
 
-    exportToPDF(
-      'Analytics Report',
-      [
-        {
-          title: 'Key Metrics Summary',
-          type: 'stats',
-          data: stats.map(stat => ({
-            label: stat.label,
-            value: stat.isCurrency
-              ? formatCurrencyForExport(stat.value)
-              : `${stat.value.toLocaleString()}${stat.suffix || ''}`,
-          })),
-        },
-        {
-          title: 'Revenue by Period',
-          type: 'table',
-          headers: [
-            { key: 'period', label: 'Period' },
-            { key: 'revenueFormatted', label: 'Revenue' },
-          ],
-          data: monthlyRevenue.map(item => ({
-            period: item.label,
-            revenueFormatted: formatCurrencyForExport(item.revenue),
-          })),
-        },
-        {
-          title: 'Booking Trends',
-          type: 'table',
-          headers: [
-            { key: 'period', label: 'Period' },
-            { key: 'bookings', label: 'Bookings' },
-          ],
-          data: bookingTrends.map(item => ({ period: item.label, bookings: item.bookings })),
-        },
-        {
-          title: 'Fleet Utilization by Category',
-          type: 'table',
-          headers: [
-            { key: 'name', label: 'Category' },
-            { key: 'utilization', label: 'Utilization' },
-          ],
-          data: fleetUtilization.map(item => ({
-            name: item.name,
-            utilization: `${item.value}%`,
-          })),
-        },
-      ]
-    );
+    exportToPDF('Analytics Report', [
+      {
+        title: 'Key Metrics Summary',
+        type: 'stats',
+        data: stats.map((stat) => ({
+          label: stat.label,
+          value: stat.isCurrency
+            ? formatCurrencyForExport(stat.value)
+            : `${stat.value.toLocaleString()}${stat.suffix || ''}`,
+        })),
+      },
+      {
+        title: 'Revenue by Period',
+        type: 'table',
+        headers: [
+          { key: 'period', label: 'Period' },
+          { key: 'revenueFormatted', label: 'Revenue' },
+        ],
+        data: monthlyRevenue.map((item) => ({
+          period: item.label,
+          revenueFormatted: formatCurrencyForExport(item.revenue),
+        })),
+      },
+      {
+        title: 'Booking Trends',
+        type: 'table',
+        headers: [
+          { key: 'period', label: 'Period' },
+          { key: 'bookings', label: 'Bookings' },
+        ],
+        data: bookingTrends.map((item) => ({ period: item.label, bookings: item.bookings })),
+      },
+      {
+        title: 'Fleet Utilization by Category',
+        type: 'table',
+        headers: [
+          { key: 'name', label: 'Category' },
+          { key: 'utilization', label: 'Utilization' },
+        ],
+        data: fleetUtilization.map((item) => ({
+          name: item.name,
+          utilization: `${item.value}%`,
+        })),
+      },
+    ]);
   };
 
   // Export All Data as CSV
@@ -258,23 +270,43 @@ export default function AnalyticsPage() {
 
     // Create comprehensive data export
     const allData = [
-      { category: 'Summary', metric: 'Total Revenue', value: formatCurrencyForExport(stats[0].value), change: `${stats[0].change}%` },
-      { category: 'Summary', metric: 'Total Bookings', value: stats[1].value.toString(), change: `${stats[1].change}%` },
-      { category: 'Summary', metric: 'Total Customers', value: stats[2].value.toString(), change: `+${stats[2].change} new` },
-      { category: 'Summary', metric: 'Fleet Utilization', value: `${stats[3].value}%`, change: `${stats[3].change}%` },
-      ...monthlyRevenue.map(item => ({
+      {
+        category: 'Summary',
+        metric: 'Total Revenue',
+        value: formatCurrencyForExport(stats[0].value),
+        change: `${stats[0].change}%`,
+      },
+      {
+        category: 'Summary',
+        metric: 'Total Bookings',
+        value: stats[1].value.toString(),
+        change: `${stats[1].change}%`,
+      },
+      {
+        category: 'Summary',
+        metric: 'Total Customers',
+        value: stats[2].value.toString(),
+        change: `+${stats[2].change} new`,
+      },
+      {
+        category: 'Summary',
+        metric: 'Fleet Utilization',
+        value: `${stats[3].value}%`,
+        change: `${stats[3].change}%`,
+      },
+      ...monthlyRevenue.map((item) => ({
         category: 'Revenue',
         metric: item.label,
         value: formatCurrencyForExport(item.revenue),
         change: '-',
       })),
-      ...bookingTrends.map(item => ({
+      ...bookingTrends.map((item) => ({
         category: 'Booking Trends',
         metric: item.label,
         value: item.bookings.toString(),
         change: '-',
       })),
-      ...fleetUtilization.map(item => ({
+      ...fleetUtilization.map((item) => ({
         category: 'Fleet by Category',
         metric: item.name,
         value: `${item.value} vehicles`,
@@ -297,9 +329,9 @@ export default function AnalyticsPage() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
+          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-orange-500" />
           <p className="text-gray-500">Loading analytics...</p>
         </div>
       </div>
@@ -312,15 +344,16 @@ export default function AnalyticsPage() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3"
+        className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4"
       >
-        <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-          <span className="text-amber-600 font-bold text-sm">DEMO</span>
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100">
+          <span className="text-sm font-bold text-amber-600">DEMO</span>
         </div>
         <div className="flex-1">
           <p className="text-sm font-medium text-amber-800">Demo Mode Active</p>
           <p className="text-xs text-amber-600">
-            Revenue data may include demo/test payments. Contact support to reset data before launch.
+            Revenue data may include demo/test payments. Contact support to reset data before
+            launch.
           </p>
         </div>
       </motion.div>
@@ -340,7 +373,7 @@ export default function AnalyticsPage() {
           <select
             value={timePeriod}
             onChange={(e) => setTimePeriod(e.target.value as Period)}
-            className="border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+            className="focus:ring-primary rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -352,25 +385,24 @@ export default function AnalyticsPage() {
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300"
+              className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300"
             >
-              <Download className="w-4 h-4" />
+              <Download className="h-4 w-4" />
               Export
-              <ChevronDown className={cn("w-4 h-4 transition-transform", showExportMenu && "rotate-180")} />
+              <ChevronDown
+                className={cn('h-4 w-4 transition-transform', showExportMenu && 'rotate-180')}
+              />
             </button>
 
             {showExportMenu && (
               <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowExportMenu(false)}
-                />
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-2">
+                <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
+                <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-gray-100 bg-white py-2 shadow-xl">
                   <button
                     onClick={handleExportPDF}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                    className="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-gray-50"
                   >
-                    <FileText className="w-4 h-4 text-red-500" />
+                    <FileText className="h-4 w-4 text-red-500" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">Export as PDF</p>
                       <p className="text-xs text-gray-500">Full report with charts</p>
@@ -378,9 +410,9 @@ export default function AnalyticsPage() {
                   </button>
                   <button
                     onClick={handleExportCSV}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                    className="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-gray-50"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-green-500" />
+                    <FileSpreadsheet className="h-4 w-4 text-green-500" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">Export Revenue CSV</p>
                       <p className="text-xs text-gray-500">Monthly revenue data</p>
@@ -388,9 +420,9 @@ export default function AnalyticsPage() {
                   </button>
                   <button
                     onClick={handleExportAllCSV}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                    className="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-gray-50"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-blue-500" />
+                    <FileSpreadsheet className="h-4 w-4 text-blue-500" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">Export All Data CSV</p>
                       <p className="text-xs text-gray-500">Complete analytics export</p>
@@ -404,27 +436,29 @@ export default function AnalyticsPage() {
       </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 * index, duration: 0.3 }}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300"
+            className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-xl"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
-                <stat.icon className="w-6 h-6 text-primary" />
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100">
+                <stat.icon className="text-primary h-6 w-6" />
               </div>
-              <div className={cn(
-                'flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-lg',
-                stat.trend === 'up' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
-              )}>
+              <div
+                className={cn(
+                  'flex items-center gap-1 rounded-lg px-2.5 py-1 text-sm font-medium',
+                  stat.trend === 'up' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                )}
+              >
                 {stat.trend === 'up' ? (
-                  <TrendingUp className="w-4 h-4" />
+                  <TrendingUp className="h-4 w-4" />
                 ) : (
-                  <TrendingDown className="w-4 h-4" />
+                  <TrendingDown className="h-4 w-4" />
                 )}
                 {Math.abs(stat.change)}%
               </div>
@@ -434,28 +468,28 @@ export default function AnalyticsPage() {
                 ? formatCurrency(stat.value)
                 : `${stat.value.toLocaleString()}${stat.suffix || ''}`}
             </p>
-            <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
+            <p className="mt-1 text-sm text-gray-500">{stat.label}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Charts Row */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* Revenue Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
+          className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Revenue</h2>
             <button
               onClick={() => {
                 exportToCSV(
-                  monthlyRevenue.map(item => ({
+                  monthlyRevenue.map((item) => ({
                     period: item.label,
-                    revenueFormatted: formatCurrencyForExport(item.revenue)
+                    revenueFormatted: formatCurrencyForExport(item.revenue),
                   })),
                   `revenue-data-${new Date().toISOString().split('T')[0]}`,
                   [
@@ -464,9 +498,9 @@ export default function AnalyticsPage() {
                   ]
                 );
               }}
-              className="text-sm text-primary hover:text-orange-600 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+              className="text-primary flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-orange-50 hover:text-orange-600"
             >
-              <Download className="w-3 h-3" />
+              <Download className="h-3 w-3" />
               CSV
             </button>
           </div>
@@ -475,8 +509,18 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} tickFormatter={(value) => `$${value / 1000}k`} />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af' }}
+                    tickFormatter={(value) => `$${value / 1000}k`}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#fff',
@@ -490,7 +534,7 @@ export default function AnalyticsPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="flex h-full items-center justify-center text-gray-400">
                 No revenue data available
               </div>
             )}
@@ -502,14 +546,14 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
+          className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Booking Trends</h2>
             <button
               onClick={() => {
                 exportToCSV(
-                  bookingTrends.map(item => ({ period: item.label, bookings: item.bookings })),
+                  bookingTrends.map((item) => ({ period: item.label, bookings: item.bookings })),
                   `booking-trends-${new Date().toISOString().split('T')[0]}`,
                   [
                     { key: 'period', label: 'Period' },
@@ -517,9 +561,9 @@ export default function AnalyticsPage() {
                   ]
                 );
               }}
-              className="text-sm text-primary hover:text-orange-600 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+              className="text-primary flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-orange-50 hover:text-orange-600"
             >
-              <Download className="w-3 h-3" />
+              <Download className="h-3 w-3" />
               CSV
             </button>
           </div>
@@ -528,7 +572,12 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={bookingTrends}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} />
                   <Tooltip
                     contentStyle={{
@@ -549,7 +598,7 @@ export default function AnalyticsPage() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="flex h-full items-center justify-center text-gray-400">
                 No booking data available
               </div>
             )}
@@ -562,14 +611,14 @@ export default function AnalyticsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
+        className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Fleet Distribution by Category</h2>
           <button
             onClick={() => {
               exportToCSV(
-                fleetUtilization.map(item => ({
+                fleetUtilization.map((item) => ({
                   category: item.name,
                   vehicles: item.value,
                 })),
@@ -580,13 +629,13 @@ export default function AnalyticsPage() {
                 ]
               );
             }}
-            className="text-sm text-primary hover:text-orange-600 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+            className="text-primary flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-orange-50 hover:text-orange-600"
           >
-            <Download className="w-3 h-3" />
+            <Download className="h-3 w-3" />
             CSV
           </button>
         </div>
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid gap-8 lg:grid-cols-2">
           <div className="h-64">
             {fleetUtilization.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -616,7 +665,7 @@ export default function AnalyticsPage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="flex h-full items-center justify-center text-gray-400">
                 No fleet data available
               </div>
             )}
@@ -625,7 +674,8 @@ export default function AnalyticsPage() {
             {(() => {
               const totalVehicles = fleetUtilization.reduce((sum, cat) => sum + cat.value, 0);
               return fleetUtilization.map((category, index) => {
-                const percentage = totalVehicles > 0 ? Math.round((category.value / totalVehicles) * 100) : 0;
+                const percentage =
+                  totalVehicles > 0 ? Math.round((category.value / totalVehicles) * 100) : 0;
                 return (
                   <motion.div
                     key={category.name}
@@ -635,15 +685,17 @@ export default function AnalyticsPage() {
                     className="flex items-center gap-4"
                   >
                     <div
-                      className="w-4 h-4 rounded-full"
+                      className="h-4 w-4 rounded-full"
                       style={{ backgroundColor: category.color }}
                     />
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="mb-1 flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700">{category.name}</span>
-                        <span className="text-sm font-semibold text-gray-900">{category.value} ({percentage}%)</span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {category.value} ({percentage}%)
+                        </span>
                       </div>
-                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${percentage}%` }}

@@ -75,10 +75,13 @@ export default function MessagesPage() {
     setError(null);
     try {
       const statusFilter: ConversationStatus | undefined =
-        activeTab === 'open' ? 'OPEN' :
-        activeTab === 'pending' ? 'PENDING' :
-        activeTab === 'resolved' ? 'RESOLVED' :
-        undefined;
+        activeTab === 'open'
+          ? 'OPEN'
+          : activeTab === 'pending'
+            ? 'PENDING'
+            : activeTab === 'resolved'
+              ? 'RESOLVED'
+              : undefined;
 
       const { items } = await api.conversations.list({
         status: statusFilter,
@@ -116,7 +119,7 @@ export default function MessagesPage() {
       const { items } = await api.customers.list({
         search: customerSearch || undefined,
         role: 'CUSTOMER', // Only fetch customers, not staff
-        limit: 100
+        limit: 100,
       });
       setCustomers(items);
     } catch (err) {
@@ -179,9 +182,15 @@ export default function MessagesPage() {
       fetchConversations();
     }, 300);
     return () => clearTimeout(timer);
+    // Intentionally keyed to searchQuery only: this effect exists to debounce typing.
+    // Adding fetchConversations would also fire a debounced fetch on tab changes,
+    // which the mount effect above already handles immediately.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
-  const openCount = conversations.filter((c) => c.status === 'OPEN' || c.status === 'IN_PROGRESS').length;
+  const openCount = conversations.filter(
+    (c) => c.status === 'OPEN' || c.status === 'IN_PROGRESS'
+  ).length;
 
   const handleSelectConversation = async (conversation: Conversation) => {
     await fetchConversationDetail(conversation.id);
@@ -224,7 +233,7 @@ export default function MessagesPage() {
       await api.conversations.update(conversationId, { status });
       // Refresh conversation if it's selected
       if (selectedConversation?.id === conversationId) {
-        setSelectedConversation((prev) => prev ? { ...prev, status } : null);
+        setSelectedConversation((prev) => (prev ? { ...prev, status } : null));
       }
       fetchConversations();
     } catch (err) {
@@ -258,49 +267,49 @@ export default function MessagesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowNewConversation(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-200"
+            className="bg-primary flex items-center gap-2 rounded-xl px-4 py-2 text-white shadow-lg shadow-orange-200 transition-colors hover:bg-orange-600"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="h-5 w-5" />
             <span className="hidden sm:inline">New Conversation</span>
           </button>
           <button
             onClick={() => fetchConversations()}
             disabled={isLoading}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+            className="rounded-lg p-2 transition-colors hover:bg-gray-100 disabled:opacity-50"
           >
-            <RefreshCw className={cn('w-5 h-5 text-gray-600', isLoading && 'animate-spin')} />
+            <RefreshCw className={cn('h-5 w-5 text-gray-600', isLoading && 'animate-spin')} />
           </button>
         </div>
       </motion.div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-red-600">
+          <AlertCircle className="h-5 w-5" />
           {error}
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-220px)]">
+      <div className="flex h-[calc(100vh-220px)] flex-col gap-6 lg:flex-row">
         {/* Conversation List */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
           className={cn(
-            'bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden',
+            'flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm',
             selectedConversation ? 'hidden lg:flex lg:w-96' : 'flex-1'
           )}
         >
           {/* Search and Filters */}
-          <div className="p-4 border-b border-gray-100">
+          <div className="border-b border-gray-100 p-4">
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="focus:ring-primary w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2"
               />
             </div>
             <div className="flex gap-2">
@@ -309,16 +318,16 @@ export default function MessagesPage() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                    'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                     activeTab === tab.id
-                      ? 'bg-orange-100 text-primary'
+                      ? 'text-primary bg-orange-100'
                       : 'text-gray-600 hover:bg-gray-100'
                   )}
                 >
-                  <tab.icon className="w-4 h-4" />
+                  <tab.icon className="h-4 w-4" />
                   {tab.label}
                   {tab.id === 'open' && openCount > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">
+                    <span className="bg-primary ml-1 rounded-full px-1.5 py-0.5 text-xs text-white">
                       {openCount}
                     </span>
                   )}
@@ -330,12 +339,12 @@ export default function MessagesPage() {
           {/* Conversation List */}
           <div className="flex-1 overflow-y-auto">
             {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              <div className="flex h-full items-center justify-center">
+                <Loader2 className="text-primary h-8 w-8 animate-spin" />
               </div>
             ) : conversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                <Mail className="w-12 h-12 mb-3 text-gray-300" />
+              <div className="flex h-full flex-col items-center justify-center text-gray-500">
+                <Mail className="mb-3 h-12 w-12 text-gray-300" />
                 <p className="font-medium">No conversations found</p>
                 <p className="text-sm">Try adjusting your search or filters</p>
               </div>
@@ -349,46 +358,66 @@ export default function MessagesPage() {
                     transition={{ delay: index * 0.03 }}
                     onClick={() => handleSelectConversation(conversation)}
                     className={cn(
-                      'p-4 cursor-pointer transition-colors hover:bg-gray-50',
+                      'cursor-pointer p-4 transition-colors hover:bg-gray-50',
                       conversation.status === 'OPEN' && 'bg-orange-50/50',
                       selectedConversation?.id === conversation.id && 'bg-orange-50'
                     )}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-                        {getCustomerName(conversation).split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-sm font-medium text-white">
+                        {getCustomerName(conversation)
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')
+                          .slice(0, 2)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className={cn(
-                            'text-sm truncate',
-                            conversation.status === 'OPEN' ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
-                          )}>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex items-center justify-between">
+                          <p
+                            className={cn(
+                              'truncate text-sm',
+                              conversation.status === 'OPEN'
+                                ? 'font-semibold text-gray-900'
+                                : 'font-medium text-gray-700'
+                            )}
+                          >
                             {getCustomerName(conversation)}
                           </p>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-400">
                               {formatDate(new Date(conversation.lastMessageAt))}
                             </span>
-                            <Circle className={cn('w-2 h-2', priorityColors[conversation.priority], 'fill-current')} />
+                            <Circle
+                              className={cn(
+                                'h-2 w-2',
+                                priorityColors[conversation.priority],
+                                'fill-current'
+                              )}
+                            />
                           </div>
                         </div>
-                        <p className={cn(
-                          'text-sm truncate mb-1',
-                          conversation.status === 'OPEN' ? 'font-medium text-gray-900' : 'text-gray-700'
-                        )}>
+                        <p
+                          className={cn(
+                            'mb-1 truncate text-sm',
+                            conversation.status === 'OPEN'
+                              ? 'font-medium text-gray-900'
+                              : 'text-gray-700'
+                          )}
+                        >
                           {conversation.subject || 'No subject'}
                         </p>
                         <div className="flex items-center gap-2">
-                          <p className="text-sm text-gray-500 truncate flex-1">
+                          <p className="flex-1 truncate text-sm text-gray-500">
                             {conversation._count?.messages || 0} messages
                           </p>
                         </div>
                         <div className="mt-2">
-                          <span className={cn(
-                            'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
-                            statusColors[conversation.status]
-                          )}>
+                          <span
+                            className={cn(
+                              'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                              statusColors[conversation.status]
+                            )}
+                          >
                             {conversation.status.replace('_', ' ')}
                           </span>
                         </div>
@@ -406,45 +435,45 @@ export default function MessagesPage() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden"
+            className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
           >
             {/* Detail Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 p-4">
               <button
                 onClick={() => setSelectedConversation(null)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="rounded-lg p-2 transition-colors hover:bg-gray-100 lg:hidden"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="h-5 w-5 text-gray-600" />
               </button>
               <div className="flex items-center gap-2">
                 {selectedConversation.status === 'OPEN' && (
                   <button
                     onClick={() => handleUpdateStatus(selectedConversation.id, 'RESOLVED')}
-                    className="px-3 py-1.5 text-sm text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-1"
+                    className="flex items-center gap-1 rounded-lg bg-green-50 px-3 py-1.5 text-sm text-green-600 transition-colors hover:bg-green-100"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircle2 className="h-4 w-4" />
                     Mark Resolved
                   </button>
                 )}
                 {selectedConversation.status === 'RESOLVED' && (
                   <button
                     onClick={() => handleUpdateStatus(selectedConversation.id, 'OPEN')}
-                    className="px-3 py-1.5 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                    className="rounded-lg bg-blue-50 px-3 py-1.5 text-sm text-blue-600 transition-colors hover:bg-blue-100"
                   >
                     Reopen
                   </button>
                 )}
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Archive className="w-5 h-5 text-gray-600" />
+                <button className="rounded-lg p-2 transition-colors hover:bg-gray-100">
+                  <Archive className="h-5 w-5 text-gray-600" />
                 </button>
                 <button
                   onClick={() => handleDeleteConversation(selectedConversation.id)}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="rounded-lg p-2 transition-colors hover:bg-gray-100"
                 >
-                  <Trash2 className="w-5 h-5 text-gray-600" />
+                  <Trash2 className="h-5 w-5 text-gray-600" />
                 </button>
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <MoreHorizontal className="w-5 h-5 text-gray-600" />
+                <button className="rounded-lg p-2 transition-colors hover:bg-gray-100">
+                  <MoreHorizontal className="h-5 w-5 text-gray-600" />
                 </button>
               </div>
             </div>
@@ -452,27 +481,37 @@ export default function MessagesPage() {
             {/* Conversation Content */}
             <div className="flex-1 overflow-y-auto p-6">
               {isLoadingDetail ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <div className="flex h-full items-center justify-center">
+                  <Loader2 className="text-primary h-8 w-8 animate-spin" />
                 </div>
               ) : (
                 <>
                   {/* Customer Header */}
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-medium">
-                      {getCustomerName(selectedConversation).split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  <div className="mb-6 flex items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 font-medium text-white">
+                      {getCustomerName(selectedConversation)
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .slice(0, 2)}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-semibold text-gray-900">{getCustomerName(selectedConversation)}</h3>
-                          <p className="text-sm text-gray-500">{getCustomerEmail(selectedConversation)}</p>
+                          <h3 className="font-semibold text-gray-900">
+                            {getCustomerName(selectedConversation)}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {getCustomerEmail(selectedConversation)}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={cn(
-                            'inline-flex px-2.5 py-1 rounded-full text-xs font-medium',
-                            statusColors[selectedConversation.status]
-                          )}>
+                          <span
+                            className={cn(
+                              'inline-flex rounded-full px-2.5 py-1 text-xs font-medium',
+                              statusColors[selectedConversation.status]
+                            )}
+                          >
                             {selectedConversation.status.replace('_', ' ')}
                           </span>
                         </div>
@@ -482,7 +521,7 @@ export default function MessagesPage() {
 
                   {/* Subject */}
                   <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    <h2 className="mb-2 text-xl font-semibold text-gray-900">
                       {selectedConversation.subject || 'No subject'}
                     </h2>
                     {selectedConversation.booking && (
@@ -498,11 +537,11 @@ export default function MessagesPage() {
                       <div
                         key={message.id}
                         className={cn(
-                          'p-4 rounded-xl',
-                          message.senderType === 'ADMIN' ? 'bg-orange-50 ml-8' : 'bg-gray-50 mr-8'
+                          'rounded-xl p-4',
+                          message.senderType === 'ADMIN' ? 'ml-8 bg-orange-50' : 'mr-8 bg-gray-50'
                         )}
                       >
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="mb-2 flex items-center justify-between">
                           <span className="text-sm font-medium text-gray-900">
                             {message.senderType === 'ADMIN'
                               ? message.sender
@@ -512,21 +551,23 @@ export default function MessagesPage() {
                                 ? 'System'
                                 : getCustomerName(selectedConversation)}
                           </span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
+                          <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <Clock className="h-3 w-3" />
                             {formatDate(new Date(message.createdAt))}
                           </span>
                         </div>
                         <div className="prose prose-sm prose-gray max-w-none">
                           {message.content.split('\n').map((paragraph, i) => (
-                            <p key={i} className="text-gray-700 mb-2 last:mb-0">{paragraph}</p>
+                            <p key={i} className="mb-2 text-gray-700 last:mb-0">
+                              {paragraph}
+                            </p>
                           ))}
                         </div>
                         {message.attachments && message.attachments.length > 0 && (
                           <div className="mt-3 space-y-2">
                             {message.attachments.map((attachment) => (
                               <div key={attachment.id} className="flex items-center gap-2 text-sm">
-                                <Paperclip className="w-4 h-4 text-gray-400" />
+                                <Paperclip className="h-4 w-4 text-gray-400" />
                                 <span className="text-gray-600">{attachment.fileName}</span>
                               </div>
                             ))}
@@ -541,28 +582,30 @@ export default function MessagesPage() {
 
             {/* Reply Section */}
             {selectedConversation.status !== 'CLOSED' && (
-              <div className="p-4 border-t border-gray-100 bg-gray-50">
-                <div className="flex items-center gap-2 mb-3">
-                  <Reply className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-500">Reply to {getCustomerName(selectedConversation)}</span>
+              <div className="border-t border-gray-100 bg-gray-50 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Reply className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">
+                    Reply to {getCustomerName(selectedConversation)}
+                  </span>
                 </div>
                 <textarea
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                   placeholder="Type your reply..."
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  className="focus:ring-primary w-full resize-none rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2"
                 />
-                <div className="flex items-center justify-end mt-3">
+                <div className="mt-3 flex items-center justify-end">
                   <button
                     onClick={handleSendReply}
                     disabled={!replyContent.trim() || isSending}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                    className="bg-primary flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white shadow-lg shadow-orange-200 transition-all hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
                     {isSending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Send className="w-4 h-4" />
+                      <Send className="h-4 w-4" />
                     )}
                     Send Reply
                   </button>
@@ -577,13 +620,13 @@ export default function MessagesPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="hidden lg:flex flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 items-center justify-center"
+            className="hidden flex-1 items-center justify-center rounded-2xl border border-gray-100 bg-white shadow-sm lg:flex"
           >
             <div className="text-center">
-              <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-10 h-10 text-gray-400" />
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-100">
+                <Mail className="h-10 w-10 text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Select a conversation</h3>
+              <h3 className="mb-1 text-lg font-semibold text-gray-900">Select a conversation</h3>
               <p className="text-gray-500">Choose a conversation from the list to view messages</p>
             </div>
           </motion.div>
@@ -600,7 +643,7 @@ export default function MessagesPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowNewConversation(false)}
-              className="fixed inset-0 bg-black/50 z-50"
+              className="fixed inset-0 z-50 bg-black/50"
             />
 
             {/* Modal */}
@@ -610,30 +653,31 @@ export default function MessagesPage() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden">
+              <div className="max-h-[90vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
                 {/* Modal Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                <div className="flex items-center justify-between border-b border-gray-100 p-4">
                   <h2 className="text-xl font-semibold text-gray-900">New Conversation</h2>
                   <button
                     onClick={() => setShowNewConversation(false)}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="rounded-lg p-2 transition-colors hover:bg-gray-100"
                   >
-                    <X className="w-5 h-5 text-gray-500" />
+                    <X className="h-5 w-5 text-gray-500" />
                   </button>
                 </div>
 
                 {/* Modal Body */}
-                <div className="p-4 space-y-4 max-h-[calc(90vh-140px)] overflow-y-auto">
+                <div className="max-h-[calc(90vh-140px)] space-y-4 overflow-y-auto p-4">
                   {/* Customer Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Select Customer *
                     </label>
                     {selectedCustomer ? (
-                      <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-xl">
+                      <div className="flex items-center justify-between rounded-xl border border-orange-200 bg-orange-50 p-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-sm font-medium">
-                            {selectedCustomer.firstName?.[0]}{selectedCustomer.lastName?.[0]}
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-sm font-medium text-white">
+                            {selectedCustomer.firstName?.[0]}
+                            {selectedCustomer.lastName?.[0]}
                           </div>
                           <div>
                             <p className="font-medium text-gray-900">
@@ -644,30 +688,30 @@ export default function MessagesPage() {
                         </div>
                         <button
                           onClick={() => setSelectedCustomer(null)}
-                          className="p-1 rounded-lg hover:bg-orange-100"
+                          className="rounded-lg p-1 hover:bg-orange-100"
                         >
-                          <X className="w-4 h-4 text-orange-600" />
+                          <X className="h-4 w-4 text-orange-600" />
                         </button>
                       </div>
                     ) : (
                       <div className="space-y-2">
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                           <input
                             type="text"
                             placeholder="Search customers by name or email..."
                             value={customerSearch}
                             onChange={(e) => setCustomerSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="focus:ring-primary w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2"
                           />
                         </div>
-                        <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100">
+                        <div className="max-h-48 divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200">
                           {isLoadingCustomers ? (
                             <div className="p-4 text-center">
-                              <Loader2 className="w-5 h-5 text-primary animate-spin mx-auto" />
+                              <Loader2 className="text-primary mx-auto h-5 w-5 animate-spin" />
                             </div>
                           ) : customers.length === 0 ? (
-                            <div className="p-4 text-center text-gray-500 text-sm">
+                            <div className="p-4 text-center text-sm text-gray-500">
                               No customers found
                             </div>
                           ) : (
@@ -675,13 +719,14 @@ export default function MessagesPage() {
                               <button
                                 key={customer.id}
                                 onClick={() => setSelectedCustomer(customer)}
-                                className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left"
+                                className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-gray-50"
                               >
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-medium">
-                                  {customer.firstName?.[0]}{customer.lastName?.[0]}
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-xs font-medium text-white">
+                                  {customer.firstName?.[0]}
+                                  {customer.lastName?.[0]}
                                 </div>
                                 <div>
-                                  <p className="font-medium text-gray-900 text-sm">
+                                  <p className="text-sm font-medium text-gray-900">
                                     {customer.firstName} {customer.lastName}
                                   </p>
                                   <p className="text-xs text-gray-500">{customer.email}</p>
@@ -696,7 +741,7 @@ export default function MessagesPage() {
 
                   {/* Subject */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Subject (Optional)
                     </label>
                     <input
@@ -704,27 +749,28 @@ export default function MessagesPage() {
                       placeholder="e.g., Booking inquiry, Support request..."
                       value={newSubject}
                       onChange={(e) => setNewSubject(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2"
                     />
                   </div>
 
                   {/* Priority */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Priority
-                    </label>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">Priority</label>
                     <div className="flex gap-2">
                       {(['LOW', 'NORMAL', 'HIGH', 'URGENT'] as Priority[]).map((priority) => (
                         <button
                           key={priority}
                           onClick={() => setNewPriority(priority)}
                           className={cn(
-                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                            'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                             newPriority === priority
-                              ? priority === 'LOW' ? 'bg-gray-200 text-gray-800'
-                                : priority === 'NORMAL' ? 'bg-blue-100 text-blue-800'
-                                : priority === 'HIGH' ? 'bg-orange-100 text-orange-800'
-                                : 'bg-red-100 text-red-800'
+                              ? priority === 'LOW'
+                                ? 'bg-gray-200 text-gray-800'
+                                : priority === 'NORMAL'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : priority === 'HIGH'
+                                    ? 'bg-orange-100 text-orange-800'
+                                    : 'bg-red-100 text-red-800'
                               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           )}
                         >
@@ -736,7 +782,7 @@ export default function MessagesPage() {
 
                   {/* Initial Message */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Message *
                     </label>
                     <textarea
@@ -744,28 +790,28 @@ export default function MessagesPage() {
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       rows={4}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                      className="focus:ring-primary w-full resize-none rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2"
                     />
                   </div>
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-100 bg-gray-50">
+                <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50 p-4">
                   <button
                     onClick={() => setShowNewConversation(false)}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+                    className="rounded-xl px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateConversation}
                     disabled={!selectedCustomer || !newMessage.trim() || isCreating}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                    className="bg-primary flex items-center gap-2 rounded-xl px-4 py-2 text-white shadow-lg shadow-orange-200 transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
                     {isCreating ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Send className="w-4 h-4" />
+                      <Send className="h-4 w-4" />
                     )}
                     Start Conversation
                   </button>

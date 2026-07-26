@@ -12,10 +12,10 @@ interface TierProgressProps {
 }
 
 const tierIcons: Record<string, React.ReactNode> = {
-  BRONZE: <Award className="w-6 h-6" />,
-  SILVER: <Star className="w-6 h-6" />,
-  GOLD: <Crown className="w-6 h-6" />,
-  PLATINUM: <Gem className="w-6 h-6" />,
+  BRONZE: <Award className="h-6 w-6" />,
+  SILVER: <Star className="h-6 w-6" />,
+  GOLD: <Crown className="h-6 w-6" />,
+  PLATINUM: <Gem className="h-6 w-6" />,
 };
 
 const tierColors: Record<string, { bg: string; text: string; border: string; progress: string }> = {
@@ -56,11 +56,11 @@ export default function TierProgress({
   const colors = tierColors[currentTier] || tierColors.BRONZE;
 
   return (
-    <div className={cn('bg-white rounded-xl border border-gray-200 p-6', className)}>
-      <div className="flex items-center justify-between mb-4">
+    <div className={cn('rounded-xl border border-gray-200 bg-white p-6', className)}>
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={cn('p-3 rounded-full', colors.bg, colors.text)}>
-            {tierIcons[currentTier] || <Award className="w-6 h-6" />}
+          <div className={cn('rounded-full p-3', colors.bg, colors.text)}>
+            {tierIcons[currentTier] || <Award className="h-6 w-6" />}
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">{currentTier} Member</h3>
@@ -73,7 +73,7 @@ export default function TierProgress({
 
       {nextTier && (
         <div>
-          <div className="flex justify-between text-sm mb-2">
+          <div className="mb-2 flex justify-between text-sm">
             <span className="text-gray-600">Progress to {nextTier}</span>
             <span className="font-medium text-gray-900">
               {pointsToNextTier.toLocaleString()} points to go
@@ -81,7 +81,7 @@ export default function TierProgress({
           </div>
 
           <div
-            className="h-3 bg-gray-100 rounded-full overflow-hidden"
+            className="h-3 overflow-hidden rounded-full bg-gray-100"
             role="progressbar"
             aria-valuenow={Math.round(progressToNextTier)}
             aria-valuemin={0}
@@ -96,20 +96,16 @@ export default function TierProgress({
             />
           </div>
 
-          <p className="text-xs text-gray-400 mt-2 text-center">
+          <p className="mt-2 text-center text-xs text-gray-400">
             {Math.round(progressToNextTier)}% of the way there!
           </p>
         </div>
       )}
 
       {!nextTier && (
-        <div className="text-center py-4">
-          <p className="text-purple-600 font-medium">
-            You've reached the highest tier!
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Enjoy maximum rewards on all your rentals.
-          </p>
+        <div className="py-4 text-center">
+          <p className="font-medium text-purple-600">You&apos;ve reached the highest tier!</p>
+          <p className="mt-1 text-sm text-gray-500">Enjoy maximum rewards on all your rentals.</p>
         </div>
       )}
     </div>

@@ -25,7 +25,7 @@ let serverWakeUpPromise: Promise<void> | null = null;
 let isServerAwake = false;
 
 async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function wakeUpServer(): Promise<void> {
@@ -57,7 +57,10 @@ export async function wakeUpServer(): Promise<void> {
             return;
           }
           // Database still connecting, wait and retry
-          console.log('Server up but database connecting, waiting...');
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console -- dev-only visibility into server wake-up retries
+            console.debug('Server up but database connecting, waiting...');
+          }
         }
       } catch (error) {
         // Ignore errors and retry
@@ -266,7 +269,9 @@ async function requestWithPagination<T>(
 
     // Return both items and data for compatibility with different page patterns
     // Handle both array responses and { items: [...] } wrapped responses
-    const items = Array.isArray(json.data) ? json.data : (json.data as { items?: T }).items ?? json.data;
+    const items = Array.isArray(json.data)
+      ? json.data
+      : ((json.data as { items?: T }).items ?? json.data);
     return { items: items as T, data: json.data, pagination: json.pagination };
   } catch (error) {
     // Retry on network errors (server might be waking up)
@@ -563,10 +568,24 @@ export interface Integration {
 }
 
 // ============ Trash / Recycle Bin Types ============
-export type TrashEntityType = 'users' | 'vehicles' | 'bookings' | 'documents' | 'conversations' | 'invoices' | 'reviews' | 'maintenance';
+export type TrashEntityType =
+  | 'users'
+  | 'vehicles'
+  | 'bookings'
+  | 'documents'
+  | 'conversations'
+  | 'invoices'
+  | 'reviews'
+  | 'maintenance';
 
 // ============ Document Types ============
-export type DocumentType = 'DRIVERS_LICENSE_FRONT' | 'DRIVERS_LICENSE_BACK' | 'ID_CARD' | 'PASSPORT' | 'PROOF_OF_ADDRESS' | 'INSURANCE';
+export type DocumentType =
+  | 'DRIVERS_LICENSE_FRONT'
+  | 'DRIVERS_LICENSE_BACK'
+  | 'ID_CARD'
+  | 'PASSPORT'
+  | 'PROOF_OF_ADDRESS'
+  | 'INSURANCE';
 export type DocumentStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
 
 export interface Document {
@@ -738,11 +757,9 @@ export const api = {
         body: JSON.stringify({ email, password }),
       }),
 
-    logout: (): Promise<void> =>
-      request('/auth/logout', { method: 'POST' }),
+    logout: (): Promise<void> => request('/auth/logout', { method: 'POST' }),
 
-    me: (): Promise<User> =>
-      request('/auth/me'),
+    me: (): Promise<User> => request('/auth/me'),
 
     exchangeSsoCode: (code: string): Promise<AuthResponse> =>
       request('/auth/sso-exchange', {
@@ -759,8 +776,7 @@ export const api = {
 
   // Sessions
   sessions: {
-    list: (): Promise<Session[]> =>
-      request('/sessions'),
+    list: (): Promise<Session[]> => request('/sessions'),
 
     listAll: (params?: { userId?: string; isActive?: boolean; page?: number; limit?: number }) =>
       requestWithPagination<Session[]>('/sessions/all', { params }),
@@ -788,23 +804,31 @@ export const api = {
     getByUser: (userId: string, params?: { page?: number; limit?: number }) =>
       requestWithPagination<ActivityLog[]>(`/activity/user/${userId}`, { params }),
 
-    getByEntity: (entityType: string, entityId: string, params?: { page?: number; limit?: number }) =>
-      requestWithPagination<ActivityLog[]>(`/activity/entity/${entityType}/${entityId}`, { params }),
+    getByEntity: (
+      entityType: string,
+      entityId: string,
+      params?: { page?: number; limit?: number }
+    ) =>
+      requestWithPagination<ActivityLog[]>(`/activity/entity/${entityType}/${entityId}`, {
+        params,
+      }),
 
     getStats: (params?: { startDate?: string; endDate?: string }): Promise<ActivityStats> =>
       request('/activity/stats', { params }),
 
-    getActions: (): Promise<string[]> =>
-      request('/activity/actions'),
+    getActions: (): Promise<string[]> => request('/activity/actions'),
   },
 
   // Notifications
   notifications: {
-    list: (params?: { page?: number; limit?: number; unreadOnly?: boolean; type?: NotificationType }) =>
-      requestWithPagination<Notification[]>('/notifications', { params }),
+    list: (params?: {
+      page?: number;
+      limit?: number;
+      unreadOnly?: boolean;
+      type?: NotificationType;
+    }) => requestWithPagination<Notification[]>('/notifications', { params }),
 
-    getUnreadCount: (): Promise<{ count: number }> =>
-      request('/notifications/unread-count'),
+    getUnreadCount: (): Promise<{ count: number }> => request('/notifications/unread-count'),
 
     markAsRead: (id: string): Promise<Notification> =>
       request(`/notifications/${id}/read`, { method: 'PATCH' }),
@@ -819,10 +843,11 @@ export const api = {
   // Vehicles
   vehicles: {
     list: (params?: VehicleFiltersParams) =>
-      requestWithPagination<Vehicle[]>('/vehicles', { params: params as Record<string, string | number | boolean | undefined> }),
+      requestWithPagination<Vehicle[]>('/vehicles', {
+        params: params as Record<string, string | number | boolean | undefined>,
+      }),
 
-    get: (id: string): Promise<Vehicle> =>
-      request(`/vehicles/${id}`),
+    get: (id: string): Promise<Vehicle> => request(`/vehicles/${id}`),
 
     create: (data: Partial<Vehicle>): Promise<Vehicle> =>
       request('/vehicles', {
@@ -876,11 +901,15 @@ export const api = {
 
   // Bookings
   bookings: {
-    list: (params?: { status?: string; userId?: string; vehicleId?: string; page?: number; limit?: number }) =>
-      requestWithPagination<Booking[]>('/bookings', { params }),
+    list: (params?: {
+      status?: string;
+      userId?: string;
+      vehicleId?: string;
+      page?: number;
+      limit?: number;
+    }) => requestWithPagination<Booking[]>('/bookings', { params }),
 
-    get: (id: string): Promise<Booking> =>
-      request(`/bookings/${id}`),
+    get: (id: string): Promise<Booking> => request(`/bookings/${id}`),
 
     create: (data: Partial<Booking>): Promise<Booking> =>
       request('/bookings', {
@@ -900,17 +929,19 @@ export const api = {
         body: JSON.stringify({ status }),
       }),
 
-    cancel: (id: string): Promise<Booking> =>
-      request(`/bookings/${id}/cancel`, { method: 'POST' }),
+    cancel: (id: string): Promise<Booking> => request(`/bookings/${id}/cancel`, { method: 'POST' }),
   },
 
   // Customers
   customers: {
-    list: (params?: { search?: string; role?: 'CUSTOMER' | 'SUPPORT' | 'MANAGER' | 'ADMIN'; page?: number; limit?: number }) =>
-      requestWithPagination<Customer[]>('/customers', { params }),
+    list: (params?: {
+      search?: string;
+      role?: 'CUSTOMER' | 'SUPPORT' | 'MANAGER' | 'ADMIN';
+      page?: number;
+      limit?: number;
+    }) => requestWithPagination<Customer[]>('/customers', { params }),
 
-    get: (id: string): Promise<Customer> =>
-      request(`/customers/${id}`),
+    get: (id: string): Promise<Customer> => request(`/customers/${id}`),
 
     update: (id: string, data: Partial<Customer>): Promise<Customer> =>
       request(`/customers/${id}`, {
@@ -949,11 +980,14 @@ export const api = {
 
   // Documents
   documents: {
-    list: (params?: { userId?: string; type?: DocumentType; status?: DocumentStatus; bookingId?: string }): Promise<Document[]> =>
-      request('/documents', { params }),
+    list: (params?: {
+      userId?: string;
+      type?: DocumentType;
+      status?: DocumentStatus;
+      bookingId?: string;
+    }): Promise<Document[]> => request('/documents', { params }),
 
-    get: (id: string): Promise<Document> =>
-      request(`/documents/${id}`),
+    get: (id: string): Promise<Document> => request(`/documents/${id}`),
 
     verify: (id: string, status: 'VERIFIED' | 'REJECTED', notes?: string): Promise<Document> =>
       request(`/documents/${id}/verify`, {
@@ -964,7 +998,9 @@ export const api = {
     delete: (id: string): Promise<{ message: string }> =>
       request(`/documents/${id}`, { method: 'DELETE' }),
 
-    getDownloadUrl: (id: string): Promise<{ downloadUrl: string; fileName: string; mimeType: string }> =>
+    getDownloadUrl: (
+      id: string
+    ): Promise<{ downloadUrl: string; fileName: string; mimeType: string }> =>
       request(`/documents/${id}/download`),
   },
 
@@ -980,8 +1016,7 @@ export const api = {
       limit?: number;
     }) => requestWithPagination<Conversation[]>('/conversations', { params }),
 
-    get: (id: string): Promise<Conversation> =>
-      request(`/conversations/${id}`),
+    get: (id: string): Promise<Conversation> => request(`/conversations/${id}`),
 
     create: (data: {
       customerId: string;
@@ -995,11 +1030,14 @@ export const api = {
         body: JSON.stringify(data),
       }),
 
-    update: (id: string, data: {
-      status?: ConversationStatus;
-      priority?: Priority;
-      assignedToId?: string | null;
-    }): Promise<Conversation> =>
+    update: (
+      id: string,
+      data: {
+        status?: ConversationStatus;
+        priority?: Priority;
+        assignedToId?: string | null;
+      }
+    ): Promise<Conversation> =>
       request(`/conversations/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
@@ -1030,26 +1068,22 @@ export const api = {
     delete: (id: string): Promise<{ message: string }> =>
       request(`/conversations/${id}`, { method: 'DELETE' }),
 
-    getUnreadCount: (): Promise<{ count: number }> =>
-      request('/conversations/unread-count'),
+    getUnreadCount: (): Promise<{ count: number }> => request('/conversations/unread-count'),
   },
 
   // Stats / Dashboard
   stats: {
-    dashboard: (): Promise<DashboardStats> =>
-      request('/stats/dashboard'),
+    dashboard: (): Promise<DashboardStats> => request('/stats/dashboard'),
 
     revenue: (period?: string): Promise<RevenueStats> =>
       request('/stats/revenue', { params: period ? { period } : undefined }),
 
-    fleet: (): Promise<FleetStats> =>
-      request('/stats/fleet'),
+    fleet: (): Promise<FleetStats> => request('/stats/fleet'),
 
     bookings: (params?: { startDate?: string; endDate?: string }): Promise<BookingStats> =>
       request('/stats/bookings', { params }),
 
-    customers: (): Promise<CustomerStats> =>
-      request('/stats/customers'),
+    customers: (): Promise<CustomerStats> => request('/stats/customers'),
   },
 
   // User Preferences
@@ -1066,8 +1100,7 @@ export const api = {
 
   // Company Settings
   company: {
-    get: (): Promise<CompanySettings> =>
-      request('/settings/company'),
+    get: (): Promise<CompanySettings> => request('/settings/company'),
 
     update: (data: Partial<CompanySettings>): Promise<CompanySettings> =>
       request('/settings/company', {
@@ -1103,13 +1136,15 @@ export const api = {
 
   // Integrations
   integrations: {
-    list: (): Promise<Integration[]> =>
-      request('/integrations'),
+    list: (): Promise<Integration[]> => request('/integrations'),
 
     get: (provider: IntegrationProvider): Promise<Integration> =>
       request(`/integrations/${provider}`),
 
-    connect: (provider: IntegrationProvider, credentials: Record<string, string>): Promise<{ success: boolean; message?: string; oauthUrl?: string }> =>
+    connect: (
+      provider: IntegrationProvider,
+      credentials: Record<string, string>
+    ): Promise<{ success: boolean; message?: string; oauthUrl?: string }> =>
       request(`/integrations/${provider}/connect`, {
         method: 'POST',
         body: JSON.stringify(credentials),
@@ -1118,7 +1153,10 @@ export const api = {
     disconnect: (provider: IntegrationProvider): Promise<{ message: string }> =>
       request(`/integrations/${provider}/disconnect`, { method: 'POST' }),
 
-    updateConfig: (provider: IntegrationProvider, config: Record<string, unknown>): Promise<Integration> =>
+    updateConfig: (
+      provider: IntegrationProvider,
+      config: Record<string, unknown>
+    ): Promise<Integration> =>
       request(`/integrations/${provider}/config`, {
         method: 'PUT',
         body: JSON.stringify(config),
@@ -1130,8 +1168,7 @@ export const api = {
 
   // ============ Billing / Payment Methods ============
   billing: {
-    getPaymentMethods: (): Promise<PaymentMethod[]> =>
-      request('/billing/payment-methods'),
+    getPaymentMethods: (): Promise<PaymentMethod[]> => request('/billing/payment-methods'),
 
     createSetupIntent: (): Promise<{ clientSecret: string }> =>
       request('/billing/setup-intent', { method: 'POST' }),
@@ -1148,8 +1185,7 @@ export const api = {
     setDefaultPaymentMethod: (paymentMethodId: string): Promise<{ message: string }> =>
       request(`/billing/payment-methods/${paymentMethodId}/default`, { method: 'POST' }),
 
-    getPlan: (): Promise<BillingPlan> =>
-      request('/billing/plan'),
+    getPlan: (): Promise<BillingPlan> => request('/billing/plan'),
 
     upgradePlan: (planId: string): Promise<{ checkoutUrl?: string; message: string }> =>
       request('/billing/upgrade', {
@@ -1165,8 +1201,7 @@ export const api = {
     list: (
       entityType: TrashEntityType,
       params?: { search?: string; page?: number; pageSize?: number }
-    ): Promise<TrashListResponse> =>
-      request(`/trash/${entityType}`, { params }),
+    ): Promise<TrashListResponse> => request(`/trash/${entityType}`, { params }),
 
     restore: (entityType: TrashEntityType, id: string): Promise<{ message: string }> =>
       request(`/trash/${entityType}/${id}/restore`, { method: 'POST' }),
@@ -1174,7 +1209,9 @@ export const api = {
     permanentDelete: (entityType: TrashEntityType, id: string): Promise<{ message: string }> =>
       request(`/trash/${entityType}/${id}/permanent`, { method: 'DELETE' }),
 
-    emptyAll: (entityType?: TrashEntityType): Promise<{ deletedCounts: Record<string, number>; total: number }> =>
+    emptyAll: (
+      entityType?: TrashEntityType
+    ): Promise<{ deletedCounts: Record<string, number>; total: number }> =>
       request('/trash/empty', {
         method: 'POST',
         body: JSON.stringify({ entityType }),

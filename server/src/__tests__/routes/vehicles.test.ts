@@ -76,13 +76,34 @@ const mockCustomerUser = {
   deletedBy: null,
 };
 
+/**
+ * Install a persistent user lookup for prisma.user.findUnique.
+ *
+ * The login route looks the user up by email, and the auth middleware
+ * re-fetches the user by id on EVERY authenticated request. A one-shot
+ * mockResolvedValueOnce only satisfies the login call, so the middleware's
+ * lookup would resolve undefined and correctly 401. This implementation
+ * answers both lookups for the given user and returns null for anyone else,
+ * so deliberate 401/403 tests still exercise the real middleware logic.
+ * It is reset by vi.resetAllMocks() in beforeEach, keeping each test's
+ * arrangement explicit.
+ */
+function primeUserLookup(user: { id: string; email: string } & Record<string, unknown>): void {
+  vi.mocked(prisma.user.findUnique).mockImplementation((async (args: {
+    where?: { id?: string; email?: string };
+  }) => {
+    const where = args?.where ?? {};
+    if (where.id === user.id || where.email === user.email) {
+      return user;
+    }
+    return null;
+  }) as any);
+}
+
 // Helper to get admin token
 async function getAdminToken(): Promise<string> {
   const hashedPassword = await bcrypt.hash('adminpassword', 12);
-  vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
-    ...mockAdminUser,
-    password: hashedPassword,
-  });
+  primeUserLookup({ ...mockAdminUser, password: hashedPassword });
 
   const response = await request(app)
     .post('/api/auth/login')
@@ -94,10 +115,7 @@ async function getAdminToken(): Promise<string> {
 // Helper to get customer token
 async function getCustomerToken(): Promise<string> {
   const hashedPassword = await bcrypt.hash('customerpassword', 12);
-  vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
-    ...mockCustomerUser,
-    password: hashedPassword,
-  });
+  primeUserLookup({ ...mockCustomerUser, password: hashedPassword });
 
   const response = await request(app)
     .post('/api/auth/login')
@@ -108,7 +126,10 @@ async function getCustomerToken(): Promise<string> {
 
 describe('Vehicles API', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    // resetAllMocks (not clearAllMocks) also removes mock implementations,
+    // so the persistent user lookup from primeUserLookup never leaks
+    // between tests.
+    vi.resetAllMocks();
   });
 
   describe('GET /api/vehicles', () => {
@@ -152,9 +173,7 @@ describe('Vehicles API', () => {
         },
       ] as any);
 
-      const response = await request(app)
-        .get('/api/vehicles')
-        .query({ category: 'SUV' });
+      const response = await request(app).get('/api/vehicles').query({ category: 'SUV' });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -189,9 +208,7 @@ describe('Vehicles API', () => {
         },
       ] as any);
 
-      const response = await request(app)
-        .get('/api/vehicles')
-        .query({ search: 'Toyota' });
+      const response = await request(app).get('/api/vehicles').query({ search: 'Toyota' });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -207,9 +224,7 @@ describe('Vehicles API', () => {
         },
       ] as any);
 
-      const response = await request(app)
-        .get('/api/vehicles')
-        .query({ page: 2, pageSize: 10 });
+      const response = await request(app).get('/api/vehicles').query({ page: 2, pageSize: 10 });
 
       expect(response.status).toBe(200);
       expect(response.body.data.page).toBe(2);
@@ -263,7 +278,12 @@ describe('Vehicles API', () => {
       vi.mocked(prisma.vehicle.findUnique).mockResolvedValue({
         ...mockVehicle,
         reviews: [
-          { id: 'r1', rating: 5, comment: 'Great!', user: { id: 'u1', firstName: 'John', lastName: 'Doe' } },
+          {
+            id: 'r1',
+            rating: 5,
+            comment: 'Great!',
+            user: { id: 'u1', firstName: 'John', lastName: 'Doe' },
+          },
         ],
         _count: { reviews: 1, bookings: 5 },
       } as any);
@@ -291,9 +311,7 @@ describe('Vehicles API', () => {
 
   describe('POST /api/vehicles', () => {
     it('should require authentication', async () => {
-      const response = await request(app)
-        .post('/api/vehicles')
-        .send(mockVehicle);
+      const response = await request(app).post('/api/vehicles').send(mockVehicle);
 
       expect(response.status).toBe(401);
     });
@@ -498,12 +516,10 @@ describe('Vehicles API', () => {
         status: 'AVAILABLE',
       } as any);
 
-      const response = await request(app)
-        .get('/api/vehicles/vehicle-1/availability')
-        .query({
-          startDate: '2024-03-15',
-          endDate: '2024-03-18',
-        });
+      const response = await request(app).get('/api/vehicles/vehicle-1/availability').query({
+        startDate: '2024-03-15',
+        endDate: '2024-03-18',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -517,12 +533,10 @@ describe('Vehicles API', () => {
         status: 'AVAILABLE',
       } as any);
 
-      const response = await request(app)
-        .get('/api/vehicles/vehicle-1/availability')
-        .query({
-          startDate: '2024-03-15',
-          endDate: '2024-03-18',
-        });
+      const response = await request(app).get('/api/vehicles/vehicle-1/availability').query({
+        startDate: '2024-03-15',
+        endDate: '2024-03-18',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.data.available).toBe(false);
@@ -535,12 +549,10 @@ describe('Vehicles API', () => {
         status: 'MAINTENANCE',
       } as any);
 
-      const response = await request(app)
-        .get('/api/vehicles/vehicle-1/availability')
-        .query({
-          startDate: '2024-03-15',
-          endDate: '2024-03-18',
-        });
+      const response = await request(app).get('/api/vehicles/vehicle-1/availability').query({
+        startDate: '2024-03-15',
+        endDate: '2024-03-18',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.data.available).toBe(false);
@@ -551,19 +563,16 @@ describe('Vehicles API', () => {
       vi.mocked(prisma.booking.count).mockResolvedValue(0);
       vi.mocked(prisma.vehicle.findUnique).mockResolvedValue(null);
 
-      const response = await request(app)
-        .get('/api/vehicles/non-existent/availability')
-        .query({
-          startDate: '2024-03-15',
-          endDate: '2024-03-18',
-        });
+      const response = await request(app).get('/api/vehicles/non-existent/availability').query({
+        startDate: '2024-03-15',
+        endDate: '2024-03-18',
+      });
 
       expect(response.status).toBe(404);
     });
 
     it('should require date parameters', async () => {
-      const response = await request(app)
-        .get('/api/vehicles/vehicle-1/availability');
+      const response = await request(app).get('/api/vehicles/vehicle-1/availability');
 
       expect(response.status).toBe(400);
     });

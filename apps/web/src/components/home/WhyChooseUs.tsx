@@ -5,19 +5,22 @@ const benefits = [
   {
     icon: Car,
     title: 'Quality Fleet',
-    description: 'All vehicles are regularly maintained and inspected to ensure your safety and comfort.',
+    description:
+      'All vehicles are regularly maintained and inspected to ensure your safety and comfort.',
     color: 'bg-orange-50 text-primary',
   },
   {
     icon: Calendar,
     title: 'Flexible Rentals',
-    description: 'Daily, weekly, or monthly rentals available. Extend or modify your booking anytime.',
+    description:
+      'Daily, weekly, or monthly rentals available. Extend or modify your booking anytime.',
     color: 'bg-orange-50 text-primary',
   },
   {
     icon: DollarSign,
     title: 'Transparent Pricing',
-    description: 'No hidden fees or surprises. What you see is what you pay, with all taxes included.',
+    description:
+      'No hidden fees or surprises. What you see is what you pay, with all taxes included.',
     color: 'bg-orange-50 text-primary',
   },
   {
@@ -42,7 +45,7 @@ const benefits = [
 
 export default function WhyChooseUs() {
   return (
-    <section id="why-us" className="py-16 lg:py-24 bg-white">
+    <section id="why-us" className="bg-white py-16 lg:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -50,22 +53,22 @@ export default function WhyChooseUs() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12"
+          className="mb-12 text-center"
         >
-          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
+          <span className="bg-primary/10 text-primary mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
             Why Us
           </span>
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">
             Why Choose Gem Auto Rentals
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            We go above and beyond to provide you with the best car rental experience.
-            Here's what sets us apart.
+          <p className="mx-auto max-w-2xl text-lg text-gray-600">
+            We go above and beyond to provide you with the best car rental experience. Here&apos;s
+            what sets us apart.
           </p>
         </motion.div>
 
         {/* Benefits Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           {benefits.map((benefit, index) => (
             <motion.div
               key={benefit.title}
@@ -73,17 +76,17 @@ export default function WhyChooseUs() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group p-5 bg-white rounded-xl border border-gray-100 hover:border-primary/20 hover:shadow-xl transition-all duration-300"
+              className="hover:border-primary/20 group rounded-xl border border-gray-100 bg-white p-5 transition-all duration-300 hover:shadow-xl"
             >
-              <div className={`w-12 h-12 rounded-xl ${benefit.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                <benefit.icon className="w-6 h-6" />
+              <div
+                className={`h-12 w-12 rounded-xl ${benefit.color} mb-4 flex items-center justify-center transition-transform group-hover:scale-110`}
+              >
+                <benefit.icon className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-primary transition-colors">
+              <h3 className="group-hover:text-primary mb-2 text-lg font-bold text-gray-900 transition-colors">
                 {benefit.title}
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {benefit.description}
-              </p>
+              <p className="text-sm leading-relaxed text-gray-600">{benefit.description}</p>
             </motion.div>
           ))}
         </div>
