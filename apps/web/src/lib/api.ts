@@ -25,7 +25,7 @@ let serverWakeUpPromise: Promise<void> | null = null;
 let isServerAwake = false;
 
 async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function wakeUpServer(): Promise<void> {
@@ -57,7 +57,10 @@ export async function wakeUpServer(): Promise<void> {
             return;
           }
           // Database still connecting, wait and retry
-          console.log('Server up but database connecting, waiting...');
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console -- dev-only visibility into server wake-up retries
+            console.debug('Server up but database connecting, waiting...');
+          }
         }
       } catch (error) {
         // Ignore errors and retry
@@ -314,7 +317,13 @@ export interface Document {
   id: string;
   userId: string;
   bookingId?: string;
-  type: 'DRIVERS_LICENSE_FRONT' | 'DRIVERS_LICENSE_BACK' | 'ID_CARD' | 'PASSPORT' | 'PROOF_OF_ADDRESS' | 'INSURANCE';
+  type:
+    | 'DRIVERS_LICENSE_FRONT'
+    | 'DRIVERS_LICENSE_BACK'
+    | 'ID_CARD'
+    | 'PASSPORT'
+    | 'PROOF_OF_ADDRESS'
+    | 'INSURANCE';
   fileName: string;
   fileUrl: string;
   fileSize: number;
@@ -366,15 +375,24 @@ export const api = {
   // Vehicles
   vehicles: {
     list: (params?: VehicleFiltersParams): Promise<PaginatedResponse<Vehicle>> =>
-      request('/vehicles', { params: params as Record<string, string | number | boolean | undefined> }),
+      request('/vehicles', {
+        params: params as Record<string, string | number | boolean | undefined>,
+      }),
 
-    get: (id: string): Promise<Vehicle> =>
-      request(`/vehicles/${id}`),
+    get: (id: string): Promise<Vehicle> => request(`/vehicles/${id}`),
 
-    getAvailability: (id: string, startDate: string, endDate: string): Promise<{ available: boolean }> =>
+    getAvailability: (
+      id: string,
+      startDate: string,
+      endDate: string
+    ): Promise<{ available: boolean }> =>
       request(`/vehicles/${id}/availability`, { params: { startDate, endDate } }),
 
-    previewPricing: (params: { startDate?: string; endDate?: string; category?: string }): Promise<{
+    previewPricing: (params: {
+      startDate?: string;
+      endDate?: string;
+      category?: string;
+    }): Promise<{
       availableCount: number;
       minDailyRate: number | null;
       maxDailyRate: number | null;
@@ -399,7 +417,9 @@ export const api = {
       vehicleIds: string[],
       startDate: string,
       endDate: string
-    ): Promise<Record<string, { available: boolean; status: 'available' | 'limited' | 'unavailable' }>> =>
+    ): Promise<
+      Record<string, { available: boolean; status: 'available' | 'limited' | 'unavailable' }>
+    > =>
       request('/vehicles/availability-bulk', {
         method: 'POST',
         body: JSON.stringify({ vehicleIds, startDate, endDate }),
@@ -408,10 +428,15 @@ export const api = {
 
   // Reviews
   reviews: {
-    list: (vehicleId: string, params?: { page?: number; limit?: number }): Promise<ReviewsResponse> =>
-      request(`/vehicles/${vehicleId}/reviews`, { params }),
+    list: (
+      vehicleId: string,
+      params?: { page?: number; limit?: number }
+    ): Promise<ReviewsResponse> => request(`/vehicles/${vehicleId}/reviews`, { params }),
 
-    submit: (vehicleId: string, data: { rating: number; comment?: string }): Promise<{ id: string } & Review> =>
+    submit: (
+      vehicleId: string,
+      data: { rating: number; comment?: string }
+    ): Promise<{ id: string } & Review> =>
       request(`/vehicles/${vehicleId}/reviews`, {
         method: 'POST',
         body: JSON.stringify(data),
@@ -448,7 +473,11 @@ export const api = {
       return json.data.imageUrls;
     },
 
-    removeImage: (vehicleId: string, reviewId: string, imageUrl: string): Promise<{ message: string }> =>
+    removeImage: (
+      vehicleId: string,
+      reviewId: string,
+      imageUrl: string
+    ): Promise<{ message: string }> =>
       request(`/vehicles/${vehicleId}/reviews/images`, {
         method: 'DELETE',
         body: JSON.stringify({ reviewId, imageUrl }),
@@ -457,24 +486,26 @@ export const api = {
 
   // Favorites
   favorites: {
-    list: (): Promise<Array<{
-      id: string;
-      vehicleId: string;
-      createdAt: string;
-      vehicle: {
+    list: (): Promise<
+      Array<{
         id: string;
-        make: string;
-        model: string;
-        year: number;
-        category: string;
-        dailyRate: number;
-        status: string;
-        images: string[];
-        seats: number;
-        transmission: string;
-        fuelType: string;
-      };
-    }>> => request('/favorites'),
+        vehicleId: string;
+        createdAt: string;
+        vehicle: {
+          id: string;
+          make: string;
+          model: string;
+          year: number;
+          category: string;
+          dailyRate: number;
+          status: string;
+          images: string[];
+          seats: number;
+          transmission: string;
+          fuelType: string;
+        };
+      }>
+    > => request('/favorites'),
 
     add: (vehicleId: string): Promise<{ id: string; vehicleId: string }> =>
       request(`/favorites/${vehicleId}`, { method: 'POST' }),
@@ -485,17 +516,18 @@ export const api = {
     check: (vehicleId: string): Promise<{ isFavorited: boolean }> =>
       request(`/favorites/check/${vehicleId}`),
 
-    getIds: (): Promise<string[]> =>
-      request('/favorites/ids'),
+    getIds: (): Promise<string[]> => request('/favorites/ids'),
   },
 
   // Bookings
   bookings: {
-    list: (params?: { status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Booking>> =>
-      request('/bookings', { params }),
+    list: (params?: {
+      status?: string;
+      page?: number;
+      limit?: number;
+    }): Promise<PaginatedResponse<Booking>> => request('/bookings', { params }),
 
-    get: (id: string): Promise<Booking> =>
-      request(`/bookings/${id}`),
+    get: (id: string): Promise<Booking> => request(`/bookings/${id}`),
 
     create: (data: CreateBookingData): Promise<Booking> =>
       request('/bookings', {
@@ -503,8 +535,7 @@ export const api = {
         body: JSON.stringify(data),
       }),
 
-    cancel: (id: string): Promise<Booking> =>
-      request(`/bookings/${id}/cancel`, { method: 'POST' }),
+    cancel: (id: string): Promise<Booking> => request(`/bookings/${id}/cancel`, { method: 'POST' }),
   },
 
   // Auth
@@ -521,11 +552,9 @@ export const api = {
         body: JSON.stringify(data),
       }),
 
-    logout: (): Promise<void> =>
-      request('/auth/logout', { method: 'POST' }),
+    logout: (): Promise<void> => request('/auth/logout', { method: 'POST' }),
 
-    me: (): Promise<User> =>
-      request('/auth/me'),
+    me: (): Promise<User> => request('/auth/me'),
 
     forgotPassword: (email: string): Promise<{ message: string }> =>
       request('/auth/forgot-password', {
@@ -552,16 +581,22 @@ export const api = {
         body: JSON.stringify({ bookingId }),
       }),
 
-    confirm: (paymentIntentId: string): Promise<{ payment: { status: string }; bookingStatus: string }> =>
+    confirm: (
+      paymentIntentId: string
+    ): Promise<{ payment: { status: string }; bookingStatus: string }> =>
       request('/payments/confirm', {
         method: 'POST',
         body: JSON.stringify({ paymentIntentId }),
       }),
 
-    get: (bookingId: string): Promise<{ id: string; amount: number | string; status: string; method?: string }> =>
+    get: (
+      bookingId: string
+    ): Promise<{ id: string; amount: number | string; status: string; method?: string }> =>
       request(`/payments/${bookingId}`),
 
-    demo: (bookingId: string): Promise<{ payment: { status: string }; bookingStatus: string; isDemo: boolean }> =>
+    demo: (
+      bookingId: string
+    ): Promise<{ payment: { status: string }; bookingStatus: string; isDemo: boolean }> =>
       request('/payments/demo', {
         method: 'POST',
         body: JSON.stringify({ bookingId }),
@@ -573,17 +608,22 @@ export const api = {
     createSetupIntent: (): Promise<{ clientSecret: string }> =>
       request('/billing/setup-intent', { method: 'POST' }),
 
-    listPaymentMethods: (): Promise<Array<{
-      id: string;
-      type: string;
-      last4: string;
-      expMonth: number;
-      expYear: number;
-      brand: string;
-      isDefault: boolean;
-    }>> => request('/billing/payment-methods'),
+    listPaymentMethods: (): Promise<
+      Array<{
+        id: string;
+        type: string;
+        last4: string;
+        expMonth: number;
+        expYear: number;
+        brand: string;
+        isDefault: boolean;
+      }>
+    > => request('/billing/payment-methods'),
 
-    addPaymentMethod: (paymentMethodId: string, setAsDefault?: boolean): Promise<{
+    addPaymentMethod: (
+      paymentMethodId: string,
+      setAsDefault?: boolean
+    ): Promise<{
       id: string;
       type: string;
       last4: string;
@@ -687,11 +727,7 @@ export const api = {
 
   // Documents
   documents: {
-    upload: async (
-      file: File,
-      type: Document['type'],
-      bookingId?: string
-    ): Promise<Document> => {
+    upload: async (file: File, type: Document['type'], bookingId?: string): Promise<Document> => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('type', type);
@@ -720,37 +756,40 @@ export const api = {
     list: (params?: { type?: string; status?: string; bookingId?: string }): Promise<Document[]> =>
       request('/documents', { params }),
 
-    get: (id: string): Promise<Document> =>
-      request(`/documents/${id}`),
+    get: (id: string): Promise<Document> => request(`/documents/${id}`),
 
     delete: (id: string): Promise<{ message: string }> =>
       request(`/documents/${id}`, { method: 'DELETE' }),
 
-    getDownloadUrl: (id: string): Promise<{ downloadUrl: string; fileName: string; mimeType: string }> =>
+    getDownloadUrl: (
+      id: string
+    ): Promise<{ downloadUrl: string; fileName: string; mimeType: string }> =>
       request(`/documents/${id}/download`),
   },
 
   // Invoices
   invoices: {
-    list: (): Promise<Array<{
-      id: string;
-      invoiceNumber: string;
-      status: string;
-      totalAmount: number;
-      issueDate: string;
-      dueDate: string;
-      paidAt: string | null;
-      booking: {
+    list: (): Promise<
+      Array<{
         id: string;
-        startDate: string;
-        endDate: string;
-        vehicle: {
-          make: string;
-          model: string;
-          year: number;
-        };
-      } | null;
-    }>> => request('/invoices/my'),
+        invoiceNumber: string;
+        status: string;
+        totalAmount: number;
+        issueDate: string;
+        dueDate: string;
+        paidAt: string | null;
+        booking: {
+          id: string;
+          startDate: string;
+          endDate: string;
+          vehicle: {
+            make: string;
+            model: string;
+            year: number;
+          };
+        } | null;
+      }>
+    > => request('/invoices/my'),
 
     download: (id: string): string => {
       // Return the URL for downloading/viewing the invoice
@@ -799,7 +838,9 @@ export const api = {
         body: JSON.stringify({ vehicleId }),
       }),
 
-    recover: (id: string): Promise<{
+    recover: (
+      id: string
+    ): Promise<{
       vehicle: {
         id: string;
         make: string;
@@ -857,7 +898,10 @@ export const api = {
       pointsValue: number;
     }> => request('/loyalty/account'),
 
-    getHistory: (params?: { page?: number; limit?: number }): Promise<{
+    getHistory: (params?: {
+      page?: number;
+      limit?: number;
+    }): Promise<{
       transactions: Array<{
         id: string;
         type: 'EARNED' | 'REDEEMED' | 'BONUS' | 'EXPIRED' | 'ADJUSTMENT';
@@ -872,7 +916,9 @@ export const api = {
       totalPages: number;
     }> => request('/loyalty/history', { params }),
 
-    calculateRedemption: (points: number): Promise<{
+    calculateRedemption: (
+      points: number
+    ): Promise<{
       points: number;
       dollarValue: number;
       availablePoints: number;
@@ -883,7 +929,10 @@ export const api = {
         body: JSON.stringify({ points }),
       }),
 
-    redeem: (points: number, bookingId?: string): Promise<{
+    redeem: (
+      points: number,
+      bookingId?: string
+    ): Promise<{
       transaction: {
         id: string;
         type: string;
@@ -931,7 +980,10 @@ export const api = {
       };
     }> => request('/referrals/my-code'),
 
-    getHistory: (params?: { page?: number; limit?: number }): Promise<{
+    getHistory: (params?: {
+      page?: number;
+      limit?: number;
+    }): Promise<{
       referrals: Array<{
         id: string;
         code: string;
@@ -950,14 +1002,18 @@ export const api = {
       totalPages: number;
     }> => request('/referrals/history', { params }),
 
-    validate: (code: string): Promise<{
+    validate: (
+      code: string
+    ): Promise<{
       valid: boolean;
       referrerName?: string;
       refereeReward?: number;
       message: string;
     }> => request(`/referrals/validate/${code}`),
 
-    apply: (code: string): Promise<{
+    apply: (
+      code: string
+    ): Promise<{
       message: string;
       refereeReward: number;
     }> =>
@@ -969,7 +1025,10 @@ export const api = {
 
   // Promo Codes
   promos: {
-    validate: (code: string, bookingAmount?: number): Promise<{
+    validate: (
+      code: string,
+      bookingAmount?: number
+    ): Promise<{
       valid: boolean;
       message?: string;
       code?: string;
@@ -985,7 +1044,11 @@ export const api = {
         body: JSON.stringify({ code, bookingAmount }),
       }),
 
-    apply: (code: string, bookingId: string, bookingAmount: number): Promise<{
+    apply: (
+      code: string,
+      bookingId: string,
+      bookingAmount: number
+    ): Promise<{
       code: string;
       type: string;
       discountApplied: number;
@@ -999,7 +1062,10 @@ export const api = {
 
   // Booking Extensions
   extensions: {
-    preview: (bookingId: string, newEndDate: string): Promise<{
+    preview: (
+      bookingId: string,
+      newEndDate: string
+    ): Promise<{
       available: boolean;
       message?: string;
       conflictDate?: string;
@@ -1026,7 +1092,10 @@ export const api = {
         body: JSON.stringify({ newEndDate }),
       }),
 
-    request: (bookingId: string, newEndDate: string): Promise<{
+    request: (
+      bookingId: string,
+      newEndDate: string
+    ): Promise<{
       extension: {
         id: string;
         originalEndDate: string;
@@ -1041,7 +1110,11 @@ export const api = {
         body: JSON.stringify({ newEndDate }),
       }),
 
-    pay: (bookingId: string, extensionId: string, paymentMethodId?: string): Promise<{
+    pay: (
+      bookingId: string,
+      extensionId: string,
+      paymentMethodId?: string
+    ): Promise<{
       message: string;
       newEndDate: string;
       amountPaid: number;
@@ -1051,16 +1124,20 @@ export const api = {
         body: JSON.stringify({ extensionId, paymentMethodId }),
       }),
 
-    getHistory: (bookingId: string): Promise<Array<{
-      id: string;
-      originalEndDate: string;
-      newEndDate: string;
-      additionalAmount: number;
-      paymentStatus: string;
-      requestedAt: string;
-      approvedAt?: string;
-      paidAt?: string;
-    }>> => request(`/bookings/${bookingId}/extensions`),
+    getHistory: (
+      bookingId: string
+    ): Promise<
+      Array<{
+        id: string;
+        originalEndDate: string;
+        newEndDate: string;
+        additionalAmount: number;
+        paymentStatus: string;
+        requestedAt: string;
+        approvedAt?: string;
+        paidAt?: string;
+      }>
+    > => request(`/bookings/${bookingId}/extensions`),
   },
 };
 

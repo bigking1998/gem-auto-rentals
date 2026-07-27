@@ -65,18 +65,18 @@ export default function FavoritesPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
-        <p className="text-red-600 font-medium mb-4">{error}</p>
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+        <p className="mb-4 font-medium text-red-600">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+          className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700"
         >
           Try Again
         </button>
@@ -86,34 +86,35 @@ export default function FavoritesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Favorites</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="mt-1 text-gray-500">
             {favorites.length} saved vehicle{favorites.length !== 1 ? 's' : ''}
           </p>
         </div>
         <Link
           to="/vehicles"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+          className="bg-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors hover:bg-orange-600"
         >
-          <Car className="w-4 h-4" />
+          <Car className="h-4 w-4" />
           Browse More
         </Link>
       </div>
 
       {favorites.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-          <Heart className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">No favorites yet</h2>
-          <p className="text-gray-500 mb-6 max-w-md mx-auto">
-            Save vehicles you're interested in by clicking the heart icon. They'll appear here for easy access.
+        <div className="rounded-2xl border border-gray-100 bg-white p-12 text-center shadow-sm">
+          <Heart className="mx-auto mb-4 h-16 w-16 text-gray-200" />
+          <h2 className="mb-2 text-xl font-bold text-gray-900">No favorites yet</h2>
+          <p className="mx-auto mb-6 max-w-md text-gray-500">
+            Save vehicles you&apos;re interested in by clicking the heart icon. They&apos;ll appear
+            here for easy access.
           </p>
           <Link
             to="/vehicles"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+            className="bg-primary inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
           >
-            <Car className="w-5 h-5" />
+            <Car className="h-5 w-5" />
             Browse Vehicles
           </Link>
         </div>
@@ -125,23 +126,27 @@ export default function FavoritesPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md"
             >
               <Link to={`/vehicles/${favorite.vehicle.id}`}>
                 <div className="relative aspect-[16/10] bg-gray-100">
                   <img
-                    src={favorite.vehicle.images[0] || '/placeholder-car.jpg'}
+                    src={favorite.vehicle.images[0] || '/placeholder-car.svg'}
                     alt={`${favorite.vehicle.year} ${favorite.vehicle.make} ${favorite.vehicle.model}`}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
-                  <div className="absolute top-3 left-3">
-                    <span className={cn(
-                      'px-2 py-1 rounded-full text-xs font-bold',
-                      favorite.vehicle.status === 'AVAILABLE'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-600'
-                    )}>
-                      {favorite.vehicle.status === 'AVAILABLE' ? 'Available' : favorite.vehicle.status}
+                  <div className="absolute left-3 top-3">
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-1 text-xs font-bold',
+                        favorite.vehicle.status === 'AVAILABLE'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-600'
+                      )}
+                    >
+                      {favorite.vehicle.status === 'AVAILABLE'
+                        ? 'Available'
+                        : favorite.vehicle.status}
                     </span>
                   </div>
                 </div>
@@ -149,31 +154,32 @@ export default function FavoritesPage() {
 
               <div className="p-4">
                 <Link to={`/vehicles/${favorite.vehicle.id}`}>
-                  <h3 className="font-bold text-gray-900 hover:text-primary transition-colors">
+                  <h3 className="hover:text-primary font-bold text-gray-900 transition-colors">
                     {favorite.vehicle.year} {favorite.vehicle.make} {favorite.vehicle.model}
                   </h3>
                 </Link>
-                <p className="text-sm text-gray-500 mt-1">
-                  {favorite.vehicle.category} &bull; {favorite.vehicle.seats} seats &bull; {favorite.vehicle.transmission}
+                <p className="mt-1 text-sm text-gray-500">
+                  {favorite.vehicle.category} &bull; {favorite.vehicle.seats} seats &bull;{' '}
+                  {favorite.vehicle.transmission}
                 </p>
 
-                <div className="flex items-center justify-between mt-4">
+                <div className="mt-4 flex items-center justify-between">
                   <div>
                     <span className="text-2xl font-bold text-gray-900">
                       ${favorite.vehicle.dailyRate}
                     </span>
-                    <span className="text-gray-500 text-sm">/day</span>
+                    <span className="text-sm text-gray-500">/day</span>
                   </div>
 
                   <button
                     onClick={() => handleRemove(favorite)}
                     disabled={removingId === favorite.vehicleId}
-                    className="flex items-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
                   >
                     {removingId === favorite.vehicleId ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4" />
                     )}
                     Remove
                   </button>

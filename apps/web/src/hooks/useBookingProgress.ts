@@ -19,41 +19,47 @@ export function useBookingProgress(data: BookingProgressData | null) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTrackedRef = useRef<string>('');
 
-  const trackProgress = useCallback(async (progressData: BookingProgressData) => {
-    // Only track if we have valid data
-    if (!progressData.vehicleId || !progressData.startDate || !progressData.endDate) {
-      return;
-    }
+  const trackProgress = useCallback(
+    async (progressData: BookingProgressData) => {
+      // Only track if we have valid data
+      if (!progressData.vehicleId || !progressData.startDate || !progressData.endDate) {
+        return;
+      }
 
-    // Create a hash of the data to avoid duplicate tracking
-    const dataHash = JSON.stringify({
-      vehicleId: progressData.vehicleId,
-      startDate: progressData.startDate,
-      endDate: progressData.endDate,
-      step: progressData.step,
-    });
-
-    // Skip if we already tracked this exact state
-    if (dataHash === lastTrackedRef.current) {
-      return;
-    }
-
-    lastTrackedRef.current = dataHash;
-
-    try {
-      await api.abandonment.track({
+      // Create a hash of the data to avoid duplicate tracking
+      const dataHash = JSON.stringify({
         vehicleId: progressData.vehicleId,
         startDate: progressData.startDate,
         endDate: progressData.endDate,
-        extras: progressData.extras,
         step: progressData.step,
-        email: user?.email,
       });
-    } catch (error) {
-      // Silently fail - this is non-critical tracking
-      console.debug('Failed to track booking progress:', error);
-    }
-  }, [user?.email]);
+
+      // Skip if we already tracked this exact state
+      if (dataHash === lastTrackedRef.current) {
+        return;
+      }
+
+      lastTrackedRef.current = dataHash;
+
+      try {
+        await api.abandonment.track({
+          vehicleId: progressData.vehicleId,
+          startDate: progressData.startDate,
+          endDate: progressData.endDate,
+          extras: progressData.extras,
+          step: progressData.step,
+          email: user?.email,
+        });
+      } catch (error) {
+        // Silently fail - this is non-critical tracking
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console -- dev-only diagnostic for non-critical tracking
+          console.debug('Failed to track booking progress:', error);
+        }
+      }
+    },
+    [user?.email]
+  );
 
   useEffect(() => {
     // Track for anyone with valid booking data
@@ -80,16 +86,22 @@ export function useBookingProgress(data: BookingProgressData | null) {
   }, [data, trackProgress]);
 
   // Method to mark the booking as completed (removes from abandonment tracking)
-  const markCompleted = useCallback(async (vehicleId: string) => {
-    if (!isAuthenticated) return;
+  const markCompleted = useCallback(
+    async (vehicleId: string) => {
+      if (!isAuthenticated) return;
 
-    try {
-      await api.abandonment.complete(vehicleId);
-      lastTrackedRef.current = ''; // Reset tracking state
-    } catch (error) {
-      console.debug('Failed to mark abandonment as completed:', error);
-    }
-  }, [isAuthenticated]);
+      try {
+        await api.abandonment.complete(vehicleId);
+        lastTrackedRef.current = ''; // Reset tracking state
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console -- dev-only diagnostic for non-critical tracking
+          console.debug('Failed to mark abandonment as completed:', error);
+        }
+      }
+    },
+    [isAuthenticated]
+  );
 
   return { markCompleted };
 }

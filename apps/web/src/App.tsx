@@ -13,6 +13,8 @@ const VehicleDetailPage = lazy(() => import('./pages/VehicleDetailPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Auth pages - lazy loaded
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
@@ -49,6 +51,7 @@ function App() {
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -69,6 +72,9 @@ function App() {
             <Route path="loyalty" element={<LoyaltyPage />} />
             <Route path="referrals" element={<ReferralPage />} />
           </Route>
+
+          {/* 404 - must stay last so every other route wins first */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
       <Toaster position="top-right" richColors />
@@ -77,4 +83,3 @@ function App() {
 }
 
 export default App;
-

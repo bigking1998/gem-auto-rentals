@@ -8,17 +8,9 @@ interface StatItem {
   label: string;
 }
 
-// Default stats (shown while loading or on error)
-const defaultStats: StatItem[] = [
-  { value: 1250, suffix: '+', label: 'Happy Customers' },
-  { value: 99.9, suffix: '%', label: 'Satisfaction Rate' },
-  { value: 10, suffix: '+', label: 'Years Experience' },
-  { value: 50000, suffix: '+', label: 'Completed Rentals' },
-];
-
 function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
   const [count, setCount] = useState(0);
-  const ref = useRef(null);
+  const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true });
 
   useEffect(() => {
@@ -43,88 +35,94 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
     return () => clearInterval(timer);
   }, [value, isInView]);
 
-  const displayValue = value % 1 === 0
-    ? count.toLocaleString('en-US', { maximumFractionDigits: 0 })
-    : count.toFixed(1);
+  // `count` is animation state that starts at 0 and is only ever advanced once the
+  // viewport observer fires. Fall back to the real number until then, so a browser
+  // that never delivers an intersection callback (backgrounded/non-painting tab,
+  // prerender, snapshot tooling) can't leave the section stuck reading "0".
+  const displayed = isInView ? count : value;
+
+  const displayValue =
+    value % 1 === 0
+      ? displayed.toLocaleString('en-US', { maximumFractionDigits: 0 })
+      : displayed.toFixed(1);
 
   return (
     <span ref={ref}>
-      {displayValue}{suffix}
+      {displayValue}
+      {suffix}
     </span>
   );
 }
 
 export default function Statistics() {
-  const [stats, setStats] = useState<StatItem[]>(defaultStats);
+  // `null` = not loaded yet. Never seeded with placeholder numbers: every figure
+  // rendered here has to come from the API.
+  const [stats, setStats] = useState<StatItem[] | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const data = await api.stats.getPublic();
-
-        // Convert average rating to percentage for satisfaction rate
-        // (4.8 out of 5 = 96%)
         const rating = data.averageRating ?? 0;
-        const satisfactionRate = rating > 0 ? Math.round((rating / 5) * 1000) / 10 : 0;
 
-        setStats([
-          {
-            value: data.totalCustomers || 1250,
-            suffix: '+',
-            label: 'Happy Customers'
-          },
-          {
-            value: satisfactionRate || 99.9,
-            suffix: '%',
-            label: 'Satisfaction Rate'
-          },
-          {
-            value: data.yearsInBusiness || 10,
-            suffix: '+',
-            label: 'Years Experience'
-          },
-          {
-            value: data.totalRentals || 50000,
-            suffix: '+',
-            label: 'Completed Rentals'
-          },
-        ]);
-      } catch (error) {
-        // Keep default values on error
-        console.debug('Failed to fetch public stats:', error);
+        // Ordered by how much each one says about the business; the first four
+        // that hold real data are the ones we show.
+        const items: StatItem[] = [
+          { value: data.totalCustomers, suffix: '+', label: 'Happy Customers' },
+          { value: rating, suffix: '/5', label: 'Average Rating' },
+          { value: data.yearsInBusiness, suffix: '+', label: 'Years Experience' },
+          { value: data.totalRentals, suffix: '+', label: 'Completed Rentals' },
+          { value: data.vehicleCount, suffix: '', label: 'Vehicles in Fleet' },
+        ];
+
+        // Only show stats we can actually back with data. A metric that is 0 or
+        // not yet recorded is dropped rather than padded out with a made-up number.
+        setStats(items.filter((item) => item.value > 0).slice(0, 4));
+      } catch {
+        // No data, no claims.
+        setStats([]);
       }
     };
 
     fetchStats();
   }, []);
 
+  if (!stats || stats.length === 0) return null;
+
+  const gridColumns =
+    stats.length >= 4
+      ? 'grid-cols-2 lg:grid-cols-4'
+      : stats.length === 3
+        ? 'grid-cols-2 lg:grid-cols-3'
+        : stats.length === 2
+          ? 'grid-cols-2'
+          : 'grid-cols-1';
+
   return (
-    <section className="py-20 lg:py-28 bg-gray-900 relative overflow-hidden">
+    <section className="relative overflow-hidden bg-gray-900 py-20 lg:py-28">
       {/* Background Effects */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/30 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gray-100/10 rounded-full blur-[100px]" />
+        <div className="bg-primary/30 absolute -right-40 -top-40 h-80 w-80 rounded-full blur-[100px]" />
+        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-gray-100/10 blur-[100px]" />
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12 lg:mb-16"
+          className="mb-12 text-center lg:mb-16"
         >
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            Trusted by Thousands
-          </h2>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            Numbers that speak to our commitment to excellence and customer satisfaction.
+          <h2 className="mb-4 text-3xl font-bold text-white lg:text-4xl">By the Numbers</h2>
+          <p className="mx-auto max-w-2xl text-lg text-gray-300">
+            A straight look at where Gem Auto Rentals stands today.
           </p>
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className={`grid gap-8 lg:gap-12 ${gridColumns}`}>
           {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -134,10 +132,10 @@ export default function Statistics() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="text-center"
             >
-              <div className="text-4xl lg:text-5xl font-bold text-white mb-2">
+              <div className="mb-2 text-4xl font-bold text-white lg:text-5xl">
                 <AnimatedCounter value={stat.value} suffix={stat.suffix} />
               </div>
-              <p className="text-gray-400 text-lg">{stat.label}</p>
+              <p className="text-lg text-gray-400">{stat.label}</p>
             </motion.div>
           ))}
         </div>

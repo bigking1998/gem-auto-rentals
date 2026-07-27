@@ -98,19 +98,19 @@ export function CustomerProfileModal({
   onDeleteCustomer,
   isLoading: _isLoading = false,
 }: CustomerProfileModalProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'documents' | 'notes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'documents' | 'notes'>(
+    'overview'
+  );
   const [newNote, setNewNote] = useState('');
 
   if (!isOpen || !customer) return null;
 
-  const averageBookingValue = customer.totalBookings > 0
-    ? customer.totalSpent / customer.totalBookings
-    : 0;
+  const averageBookingValue =
+    customer.totalBookings > 0 ? customer.totalSpent / customer.totalBookings : 0;
 
   const handleAddNote = () => {
     if (newNote.trim()) {
       // In production, this would call an API
-      console.log('Adding note:', newNote);
       setNewNote('');
     }
   };
@@ -118,14 +118,11 @@ export function CustomerProfileModal({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 transition-opacity"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className="relative flex min-h-screen items-center justify-center p-4">
+        <div className="relative max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-xl">
           {/* Header */}
           <div className="relative">
             {/* Background gradient */}
@@ -134,50 +131,55 @@ export function CustomerProfileModal({
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+              className="absolute right-4 top-4 rounded-lg bg-white/20 p-2 transition-colors hover:bg-white/30"
             >
-              <X className="w-5 h-5 text-white" />
+              <X className="h-5 w-5 text-white" />
             </button>
 
             {/* Customer info overlay */}
             <div className="absolute -bottom-12 left-6 flex items-end gap-4">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
-                {customer.name.split(' ').map(n => n[0]).join('')}
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-orange-400 to-orange-600 text-2xl font-bold text-white shadow-lg">
+                {customer.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')}
               </div>
               <div className="mb-2">
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-gray-900">{customer.name}</h2>
                   {customer.verified ? (
-                    <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                      <CheckCircle2 className="w-3 h-3" />
+                    <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <CheckCircle2 className="h-3 w-3" />
                       Verified
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">
-                      <Clock className="w-3 h-3" />
+                    <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                      <Clock className="h-3 w-3" />
                       Pending Verification
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500">Customer since {formatDate(customer.createdAt)}</p>
+                <p className="text-sm text-gray-500">
+                  Customer since {formatDate(customer.createdAt)}
+                </p>
               </div>
             </div>
 
             {/* Action buttons */}
             <div className="absolute -bottom-6 right-6 flex items-center gap-2">
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">
-                <Edit className="w-4 h-4" />
+              <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+                <Edit className="h-4 w-4" />
                 Edit
               </button>
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">
-                <Mail className="w-4 h-4" />
+              <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+                <Mail className="h-4 w-4" />
                 Email
               </button>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-gray-100 mt-16 px-6">
+          <div className="mt-16 flex border-b border-gray-100 px-6">
             {(['overview', 'bookings', 'documents', 'notes'] as const).map((tab) => (
               <button
                 key={tab}
@@ -185,7 +187,7 @@ export function CustomerProfileModal({
                 className={cn(
                   'px-4 py-3 text-sm font-medium transition-colors',
                   activeTab === tab
-                    ? 'text-primary border-b-2 border-primary'
+                    ? 'text-primary border-primary border-b-2'
                     : 'text-gray-500 hover:text-gray-700'
                 )}
               >
@@ -201,32 +203,36 @@ export function CustomerProfileModal({
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto max-h-[calc(90vh-250px)] p-6">
+          <div className="max-h-[calc(90vh-250px)] overflow-y-auto p-6">
             {activeTab === 'overview' && (
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className="grid gap-6 lg:grid-cols-2">
                 {/* Left Column */}
                 <div className="space-y-6">
                   {/* Contact Information */}
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Contact Information</h3>
+                  <div className="rounded-xl bg-gray-50 p-4">
+                    <h3 className="mb-3 text-sm font-semibold text-gray-900">
+                      Contact Information
+                    </h3>
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <Mail className="w-4 h-4 text-gray-400" />
+                        <Mail className="h-4 w-4 text-gray-400" />
                         <span className="text-sm text-gray-700">{customer.email}</span>
                       </div>
                       {customer.phone && (
                         <div className="flex items-center gap-3">
-                          <Phone className="w-4 h-4 text-gray-400" />
+                          <Phone className="h-4 w-4 text-gray-400" />
                           <span className="text-sm text-gray-700">{customer.phone}</span>
                         </div>
                       )}
                       {customer.address && (
                         <div className="flex items-start gap-3">
-                          <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                          <MapPin className="mt-0.5 h-4 w-4 text-gray-400" />
                           <div className="text-sm text-gray-700">
                             <p>{customer.address}</p>
                             {customer.city && customer.state && (
-                              <p>{customer.city}, {customer.state} {customer.zipCode}</p>
+                              <p>
+                                {customer.city}, {customer.state} {customer.zipCode}
+                              </p>
                             )}
                           </div>
                         </div>
@@ -235,8 +241,10 @@ export function CustomerProfileModal({
                   </div>
 
                   {/* Personal Information */}
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Personal Information</h3>
+                  <div className="rounded-xl bg-gray-50 p-4">
+                    <h3 className="mb-3 text-sm font-semibold text-gray-900">
+                      Personal Information
+                    </h3>
                     <div className="space-y-3">
                       {customer.dateOfBirth && (
                         <div className="flex justify-between text-sm">
@@ -247,16 +255,18 @@ export function CustomerProfileModal({
                       {customer.licenseNumber && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-500">License Number</span>
-                          <span className="text-gray-900 font-mono">{customer.licenseNumber}</span>
+                          <span className="font-mono text-gray-900">{customer.licenseNumber}</span>
                         </div>
                       )}
                       {customer.licenseExpiry && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-500">License Expiry</span>
-                          <span className={cn(
-                            'text-gray-900',
-                            new Date(customer.licenseExpiry) < new Date() && 'text-red-600'
-                          )}>
+                          <span
+                            className={cn(
+                              'text-gray-900',
+                              new Date(customer.licenseExpiry) < new Date() && 'text-red-600'
+                            )}
+                          >
                             {formatDate(customer.licenseExpiry)}
                           </span>
                         </div>
@@ -269,45 +279,55 @@ export function CustomerProfileModal({
                 <div className="space-y-6">
                   {/* Statistics */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-orange-50 rounded-xl p-4 text-center">
-                      <Car className="w-8 h-8 text-primary mx-auto mb-2" />
+                    <div className="rounded-xl bg-orange-50 p-4 text-center">
+                      <Car className="text-primary mx-auto mb-2 h-8 w-8" />
                       <p className="text-2xl font-bold text-gray-900">{customer.totalBookings}</p>
                       <p className="text-sm text-gray-500">Total Bookings</p>
                     </div>
-                    <div className="bg-green-50 rounded-xl p-4 text-center">
-                      <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(customer.totalSpent)}</p>
+                    <div className="rounded-xl bg-green-50 p-4 text-center">
+                      <DollarSign className="mx-auto mb-2 h-8 w-8 text-green-600" />
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(customer.totalSpent)}
+                      </p>
                       <p className="text-sm text-gray-500">Total Spent</p>
                     </div>
-                    <div className="bg-amber-50 rounded-xl p-4 text-center">
-                      <Star className="w-8 h-8 text-amber-600 mx-auto mb-2" />
-                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(averageBookingValue)}</p>
+                    <div className="rounded-xl bg-amber-50 p-4 text-center">
+                      <Star className="mx-auto mb-2 h-8 w-8 text-amber-600" />
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(averageBookingValue)}
+                      </p>
                       <p className="text-sm text-gray-500">Avg. Booking</p>
                     </div>
-                    <div className="bg-orange-50 rounded-xl p-4 text-center">
-                      <Calendar className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                    <div className="rounded-xl bg-orange-50 p-4 text-center">
+                      <Calendar className="mx-auto mb-2 h-8 w-8 text-orange-600" />
                       <p className="text-2xl font-bold text-gray-900">
-                        {Math.floor((Date.now() - customer.createdAt.getTime()) / (1000 * 60 * 60 * 24))}
+                        {Math.floor(
+                          (Date.now() - customer.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+                        )}
                       </p>
                       <p className="text-sm text-gray-500">Days as Customer</p>
                     </div>
                   </div>
 
                   {/* Recent Activity */}
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Recent Activity</h3>
+                  <div className="rounded-xl bg-gray-50 p-4">
+                    <h3 className="mb-3 text-sm font-semibold text-gray-900">Recent Activity</h3>
                     {customer.bookings && customer.bookings.length > 0 ? (
                       <div className="space-y-3">
                         {customer.bookings.slice(0, 3).map((booking) => (
                           <div key={booking.id} className="flex items-center justify-between">
                             <div>
                               <p className="text-sm font-medium text-gray-900">{booking.vehicle}</p>
-                              <p className="text-xs text-gray-500">{formatDate(booking.startDate)}</p>
+                              <p className="text-xs text-gray-500">
+                                {formatDate(booking.startDate)}
+                              </p>
                             </div>
-                            <span className={cn(
-                              'px-2 py-0.5 rounded-full text-xs font-medium',
-                              statusColors[booking.status]
-                            )}>
+                            <span
+                              className={cn(
+                                'rounded-full px-2 py-0.5 text-xs font-medium',
+                                statusColors[booking.status]
+                              )}
+                            >
                               {booking.status}
                             </span>
                           </div>
@@ -327,11 +347,11 @@ export function CustomerProfileModal({
                   customer.bookings.map((booking) => (
                     <div
                       key={booking.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between rounded-xl bg-gray-50 p-4 transition-colors hover:bg-gray-100"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                          <Car className="w-5 h-5 text-primary" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+                          <Car className="text-primary h-5 w-5" />
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">{booking.vehicle}</p>
@@ -341,21 +361,25 @@ export function CustomerProfileModal({
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className={cn(
-                          'px-2.5 py-0.5 rounded-full text-xs font-medium',
-                          statusColors[booking.status]
-                        )}>
+                        <span
+                          className={cn(
+                            'rounded-full px-2.5 py-0.5 text-xs font-medium',
+                            statusColors[booking.status]
+                          )}
+                        >
                           {booking.status}
                         </span>
-                        <span className="font-semibold text-gray-900">{formatCurrency(booking.amount)}</span>
+                        <span className="font-semibold text-gray-900">
+                          {formatCurrency(booking.amount)}
+                        </span>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-12">
-                    <Car className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">No bookings yet</h3>
-                    <p className="text-gray-500">This customer hasn't made any bookings.</p>
+                  <div className="py-12 text-center">
+                    <Car className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+                    <h3 className="mb-1 text-lg font-medium text-gray-900">No bookings yet</h3>
+                    <p className="text-gray-500">This customer hasn&apos;t made any bookings.</p>
                   </div>
                 )}
               </div>
@@ -367,14 +391,16 @@ export function CustomerProfileModal({
                   customer.documents.map((doc) => (
                     <div
                       key={doc.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+                      className="flex items-center justify-between rounded-xl bg-gray-50 p-4"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-blue-600" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                          <FileText className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{documentTypeLabels[doc.type]}</p>
+                          <p className="font-medium text-gray-900">
+                            {documentTypeLabels[doc.type]}
+                          </p>
                           <p className="text-sm text-gray-500">
                             Uploaded {formatDate(doc.uploadedAt)}
                           </p>
@@ -382,33 +408,37 @@ export function CustomerProfileModal({
                       </div>
                       <div className="flex items-center gap-3">
                         {doc.verified ? (
-                          <span className="flex items-center gap-1 px-2.5 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                            <CheckCircle2 className="w-3 h-3" />
+                          <span className="flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                            <CheckCircle2 className="h-3 w-3" />
                             Verified
                           </span>
                         ) : (
                           <button
                             onClick={() => onVerifyDocument?.(customer.id, doc.id)}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-orange-600 transition-colors"
+                            className="bg-primary flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-orange-600"
                           >
-                            <Shield className="w-3 h-3" />
+                            <Shield className="h-3 w-3" />
                             Verify
                           </button>
                         )}
-                        <button className="p-2 rounded-lg hover:bg-gray-200 transition-colors">
-                          <Eye className="w-4 h-4 text-gray-500" />
+                        <button className="rounded-lg p-2 transition-colors hover:bg-gray-200">
+                          <Eye className="h-4 w-4 text-gray-500" />
                         </button>
-                        <button className="p-2 rounded-lg hover:bg-gray-200 transition-colors">
-                          <Download className="w-4 h-4 text-gray-500" />
+                        <button className="rounded-lg p-2 transition-colors hover:bg-gray-200">
+                          <Download className="h-4 w-4 text-gray-500" />
                         </button>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-12">
-                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">No documents uploaded</h3>
-                    <p className="text-gray-500">This customer hasn't uploaded any documents yet.</p>
+                  <div className="py-12 text-center">
+                    <FileText className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+                    <h3 className="mb-1 text-lg font-medium text-gray-900">
+                      No documents uploaded
+                    </h3>
+                    <p className="text-gray-500">
+                      This customer hasn&apos;t uploaded any documents yet.
+                    </p>
                   </div>
                 )}
               </div>
@@ -417,22 +447,22 @@ export function CustomerProfileModal({
             {activeTab === 'notes' && (
               <div className="space-y-4">
                 {/* Add Note */}
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Add Note</h3>
+                <div className="rounded-xl bg-gray-50 p-4">
+                  <h3 className="mb-3 text-sm font-semibold text-gray-900">Add Note</h3>
                   <div className="flex gap-3">
                     <textarea
                       value={newNote}
                       onChange={(e) => setNewNote(e.target.value)}
                       placeholder="Write a note about this customer..."
                       rows={3}
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                      className="focus:ring-primary flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2"
                     />
                   </div>
-                  <div className="flex justify-end mt-3">
+                  <div className="mt-3 flex justify-end">
                     <button
                       onClick={handleAddNote}
                       disabled={!newNote.trim()}
-                      className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-primary rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Add Note
                     </button>
@@ -442,29 +472,34 @@ export function CustomerProfileModal({
                 {/* Notes List */}
                 {customer.notes && customer.notes.length > 0 ? (
                   customer.notes.map((note) => (
-                    <div key={note.id} className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex items-start justify-between mb-2">
+                    <div key={note.id} className="rounded-xl bg-gray-50 p-4">
+                      <div className="mb-2 flex items-start justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-primary text-sm font-medium">
-                            {note.author.split(' ').map(n => n[0]).join('')}
+                          <div className="text-primary flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-sm font-medium">
+                            {note.author
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900">{note.author}</p>
                             <p className="text-xs text-gray-500">{formatDate(note.createdAt)}</p>
                           </div>
                         </div>
-                        <button className="p-1 rounded hover:bg-gray-200 transition-colors">
-                          <Trash2 className="w-4 h-4 text-gray-400" />
+                        <button className="rounded p-1 transition-colors hover:bg-gray-200">
+                          <Trash2 className="h-4 w-4 text-gray-400" />
                         </button>
                       </div>
-                      <p className="text-sm text-gray-700 pl-10">{note.content}</p>
+                      <p className="pl-10 text-sm text-gray-700">{note.content}</p>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8">
-                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">No notes yet</h3>
-                    <p className="text-gray-500">Add notes to keep track of important information.</p>
+                  <div className="py-8 text-center">
+                    <MessageSquare className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+                    <h3 className="mb-1 text-lg font-medium text-gray-900">No notes yet</h3>
+                    <p className="text-gray-500">
+                      Add notes to keep track of important information.
+                    </p>
                   </div>
                 )}
               </div>
@@ -472,17 +507,17 @@ export function CustomerProfileModal({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-6 py-4">
             <button
               onClick={() => onDeleteCustomer?.(customer.id)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
               Delete Customer
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors"
+              className="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-300"
             >
               Close
             </button>

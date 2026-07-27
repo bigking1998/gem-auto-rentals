@@ -1,0 +1,65 @@
+name: Deploy to DigitalOcean
+
+# Runs on every push to master, plus a manual "Run workflow" button in the
+# Actions tab if you ever want to redeploy without pushing code.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# If you push twice quickly, cancel the older run so deploys never overlap.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Load SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # The droplet pulls the code itself and rebuilds. Keeps this workflow
+      # simple and means the server is always the single source of truth for
+      # what is actually running.
+      #
+      # SECURITY: DEPLOY_SSH_KEY is a restricted, deploy-only key. On the
+      # server it is registered with a forced command, so it can ONLY run
+      # gem-deploy — no shell, no port forwarding, no file access. Whatever
+      # command is sent below is ignored in favour of that forced command.
+      # If this secret ever leaked, the worst an attacker could do is
+      # redeploy your own code.
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+              -o ConnectTimeout=30 \
+              -o ServerAliveInterval=20 \
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+              'gem-deploy master'
+
+      - name: Verify the site is healthy
+        run: |
+          echo "Waiting for API to settle..."
+          sleep 5
+          for i in 1 2 3 4 5; do
+            if curl -fsS --max-time 15 https://api.gemrentalcars.com/health; then
+              echo ""
+              echo "API is healthy."
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 6
+          done
+          echo "API did not come back healthy after deploy."
+          exit 1
+
+      - name: Clean up
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

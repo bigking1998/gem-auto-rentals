@@ -21,7 +21,7 @@ const aspectRatioClasses = {
 export default function LazyImage({
   src,
   alt,
-  fallback = '/placeholder-car.jpg',
+  fallback = '/placeholder-car.svg',
   aspectRatio = 'auto',
   objectFit = 'cover',
   className,
@@ -86,7 +86,7 @@ export default function LazyImage({
         onLoad={handleLoad}
         onError={handleError}
         className={cn(
-          'w-full h-full transition-opacity duration-300',
+          'h-full w-full transition-opacity duration-300',
           objectFit === 'cover' && 'object-cover',
           objectFit === 'contain' && 'object-contain',
           objectFit === 'fill' && 'object-fill',
@@ -103,7 +103,7 @@ export default function LazyImage({
 export function EagerImage({
   src,
   alt,
-  fallback = '/placeholder-car.jpg',
+  fallback = '/placeholder-car.svg',
   aspectRatio = 'auto',
   objectFit = 'cover',
   className,
@@ -135,7 +135,7 @@ export function EagerImage({
           setIsLoaded(true);
         }}
         className={cn(
-          'w-full h-full transition-opacity duration-300',
+          'h-full w-full transition-opacity duration-300',
           objectFit === 'cover' && 'object-cover',
           objectFit === 'contain' && 'object-contain',
           objectFit === 'fill' && 'object-fill',

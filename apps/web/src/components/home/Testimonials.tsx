@@ -9,7 +9,8 @@ const testimonials = [
     role: 'Business Traveler',
     image: null,
     rating: 5,
-    quote: 'Exceptional service from start to finish! The car was spotless and the pickup process was incredibly smooth. Will definitely use Gem Auto Rentals again.',
+    quote:
+      'Exceptional service from start to finish! The car was spotless and the pickup process was incredibly smooth. Will definitely use Gem Auto Rentals again.',
   },
   {
     id: 2,
@@ -17,7 +18,8 @@ const testimonials = [
     role: 'Family Vacation',
     image: null,
     rating: 5,
-    quote: 'We rented an SUV for our family road trip and it was perfect. Great price, excellent condition, and the staff was super helpful with car seat installation.',
+    quote:
+      'We rented an SUV for our family road trip and it was perfect. Great price, excellent condition, and the staff was super helpful with car seat installation.',
   },
   {
     id: 3,
@@ -25,7 +27,8 @@ const testimonials = [
     role: 'Weekend Getaway',
     image: null,
     rating: 5,
-    quote: 'Booked a convertible for a weekend trip to the coast. The online booking was easy and the car exceeded my expectations. Highly recommend!',
+    quote:
+      'Booked a convertible for a weekend trip to the coast. The online booking was easy and the car exceeded my expectations. Highly recommend!',
   },
   {
     id: 4,
@@ -33,7 +36,8 @@ const testimonials = [
     role: 'Corporate Client',
     image: null,
     rating: 5,
-    quote: 'Our company has been using Gem Auto Rentals for all our employee travel needs. Consistent quality, competitive rates, and reliable service.',
+    quote:
+      'Our company has been using Gem Auto Rentals for all our employee travel needs. Consistent quality, competitive rates, and reliable service.',
   },
 ];
 
@@ -49,7 +53,7 @@ export default function Testimonials() {
   };
 
   return (
-    <section className="py-20 lg:py-28 bg-gray-50">
+    <section className="bg-gray-50 py-20 lg:py-28">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -57,21 +61,22 @@ export default function Testimonials() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12 lg:mb-16"
+          className="mb-12 text-center lg:mb-16"
         >
-          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
+          <span className="bg-primary/10 text-primary mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
             Testimonials
           </span>
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">
             What Our Customers Say
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Don't just take our word for it. Here's what our valued customers have to say about their experience.
+          <p className="mx-auto max-w-2xl text-lg text-gray-600">
+            Don&apos;t just take our word for it. Here&apos;s what our valued customers have to say
+            about their experience.
           </p>
         </motion.div>
 
         {/* Testimonial Carousel */}
-        <div className="max-w-4xl mx-auto">
+        <div className="mx-auto max-w-4xl">
           <div className="relative">
             <AnimatePresence mode="wait">
               <motion.div
@@ -80,50 +85,46 @@ export default function Testimonials() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white rounded-2xl p-8 lg:p-12 shadow-lg border border-gray-100"
+                className="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg lg:p-12"
               >
                 {/* Quote Icon */}
-                <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-6">
-                  <Quote className="w-6 h-6 text-primary" />
+                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-orange-50">
+                  <Quote className="text-primary h-6 w-6" />
                 </div>
 
                 {/* Stars */}
-                <div className="flex items-center gap-1 mb-6">
+                <div className="mb-6 flex items-center gap-1">
                   {[...Array(testimonials[currentIndex].rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-primary fill-current" />
+                    <Star key={i} className="text-primary h-5 w-5 fill-current" />
                   ))}
                 </div>
 
                 {/* Quote */}
-                <blockquote className="text-xl lg:text-2xl text-gray-700 leading-relaxed mb-8">
-                  "{testimonials[currentIndex].quote}"
+                <blockquote className="mb-8 text-xl leading-relaxed text-gray-700 lg:text-2xl">
+                  &ldquo;{testimonials[currentIndex].quote}&rdquo;
                 </blockquote>
 
                 {/* Author */}
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center text-white font-bold text-lg">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-lg font-bold text-white">
                     {testimonials[currentIndex].name.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900">
-                      {testimonials[currentIndex].name}
-                    </p>
-                    <p className="text-gray-500">
-                      {testimonials[currentIndex].role}
-                    </p>
+                    <p className="font-bold text-gray-900">{testimonials[currentIndex].name}</p>
+                    <p className="text-gray-500">{testimonials[currentIndex].role}</p>
                   </div>
                 </div>
               </motion.div>
             </AnimatePresence>
 
             {/* Navigation Buttons */}
-            <div className="flex items-center justify-center gap-4 mt-8">
+            <div className="mt-8 flex items-center justify-center gap-4">
               <button
                 onClick={prevTestimonial}
-                className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors border border-gray-100"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-100 bg-white shadow-md transition-colors hover:bg-gray-50"
                 aria-label="Previous testimonial"
               >
-                <ChevronLeft className="w-6 h-6 text-gray-600" />
+                <ChevronLeft className="h-6 w-6 text-gray-600" />
               </button>
 
               {/* Dots */}
@@ -132,10 +133,9 @@ export default function Testimonials() {
                   <button
                     key={index}
                     onClick={() => setCurrentIndex(index)}
-                    className={`w-2.5 h-2.5 rounded-full transition-all ${index === currentIndex
-                        ? 'bg-primary w-8'
-                        : 'bg-gray-300 hover:bg-gray-400'
-                      }`}
+                    className={`h-2.5 w-2.5 rounded-full transition-all ${
+                      index === currentIndex ? 'bg-primary w-8' : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
                     aria-label={`Go to testimonial ${index + 1}`}
                   />
                 ))}
@@ -143,10 +143,10 @@ export default function Testimonials() {
 
               <button
                 onClick={nextTestimonial}
-                className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors border border-gray-100"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-100 bg-white shadow-md transition-colors hover:bg-gray-50"
                 aria-label="Next testimonial"
               >
-                <ChevronRight className="w-6 h-6 text-gray-600" />
+                <ChevronRight className="h-6 w-6 text-gray-600" />
               </button>
             </div>
           </div>

@@ -90,13 +90,41 @@ const mockBooking = {
   updatedAt: new Date(),
 };
 
+/**
+ * Install a persistent user lookup for prisma.user.findUnique.
+ *
+ * The login route looks the user up by email, and the auth middleware
+ * re-fetches the user by id on EVERY authenticated request. A one-shot
+ * mockResolvedValueOnce only satisfies the login call, so the middleware's
+ * lookup would resolve undefined and correctly 401. This implementation
+ * answers both lookups for the given user and returns null for anyone else,
+ * so deliberate 401/403 tests still exercise the real middleware logic.
+ * It is reset by vi.resetAllMocks() in beforeEach, keeping each test's
+ * arrangement explicit.
+ */
+function primeUserLookup(user: { id: string; email: string } & Record<string, unknown>): void {
+  vi.mocked(prisma.user.findUnique).mockImplementation((async (args: {
+    where?: { id?: string; email?: string };
+  }) => {
+    const where = args?.where ?? {};
+    if (where.id === user.id || where.email === user.email) {
+      return user;
+    }
+    return null;
+  }) as any);
+}
+
+// createBookingSchema requires vehicleId to be a valid cuid, so request
+// payloads must use cuid-shaped ids (the prisma mocks don't care about the
+// actual value — behavior is driven by what each test mocks findUnique to
+// return).
+const validVehicleCuid = 'clx0vehicle00000000000001';
+const missingVehicleCuid = 'clx0missing00000000000001';
+
 // Helper to get user token
 async function getUserToken(): Promise<string> {
   const hashedPassword = await bcrypt.hash('password123', 12);
-  vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
-    ...mockUser,
-    password: hashedPassword,
-  });
+  primeUserLookup({ ...mockUser, password: hashedPassword });
 
   const response = await request(app)
     .post('/api/auth/login')
@@ -108,10 +136,7 @@ async function getUserToken(): Promise<string> {
 // Helper to get admin token
 async function getAdminToken(): Promise<string> {
   const hashedPassword = await bcrypt.hash('adminpass', 12);
-  vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
-    ...mockAdminUser,
-    password: hashedPassword,
-  });
+  primeUserLookup({ ...mockAdminUser, password: hashedPassword });
 
   const response = await request(app)
     .post('/api/auth/login')
@@ -122,7 +147,10 @@ async function getAdminToken(): Promise<string> {
 
 describe('Bookings API', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    // resetAllMocks (not clearAllMocks) also removes mock implementations,
+    // so the persistent user lookup from primeUserLookup never leaks
+    // between tests.
+    vi.resetAllMocks();
   });
 
   describe('GET /api/bookings', () => {
@@ -229,7 +257,14 @@ describe('Bookings API', () => {
       vi.mocked(prisma.booking.findMany).mockResolvedValue([
         {
           ...mockBooking,
-          vehicle: { id: 'v1', make: 'Toyota', model: 'Camry', year: 2024, images: [], category: 'STANDARD' },
+          vehicle: {
+            id: 'v1',
+            make: 'Toyota',
+            model: 'Camry',
+            year: 2024,
+            images: [],
+            category: 'STANDARD',
+          },
           user: { id: 'u1', firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
           payment: null,
         },
@@ -292,7 +327,13 @@ describe('Bookings API', () => {
         ...mockBooking,
         userId: 'different-user', // Not the logged in user
         vehicle: mockVehicle,
-        user: { id: 'different-user', firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com', phone: null },
+        user: {
+          id: 'different-user',
+          firstName: 'Jane',
+          lastName: 'Smith',
+          email: 'jane@example.com',
+          phone: null,
+        },
         payment: null,
       } as any);
 
@@ -310,7 +351,13 @@ describe('Bookings API', () => {
         ...mockBooking,
         userId: 'other-user',
         vehicle: mockVehicle,
-        user: { id: 'other-user', firstName: 'Other', lastName: 'User', email: 'other@example.com', phone: null },
+        user: {
+          id: 'other-user',
+          firstName: 'Other',
+          lastName: 'User',
+          email: 'other@example.com',
+          phone: null,
+        },
         payment: null,
       } as any);
 
@@ -354,7 +401,7 @@ describe('Bookings API', () => {
         .post('/api/bookings')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          vehicleId: 'vehicle-1',
+          vehicleId: validVehicleCuid,
           startDate: futureDate.toISOString(),
           endDate: endDate.toISOString(),
           pickupLocation: 'Main Office',
@@ -384,7 +431,7 @@ describe('Bookings API', () => {
         .post('/api/bookings')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          vehicleId: 'vehicle-1',
+          vehicleId: validVehicleCuid,
           startDate: futureDate.toISOString(),
           endDate: endDate.toISOString(),
           pickupLocation: 'Main Office',
@@ -410,7 +457,7 @@ describe('Bookings API', () => {
         .post('/api/bookings')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          vehicleId: 'vehicle-1',
+          vehicleId: validVehicleCuid,
           startDate: futureDate.toISOString(),
           endDate: endDate.toISOString(),
           pickupLocation: 'Main Office',
@@ -433,7 +480,7 @@ describe('Bookings API', () => {
         .post('/api/bookings')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          vehicleId: 'vehicle-1',
+          vehicleId: validVehicleCuid,
           startDate: futureDate.toISOString(),
           endDate: endDate.toISOString(),
           pickupLocation: 'Main Office',
@@ -456,7 +503,7 @@ describe('Bookings API', () => {
         .post('/api/bookings')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          vehicleId: 'vehicle-1',
+          vehicleId: validVehicleCuid,
           startDate: pastDate.toISOString(),
           endDate: endDate.toISOString(),
           pickupLocation: 'Main Office',
@@ -481,7 +528,7 @@ describe('Bookings API', () => {
         .post('/api/bookings')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          vehicleId: 'non-existent',
+          vehicleId: missingVehicleCuid,
           startDate: futureDate.toISOString(),
           endDate: endDate.toISOString(),
           pickupLocation: 'Main Office',

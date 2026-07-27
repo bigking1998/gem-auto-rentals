@@ -161,6 +161,9 @@ export default function SettingsPage() {
     if (tabFromUrl && validTabs.includes(tabFromUrl) && tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
     }
+    // One-way URL -> state sync: only re-run when the URL tab param changes.
+    // validTabs is a render-scoped constant and activeTab is only read as a guard.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabFromUrl]);
 
   const handleTabChange = (tabId: string) => {
@@ -184,11 +187,11 @@ export default function SettingsPage() {
       useAuthStore.setState({
         user: {
           ...user,
-          ...profileForm
-        }
+          ...profileForm,
+        },
       });
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
     } finally {
       setIsProfileSaving(false);
     }
@@ -206,8 +209,8 @@ export default function SettingsPage() {
         zipCode: companyForm.zipCode,
       });
       toast.success('Company settings updated successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update company settings');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update company settings');
     } finally {
       setIsCompanySaving(false);
     }
@@ -218,7 +221,11 @@ export default function SettingsPage() {
     setPasswordSuccess(false);
 
     // Validation
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+    if (
+      !passwordForm.currentPassword ||
+      !passwordForm.newPassword ||
+      !passwordForm.confirmPassword
+    ) {
       setPasswordError('Please fill in all fields');
       return;
     }
@@ -239,8 +246,8 @@ export default function SettingsPage() {
       setPasswordSuccess(true);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       toast.success('Password changed successfully');
-    } catch (err: any) {
-      setPasswordError(err.message || 'Failed to change password');
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Failed to change password');
     } finally {
       setPasswordLoading(false);
     }
@@ -267,8 +274,8 @@ export default function SettingsPage() {
       const result = await api.customers.uploadAvatar(user.id, file);
       updateAvatar(result.avatarUrl);
       toast.success('Avatar updated successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to upload avatar');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to upload avatar');
     } finally {
       setIsUploadingAvatar(false);
       // Reset the input so the same file can be selected again
@@ -289,9 +296,9 @@ export default function SettingsPage() {
     try {
       const items = await api.integrations.list();
       setIntegrations(items);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to fetch integrations:', error);
-      toast.error(error.message || 'Failed to load integrations');
+      toast.error(error instanceof Error ? error.message : 'Failed to load integrations');
     } finally {
       setIsLoadingIntegrations(false);
     }
@@ -325,8 +332,8 @@ export default function SettingsPage() {
       const result = await api.company.uploadLogo(file);
       setCompanyLogo(result.logoUrl);
       toast.success('Logo updated successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to upload logo');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to upload logo');
     } finally {
       setIsUploadingLogo(false);
       // Reset the input so the same file can be selected again
@@ -339,23 +346,20 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
         <p className="text-gray-500">Manage your account and preferences</p>
       </motion.div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col gap-6 lg:flex-row">
         {/* Tabs */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="lg:w-56 flex-shrink-0"
+          className="flex-shrink-0 lg:w-56"
         >
-          <nav className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible">
+          <nav className="flex gap-1 overflow-x-auto rounded-2xl border border-gray-100 bg-white p-3 shadow-sm lg:flex-col lg:overflow-visible">
             {tabs.map((tab, index) => (
               <motion.button
                 key={tab.id}
@@ -364,13 +368,13 @@ export default function SettingsPage() {
                 transition={{ delay: 0.15 + index * 0.05 }}
                 onClick={() => handleTabChange(tab.id)}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap',
+                  'flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-orange-50 to-orange-100 text-primary shadow-sm'
+                    ? 'text-primary bg-gradient-to-r from-orange-50 to-orange-100 shadow-sm'
                     : 'text-gray-600 hover:bg-gray-50'
                 )}
               >
-                <tab.icon className="w-5 h-5" />
+                <tab.icon className="h-5 w-5" />
                 {tab.label}
               </motion.button>
             ))}
@@ -385,18 +389,18 @@ export default function SettingsPage() {
           className="flex-1"
         >
           {activeTab === 'profile' && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Profile Settings</h2>
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
+              <h2 className="mb-6 text-lg font-semibold text-gray-900">Profile Settings</h2>
 
-              <div className="flex items-center gap-6 mb-8">
+              <div className="mb-8 flex items-center gap-6">
                 {user?.avatarUrl ? (
                   <img
                     src={user.avatarUrl}
                     alt="Avatar"
-                    className="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-orange-200"
+                    className="h-20 w-20 rounded-2xl object-cover shadow-lg shadow-orange-200"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-2xl font-semibold shadow-lg shadow-orange-200">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 text-2xl font-semibold text-white shadow-lg shadow-orange-200">
                     {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '??'}
                   </div>
                 )}
@@ -411,69 +415,61 @@ export default function SettingsPage() {
                   <button
                     onClick={() => avatarInputRef.current?.click()}
                     disabled={isUploadingAvatar}
-                    className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isUploadingAvatar ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Uploading...
                       </>
                     ) : (
                       'Change Avatar'
                     )}
                   </button>
-                  <p className="text-sm text-gray-500 mt-2">JPG, GIF or PNG. Max size 2MB.</p>
+                  <p className="mt-2 text-sm text-gray-500">JPG, GIF or PNG. Max size 2MB.</p>
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid gap-6 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">First Name</label>
                   <input
                     type="text"
                     value={profileForm.firstName}
                     onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Last Name</label>
                   <input
                     type="text"
                     value={profileForm.lastName}
                     onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Email</label>
                   <input
                     type="email"
                     value={profileForm.email}
                     onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Phone</label>
                   <input
                     type="tel"
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+              <div className="mt-8 flex justify-end gap-3 border-t border-gray-100 pt-6">
                 <button
                   onClick={() => {
                     if (user) {
@@ -485,18 +481,18 @@ export default function SettingsPage() {
                       });
                     }
                   }}
-                  className="px-5 py-2.5 text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-gray-700 transition-all hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleProfileSave}
                   disabled={isProfileSaving}
-                  className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isProfileSaving ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       Saving...
                     </>
                   ) : (
@@ -508,25 +504,40 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'notifications' && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Notification Preferences</h2>
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
+              <h2 className="mb-6 text-lg font-semibold text-gray-900">Notification Preferences</h2>
 
               <div className="space-y-4">
                 {[
-                  { label: 'New booking notifications', description: 'Receive alerts when a new booking is made' },
-                  { label: 'Booking updates', description: 'Get notified about booking status changes' },
-                  { label: 'Payment confirmations', description: 'Receive payment receipts and confirmations' },
-                  { label: 'Vehicle maintenance alerts', description: 'Get reminders for scheduled maintenance' },
+                  {
+                    label: 'New booking notifications',
+                    description: 'Receive alerts when a new booking is made',
+                  },
+                  {
+                    label: 'Booking updates',
+                    description: 'Get notified about booking status changes',
+                  },
+                  {
+                    label: 'Payment confirmations',
+                    description: 'Receive payment receipts and confirmations',
+                  },
+                  {
+                    label: 'Vehicle maintenance alerts',
+                    description: 'Get reminders for scheduled maintenance',
+                  },
                   { label: 'Weekly reports', description: 'Receive weekly performance summary' },
                 ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 rounded-xl bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between rounded-xl bg-gray-50/50 p-4 transition-colors hover:bg-gray-50"
+                  >
                     <div>
                       <p className="font-medium text-gray-900">{item.label}</p>
                       <p className="text-sm text-gray-500">{item.description}</p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input type="checkbox" defaultChecked className="peer sr-only" />
+                      <div className="peer-checked:bg-primary peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300"></div>
                     </label>
                   </div>
                 ))}
@@ -535,69 +546,75 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'security' && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Security Settings</h2>
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
+              <h2 className="mb-6 text-lg font-semibold text-gray-900">Security Settings</h2>
 
               {/* Success Message */}
               {passwordSuccess && (
-                <div className="mb-6 flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700">
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                <div className="mb-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-green-700">
+                  <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
                   <p className="text-sm">Password changed successfully!</p>
                 </div>
               )}
 
               {/* Error Message */}
               {passwordError && (
-                <div className="mb-6 flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+                  <AlertCircle className="h-5 w-5 flex-shrink-0" />
                   <p className="text-sm">{passwordError}</p>
                 </div>
               )}
 
-              <div className="space-y-6 max-w-md">
+              <div className="max-w-md space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Current Password
                   </label>
                   <input
                     type="password"
                     value={passwordForm.currentPassword}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    onChange={(e) =>
+                      setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
+                    }
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     New Password
                   </label>
                   <input
                     type="password"
                     value={passwordForm.newPassword}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    onChange={(e) =>
+                      setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                    }
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
+                  <p className="mt-1 text-xs text-gray-500">Must be at least 8 characters</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Confirm New Password
                   </label>
                   <input
                     type="password"
                     value={passwordForm.confirmPassword}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    onChange={(e) =>
+                      setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
+                    }
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                   />
                 </div>
 
                 <button
                   onClick={handlePasswordChange}
                   disabled={passwordLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {passwordLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       Updating...
                     </>
                   ) : (
@@ -611,33 +628,33 @@ export default function SettingsPage() {
           {activeTab === 'billing' && (
             <div className="space-y-6">
               {/* Current Plan */}
-              <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-6 text-white">
+              <div className="rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 p-6 text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-white/80 text-sm mb-1">Current Plan</p>
+                    <p className="mb-1 text-sm text-white/80">Current Plan</p>
                     <h3 className="text-2xl font-bold">Professional</h3>
-                    <p className="text-white/80 mt-1">$299/month • Billed monthly</p>
+                    <p className="mt-1 text-white/80">$299/month • Billed monthly</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-white/80 text-sm mb-1">Next billing date</p>
+                    <p className="mb-1 text-sm text-white/80">Next billing date</p>
                     <p className="text-lg font-semibold">February 1, 2026</p>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-white/20 flex items-center justify-between">
+                <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-4">
                   <div className="flex items-center gap-4 text-sm">
                     <span className="flex items-center gap-1">
-                      <Check className="w-4 h-4" /> Unlimited vehicles
+                      <Check className="h-4 w-4" /> Unlimited vehicles
                     </span>
                     <span className="flex items-center gap-1">
-                      <Check className="w-4 h-4" /> Priority support
+                      <Check className="h-4 w-4" /> Priority support
                     </span>
                     <span className="flex items-center gap-1">
-                      <Check className="w-4 h-4" /> Advanced analytics
+                      <Check className="h-4 w-4" /> Advanced analytics
                     </span>
                   </div>
                   <button
                     onClick={() => setIsUpgradePlanModalOpen(true)}
-                    className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors"
+                    className="rounded-xl bg-white/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/30"
                   >
                     Upgrade Plan
                   </button>
@@ -645,14 +662,14 @@ export default function SettingsPage() {
               </div>
 
               {/* Payment Methods */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between mb-6">
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
                   <button
                     onClick={() => setIsAddPaymentModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-primary border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors"
+                    className="text-primary flex items-center gap-2 rounded-xl border border-orange-200 px-4 py-2 text-sm transition-colors hover:bg-orange-50"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="h-4 w-4" />
                     Add Method
                   </button>
                 </div>
@@ -660,15 +677,15 @@ export default function SettingsPage() {
                 <div className="space-y-3">
                   {isLoadingPaymentMethods ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                     </div>
                   ) : paymentMethods.length === 0 ? (
-                    <div className="text-center py-8">
-                      <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <div className="py-8 text-center">
+                      <CreditCard className="mx-auto mb-3 h-12 w-12 text-gray-300" />
                       <p className="text-gray-500">No payment methods added yet</p>
                       <button
                         onClick={() => setIsAddPaymentModalOpen(true)}
-                        className="mt-3 text-sm text-primary hover:text-orange-600"
+                        className="text-primary mt-3 text-sm hover:text-orange-600"
                       >
                         Add your first payment method
                       </button>
@@ -678,41 +695,43 @@ export default function SettingsPage() {
                       <div
                         key={method.id}
                         className={cn(
-                          'flex items-center justify-between p-4 rounded-xl border transition-colors',
+                          'flex items-center justify-between rounded-xl border p-4 transition-colors',
                           method.isDefault
-                            ? 'bg-orange-50 border-orange-200'
-                            : 'bg-gray-50 border-gray-200'
+                            ? 'border-orange-200 bg-orange-50'
+                            : 'border-gray-200 bg-gray-50'
                         )}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-8 bg-white rounded-lg border border-gray-200 flex items-center justify-center">
+                          <div className="flex h-8 w-12 items-center justify-center rounded-lg border border-gray-200 bg-white">
                             {method.brand.toLowerCase() === 'visa' ? (
-                              <span className="text-blue-600 font-bold text-sm">VISA</span>
+                              <span className="text-sm font-bold text-blue-600">VISA</span>
                             ) : method.brand.toLowerCase() === 'mastercard' ? (
-                              <span className="text-red-500 font-bold text-xs">MC</span>
+                              <span className="text-xs font-bold text-red-500">MC</span>
                             ) : method.brand.toLowerCase() === 'amex' ? (
-                              <span className="text-blue-500 font-bold text-xs">AMEX</span>
+                              <span className="text-xs font-bold text-blue-500">AMEX</span>
                             ) : (
-                              <CreditCard className="w-5 h-5 text-gray-400" />
+                              <CreditCard className="h-5 w-5 text-gray-400" />
                             )}
                           </div>
                           <div>
                             <p className="font-medium text-gray-900">
                               •••• •••• •••• {method.last4}
                             </p>
-                            <p className="text-sm text-gray-500">Expires {method.expMonth}/{method.expYear}</p>
+                            <p className="text-sm text-gray-500">
+                              Expires {method.expMonth}/{method.expYear}
+                            </p>
                           </div>
                           {method.isDefault && (
-                            <span className="px-2 py-0.5 bg-orange-100 text-primary text-xs font-medium rounded-full">
+                            <span className="text-primary rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium">
                               Default
                             </span>
                           )}
                         </div>
                         <button
                           onClick={() => handleDeletePaymentMethod(method)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     ))
@@ -721,18 +740,18 @@ export default function SettingsPage() {
               </div>
 
               {/* Billing History */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Billing History</h2>
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <h2 className="mb-6 text-lg font-semibold text-gray-900">Billing History</h2>
 
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
+                      <tr className="border-b border-gray-100 text-left text-sm text-gray-500">
                         <th className="pb-3 font-medium">Invoice</th>
                         <th className="pb-3 font-medium">Date</th>
                         <th className="pb-3 font-medium">Amount</th>
                         <th className="pb-3 font-medium">Status</th>
-                        <th className="pb-3 font-medium text-right">Actions</th>
+                        <th className="pb-3 text-right font-medium">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -742,13 +761,13 @@ export default function SettingsPage() {
                           <td className="py-4 text-gray-600">{formatDate(invoice.date)}</td>
                           <td className="py-4 text-gray-900">{formatCurrency(invoice.amount)}</td>
                           <td className="py-4">
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full capitalize">
+                            <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium capitalize text-green-700">
                               {invoice.status}
                             </span>
                           </td>
                           <td className="py-4 text-right">
-                            <button className="flex items-center gap-1 text-primary hover:text-orange-600 ml-auto">
-                              <Download className="w-4 h-4" />
+                            <button className="text-primary ml-auto flex items-center gap-1 hover:text-orange-600">
+                              <Download className="h-4 w-4" />
                               Download
                             </button>
                           </td>
@@ -764,18 +783,18 @@ export default function SettingsPage() {
           {activeTab === 'company' && (
             <div className="space-y-6">
               {/* Company Logo & Name */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Company Profile</h2>
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <h2 className="mb-6 text-lg font-semibold text-gray-900">Company Profile</h2>
 
-                <div className="flex items-start gap-6 mb-8">
+                <div className="mb-8 flex items-start gap-6">
                   {companyLogo ? (
                     <img
                       src={companyLogo}
                       alt="Company Logo"
-                      className="w-24 h-24 rounded-2xl object-contain bg-white border border-gray-200 shadow-lg shadow-orange-200"
+                      className="h-24 w-24 rounded-2xl border border-gray-200 bg-white object-contain shadow-lg shadow-orange-200"
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-orange-200">
+                    <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 text-3xl font-bold text-white shadow-lg shadow-orange-200">
                       GA
                     </div>
                   )}
@@ -790,104 +809,102 @@ export default function SettingsPage() {
                     <button
                       onClick={() => logoInputRef.current?.click()}
                       disabled={isUploadingLogo}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isUploadingLogo ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin" />
                           Uploading...
                         </>
                       ) : (
                         <>
-                          <Upload className="w-4 h-4" />
+                          <Upload className="h-4 w-4" />
                           Upload Logo
                         </>
                       )}
                     </button>
-                    <p className="text-sm text-gray-500 mt-2">PNG, JPG or SVG. Max size 2MB.</p>
+                    <p className="mt-2 text-sm text-gray-500">PNG, JPG or SVG. Max size 2MB.</p>
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Company Name
                     </label>
                     <input
                       type="text"
                       defaultValue="Gem Auto Rentals"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Business Type
                     </label>
-                    <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all">
+                    <select className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2">
                       <option>Car Rental Company</option>
                       <option>Fleet Management</option>
                       <option>Transportation Service</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Tax ID / EIN
                     </label>
                     <input
                       type="text"
                       defaultValue="59-2586252"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Website
-                    </label>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">Website</label>
                     <input
                       type="url"
                       defaultValue="https://gemautosalesinc.com"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Contact Information */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Contact Information</h2>
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <h2 className="mb-6 text-lg font-semibold text-gray-900">Contact Information</h2>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Mail className="w-4 h-4 inline mr-1" /> Email
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      <Mail className="mr-1 inline h-4 w-4" /> Email
                     </label>
                     <input
                       type="email"
                       value={companyForm.email}
                       onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Phone className="w-4 h-4 inline mr-1" /> Phone
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      <Phone className="mr-1 inline h-4 w-4" /> Phone
                     </label>
                     <input
                       type="tel"
                       value={companyForm.phone}
                       onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <MapPin className="w-4 h-4 inline mr-1" /> Address
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      <MapPin className="mr-1 inline h-4 w-4" /> Address
                     </label>
                     <input
                       type="text"
                       value={companyForm.street}
                       onChange={(e) => setCompanyForm({ ...companyForm, street: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all mb-3"
+                      className="focus:ring-primary mb-3 w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                     />
                     <div className="grid grid-cols-3 gap-3">
                       <input
@@ -895,21 +912,23 @@ export default function SettingsPage() {
                         value={companyForm.city}
                         onChange={(e) => setCompanyForm({ ...companyForm, city: e.target.value })}
                         placeholder="City"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                        className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                       />
                       <input
                         type="text"
                         value={companyForm.state}
                         onChange={(e) => setCompanyForm({ ...companyForm, state: e.target.value })}
                         placeholder="State"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                        className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                       />
                       <input
                         type="text"
                         value={companyForm.zipCode}
-                        onChange={(e) => setCompanyForm({ ...companyForm, zipCode: e.target.value })}
+                        onChange={(e) =>
+                          setCompanyForm({ ...companyForm, zipCode: e.target.value })
+                        }
                         placeholder="ZIP"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                        className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
                       />
                     </div>
                   </div>
@@ -917,9 +936,9 @@ export default function SettingsPage() {
               </div>
 
               {/* Operating Hours */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">
-                  <Clock className="w-5 h-5 inline mr-2" />
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <h2 className="mb-6 text-lg font-semibold text-gray-900">
+                  <Clock className="mr-2 inline h-5 w-5" />
                   Operating Hours
                 </h2>
 
@@ -935,42 +954,44 @@ export default function SettingsPage() {
                   ].map((schedule, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+                      className="flex items-center justify-between rounded-xl bg-gray-50 p-4"
                     >
                       <span className="font-medium text-gray-900">{schedule.day}</span>
                       <div className="flex items-center gap-3">
                         <input
                           type="text"
                           defaultValue={schedule.hours}
-                          className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="focus:ring-primary rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2"
                         />
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+                <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-6">
                   <button
-                    onClick={() => setCompanyForm({
-                      email: 'gemautosalesinc@gmail.com',
-                      phone: '863-277-7879',
-                      street: '1311 E CANAL ST',
-                      city: 'Mulberry',
-                      state: 'FL',
-                      zipCode: '33860',
-                    })}
-                    className="px-5 py-2.5 text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+                    onClick={() =>
+                      setCompanyForm({
+                        email: 'gemautosalesinc@gmail.com',
+                        phone: '863-277-7879',
+                        street: '1311 E CANAL ST',
+                        city: 'Mulberry',
+                        state: 'FL',
+                        zipCode: '33860',
+                      })
+                    }
+                    className="rounded-xl border border-gray-200 px-5 py-2.5 text-gray-700 transition-all hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCompanySave}
                     disabled={isCompanySaving}
-                    className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isCompanySaving ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Saving...
                       </>
                     ) : (
@@ -986,10 +1007,10 @@ export default function SettingsPage() {
             <div className="space-y-6">
               {/* Integration Stats */}
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-green-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100">
+                      <Zap className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-gray-900">
@@ -999,10 +1020,10 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                      <Globe className="w-5 h-5 text-gray-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                      <Globe className="h-5 w-5 text-gray-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-gray-900">{integrations.length}</p>
@@ -1010,10 +1031,10 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-                      <RefreshCw className="w-5 h-5 text-orange-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
+                      <RefreshCw className="h-5 w-5 text-orange-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-gray-900">Live</p>
@@ -1024,108 +1045,108 @@ export default function SettingsPage() {
               </div>
 
               {/* Integrations List */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between mb-6">
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-900">Available Integrations</h2>
                   <button
                     onClick={fetchIntegrations}
                     disabled={isLoadingIntegrations}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-primary border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors disabled:opacity-50"
+                    className="text-primary flex items-center gap-2 rounded-xl border border-orange-200 px-4 py-2 text-sm transition-colors hover:bg-orange-50 disabled:opacity-50"
                   >
-                    <RefreshCw className={cn('w-4 h-4', isLoadingIntegrations && 'animate-spin')} />
+                    <RefreshCw className={cn('h-4 w-4', isLoadingIntegrations && 'animate-spin')} />
                     Refresh
                   </button>
                 </div>
 
                 {isLoadingIntegrations ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    <Loader2 className="text-primary h-8 w-8 animate-spin" />
                   </div>
                 ) : integrations.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    No integrations available
-                  </div>
+                  <div className="py-12 text-center text-gray-500">No integrations available</div>
                 ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {integrations.map((integration) => (
-                    <div
-                      key={integration.id}
-                      className={cn(
-                        'flex items-center justify-between p-4 rounded-xl border transition-all',
-                        integration.isConnected
-                          ? 'bg-green-50 border-green-200'
-                          : 'bg-gray-50 border-gray-200 hover:border-orange-200'
-                      )}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 flex items-center justify-center">
-                          <Globe className="w-6 h-6 text-gray-600" />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {integrations.map((integration) => (
+                      <div
+                        key={integration.id}
+                        className={cn(
+                          'flex items-center justify-between rounded-xl border p-4 transition-all',
+                          integration.isConnected
+                            ? 'border-green-200 bg-green-50'
+                            : 'border-gray-200 bg-gray-50 hover:border-orange-200'
+                        )}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gray-200 bg-white">
+                            <Globe className="h-6 w-6 text-gray-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium capitalize text-gray-900">
+                              {integration.provider}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {integration.isConnected && integration.connectedAt
+                                ? `Connected ${formatDate(new Date(integration.connectedAt))}`
+                                : 'Not connected'}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 capitalize">{integration.provider}</p>
-                          <p className="text-sm text-gray-500">
-                            {integration.isConnected && integration.connectedAt
-                              ? `Connected ${formatDate(new Date(integration.connectedAt))}`
-                              : 'Not connected'}
-                          </p>
-                        </div>
-                      </div>
-                      {integration.isConnected ? (
-                        <div className="flex items-center gap-2">
-                          <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Connected
-                          </span>
+                        {integration.isConnected ? (
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Connected
+                            </span>
+                            <button
+                              onClick={() => api.integrations.disconnect(integration.provider)}
+                              className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                              title="Disconnect"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
                           <button
-                            onClick={() => api.integrations.disconnect(integration.provider)}
-                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Disconnect"
+                            onClick={() => api.integrations.connect(integration.provider, {})}
+                            disabled={!integration.isEnabled}
+                            className="bg-primary rounded-xl px-4 py-2 text-sm font-medium text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            <ExternalLink className="w-4 h-4" />
+                            Connect
                           </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => api.integrations.connect(integration.provider, {})}
-                          disabled={!integration.isEnabled}
-                          className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Connect
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 
               {/* API Access */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">API Access</h2>
-                <p className="text-gray-500 text-sm mb-4">
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-lg font-semibold text-gray-900">API Access</h2>
+                <p className="mb-4 text-sm text-gray-500">
                   Use our API to build custom integrations with your existing systems.
                 </p>
 
-                <div className="p-4 bg-gray-900 rounded-xl">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-400 text-sm">API Key</span>
+                <div className="rounded-xl bg-gray-900 p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm text-gray-400">API Key</span>
                     <button className="text-primary text-sm hover:text-orange-600">Copy</button>
                   </div>
-                  <code className="text-green-400 font-mono text-sm">
+                  <code className="font-mono text-sm text-green-400">
                     gem_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
                   </code>
                 </div>
 
-                <div className="flex items-center gap-4 mt-4">
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    <RefreshCw className="w-4 h-4" />
+                <div className="mt-4 flex items-center gap-4">
+                  <button className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50">
+                    <RefreshCw className="h-4 w-4" />
                     Regenerate Key
                   </button>
                   <a
                     href="#"
-                    className="flex items-center gap-2 text-sm text-primary hover:text-orange-600"
+                    className="text-primary flex items-center gap-2 text-sm hover:text-orange-600"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="h-4 w-4" />
                     View API Documentation
                   </a>
                 </div>
