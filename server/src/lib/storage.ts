@@ -1,11 +1,23 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl as getS3SignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Cloudflare R2 configuration
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL; // e.g., https://pub-xxxx.r2.dev
+
+// Per-bucket public URLs (each R2 bucket has its own public URL)
+const BUCKET_PUBLIC_URLS: Record<string, string | undefined> = {
+  'gem-avatars': process.env.R2_AVATARS_PUBLIC_URL,
+  'gem-vehicles': process.env.R2_VEHICLES_PUBLIC_URL,
+  'gem-logos': process.env.R2_LOGOS_PUBLIC_URL,
+  // Note: gem-documents and gem-contracts are PRIVATE - no public URLs
+};
 
 // Check if storage is configured
 const isConfigured = !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY);
@@ -29,14 +41,14 @@ const s3Client = isConfigured
 
 // Storage bucket names (these need to be created in Cloudflare R2 dashboard)
 export const BUCKETS = {
-  DOCUMENTS: 'gem-documents',   // Private - customer verification docs
-  VEHICLES: 'gem-vehicles',     // Public - vehicle images
-  AVATARS: 'gem-avatars',       // Public - user profile pictures
-  CONTRACTS: 'gem-contracts',   // Private - rental agreements
-  LOGOS: 'gem-logos',           // Public - company logos
+  DOCUMENTS: 'gem-documents', // Private - customer verification docs
+  VEHICLES: 'gem-vehicles', // Public - vehicle images
+  AVATARS: 'gem-avatars', // Public - user profile pictures
+  CONTRACTS: 'gem-contracts', // Private - rental agreements
+  LOGOS: 'gem-logos', // Public - company logos
 } as const;
 
-export type BucketName = typeof BUCKETS[keyof typeof BUCKETS];
+export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 // Legacy export for backwards compatibility
 export const DOCUMENTS_BUCKET = BUCKETS.DOCUMENTS;
@@ -46,17 +58,26 @@ export function isStorageConfigured(): boolean {
   return isConfigured && s3Client !== null;
 }
 
+// Public bucket names (only these should have public URLs)
+const PUBLIC_BUCKETS = [BUCKETS.AVATARS, BUCKETS.VEHICLES, BUCKETS.LOGOS] as const;
+
 // Get public URL for a file in a public bucket
 export function getPublicUrl(bucket: BucketName, filePath: string): string | null {
-  if (!R2_PUBLIC_URL) {
-    console.warn('R2_PUBLIC_URL is not set');
+  // Only allow public URLs for designated public buckets
+  if (!PUBLIC_BUCKETS.includes(bucket as (typeof PUBLIC_BUCKETS)[number])) {
+    console.warn(`Bucket ${bucket} is private - use getSignedUrl instead`);
     return null;
   }
 
-  // Public buckets are served via R2's public access URL
-  // Format: https://pub-xxxx.r2.dev/bucket-name/file-path
-  // Or if using custom domain: https://cdn.example.com/bucket-name/file-path
-  return `${R2_PUBLIC_URL}/${bucket}/${filePath}`;
+  const bucketUrl = BUCKET_PUBLIC_URLS[bucket];
+  if (!bucketUrl) {
+    console.warn(`Public URL not configured for bucket: ${bucket}`);
+    return null;
+  }
+
+  // Each R2 bucket has its own public URL
+  // Format: https://pub-xxxx.r2.dev/file-path (no bucket name in path)
+  return `${bucketUrl}/${filePath}`;
 }
 
 // Get signed URL for private files (with expiry)

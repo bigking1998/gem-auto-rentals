@@ -154,6 +154,18 @@ model Booking {
   deletedAt              DateTime?
   deletedBy              String?
 
+  // Wallet Pass tracking (for QR check-in/out)
+  googlePassId           String?   @unique  // Google Wallet pass object ID
+  applePassSerialNumber  String?   @unique  // Apple Wallet pass serial
+  passGeneratedAt        DateTime?
+  passQrCode             String?            // Signed QR code payload
+
+  // Check-in/out tracking
+  checkedInAt            DateTime?
+  checkedInBy            String?            // Staff user ID who did check-in
+  checkedOutAt           DateTime?
+  checkedOutBy           String?            // Staff user ID who did check-out
+
   user            User          @relation(fields: [userId], references: [id])
   vehicle         Vehicle       @relation(fields: [vehicleId], references: [id])
   payment         Payment?
@@ -165,11 +177,16 @@ model Booking {
   // Extensions
   extensions      BookingExtension[]
 
+  // Wallet pass registrations (for push updates)
+  passRegistrations PassRegistration[]
+
   @@index([userId])
   @@index([vehicleId])
   @@index([status])
   @@index([startDate, endDate])
   @@index([deletedAt])
+  @@index([googlePassId])
+  @@index([applePassSerialNumber])
 }
 
 enum BookingStatus {
@@ -1024,4 +1041,31 @@ model BookingExtension {
 
   @@index([bookingId])
   @@index([paymentStatus])
+}
+
+// =============================================
+// WALLET PASS REGISTRATION (for push updates)
+// =============================================
+
+model PassRegistration {
+  id            String       @id @default(cuid())
+  bookingId     String
+  deviceId      String       // Device library identifier (Apple) or device token (Google)
+  pushToken     String?      // For Apple Push Notification Service
+  platform      PassPlatform
+  passTypeId    String?      // Apple Pass Type ID (e.g., pass.com.gemrentals.rental)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  booking       Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, deviceId, platform])
+  @@index([bookingId])
+  @@index([deviceId])
+  @@index([platform])
+}
+
+enum PassPlatform {
+  APPLE
+  GOOGLE
 }

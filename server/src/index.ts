@@ -37,6 +37,7 @@ import loyaltyRoutes from './routes/loyalty.js';
 import referralRoutes from './routes/referrals.js';
 import promoRoutes from './routes/promos.js';
 import extensionRoutes from './routes/extensions.js';
+import walletRoutes from './routes/wallet.js';
 
 // Load environment variables
 dotenv.config();
@@ -48,18 +49,20 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // Compression middleware - compress all responses
-app.use(compression({
-  level: 6, // Balanced compression level (1-9)
-  threshold: 1024, // Only compress responses > 1KB
-  filter: (req, res) => {
-    // Don't compress if client doesn't accept it
-    if (req.headers['x-no-compression']) {
-      return false;
-    }
-    // Use compression filter to determine if response should be compressed
-    return compression.filter(req, res);
-  },
-}));
+app.use(
+  compression({
+    level: 6, // Balanced compression level (1-9)
+    threshold: 1024, // Only compress responses > 1KB
+    filter: (req, res) => {
+      // Don't compress if client doesn't accept it
+      if (req.headers['x-no-compression']) {
+        return false;
+      }
+      // Use compression filter to determine if response should be compressed
+      return compression.filter(req, res);
+    },
+  })
+);
 
 // Security middleware
 app.use(
@@ -67,12 +70,29 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        connectSrc: ["'self'", "https://api.stripe.com", "https://maps.googleapis.com", "https://*.supabase.co"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com", "https://maps.googleapis.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-        imgSrc: ["'self'", "data:", "https://*.stripe.com", "https://maps.gstatic.com", "https://*.supabase.co"],
-        frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+        connectSrc: [
+          "'self'",
+          'https://api.stripe.com',
+          'https://maps.googleapis.com',
+          'https://*.supabase.co',
+        ],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          'https://js.stripe.com',
+          'https://maps.googleapis.com',
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'https://*.stripe.com',
+          'https://maps.gstatic.com',
+          'https://*.supabase.co',
+        ],
+        frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
       },
     },
     crossOriginEmbedderPolicy: false,
@@ -138,7 +158,7 @@ app.get('/health', async (_req, res) => {
       status: 'ok',
       database: 'connected',
       storage: storageConfigured ? 'configured' : 'not_configured',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return;
   }
@@ -149,7 +169,7 @@ app.get('/health', async (_req, res) => {
     status: 'ok',
     database: connected ? 'connected' : 'connecting',
     storage: storageConfigured ? 'configured' : 'not_configured',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -196,6 +216,7 @@ app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/promos', promoRoutes);
 app.use('/api/bookings', extensionRoutes); // Extension routes under /api/bookings/:id/extend/*
+app.use('/api', walletRoutes); // Wallet pass routes: /api/bookings/:id/pass/*, /api/wallet/*
 
 // Sitemap for SEO (served at /sitemap.xml)
 app.use('/sitemap.xml', cacheControl(3600), sitemapRoutes);

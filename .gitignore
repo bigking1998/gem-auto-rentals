@@ -59,3 +59,4 @@ status.json
 # Vite
 *.timestamp-*.mjs
 
+google-wallet-key.json

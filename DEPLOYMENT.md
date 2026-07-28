@@ -1,5 +1,16 @@
 # Gem Auto Rentals - Deployment Guide
 
+> # ⚠️ SUPERSEDED — 2026-07-27
+>
+> This guide describes the **retired** Render + Supabase setup. The application
+> now runs on a single DigitalOcean droplet with PostgreSQL, with only the
+> customer site remaining on Vercel.
+>
+> **See [INFRASTRUCTURE.md](INFRASTRUCTURE.md) for the current architecture,
+> deploy process, backups, and runbook.**
+>
+> Kept for historical reference only. `render.yaml` in this repo is also obsolete.
+
 This guide covers deploying the Gem Auto Rentals application to production environments.
 
 ## Table of Contents
@@ -42,6 +53,7 @@ This guide covers deploying the Gem Auto Rentals application to production envir
 ```
 
 **Components:**
+
 - **Web App** (`apps/web`): Customer-facing React SPA
 - **Admin App** (`apps/admin`): Admin dashboard React SPA
 - **API Server** (`server`): Express.js REST API
@@ -59,14 +71,14 @@ This guide covers deploying the Gem Auto Rentals application to production envir
 
 ### Accounts Needed
 
-| Service | Purpose | Required |
-|---------|---------|----------|
-| [Vercel](https://vercel.com) or [Netlify](https://netlify.com) | Frontend hosting | Yes |
-| [Railway](https://railway.app), [Render](https://render.com), or [Fly.io](https://fly.io) | Backend hosting | Yes |
-| [Supabase](https://supabase.com), [Neon](https://neon.tech), or [Railway](https://railway.app) | PostgreSQL database | Yes |
-| [Stripe](https://stripe.com) | Payment processing | Yes |
-| [Cloudflare](https://cloudflare.com) | DNS & CDN | Recommended |
-| [Sentry](https://sentry.io) | Error tracking | Recommended |
+| Service                                                                                        | Purpose             | Required    |
+| ---------------------------------------------------------------------------------------------- | ------------------- | ----------- |
+| [Vercel](https://vercel.com) or [Netlify](https://netlify.com)                                 | Frontend hosting    | Yes         |
+| [Railway](https://railway.app), [Render](https://render.com), or [Fly.io](https://fly.io)      | Backend hosting     | Yes         |
+| [Supabase](https://supabase.com), [Neon](https://neon.tech), or [Railway](https://railway.app) | PostgreSQL database | Yes         |
+| [Stripe](https://stripe.com)                                                                   | Payment processing  | Yes         |
+| [Cloudflare](https://cloudflare.com)                                                           | DNS & CDN           | Recommended |
+| [Sentry](https://sentry.io)                                                                    | Error tracking      | Recommended |
 
 ---
 
@@ -181,6 +193,7 @@ pnpm prisma db seed
 4. Railway will auto-detect the Node.js app
 
 **railway.toml** (optional, for custom config):
+
 ```toml
 [build]
 builder = "nixpacks"
@@ -233,6 +246,7 @@ primary_region = "ord"
 ```
 
 3. Deploy:
+
 ```bash
 cd server
 flyctl launch
@@ -290,12 +304,14 @@ CMD ["node", "dist/index.js"]
 2. Configure the project:
 
 **Web App:**
+
 - **Root Directory**: `apps/web`
 - **Framework Preset**: Vite
 - **Build Command**: `pnpm build`
 - **Output Directory**: `dist`
 
 **Admin App:**
+
 - Create a separate Vercel project
 - **Root Directory**: `apps/admin`
 - Same settings as above
@@ -309,6 +325,7 @@ CMD ["node", "dist/index.js"]
 2. Configure build settings:
 
 **netlify.toml** (in `apps/web`):
+
 ```toml
 [build]
   command = "pnpm build"
@@ -501,17 +518,19 @@ pnpm add pino pino-pretty
 Ensure these security headers are set (via Helmet.js):
 
 ```javascript
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "https://js.stripe.com"],
-      frameSrc: ["https://js.stripe.com"],
-      connectSrc: ["'self'", "https://api.stripe.com"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", 'https://js.stripe.com'],
+        frameSrc: ['https://js.stripe.com'],
+        connectSrc: ["'self'", 'https://api.stripe.com'],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false, // Required for Stripe
-}));
+    crossOriginEmbedderPolicy: false, // Required for Stripe
+  })
+);
 ```
 
 ---
@@ -527,6 +546,7 @@ Error: P1001: Can't reach database server
 ```
 
 **Solutions:**
+
 1. Verify `DATABASE_URL` is correct
 2. Check if database allows external connections
 3. Add your IP to database firewall rules
@@ -539,6 +559,7 @@ Access to fetch has been blocked by CORS policy
 ```
 
 **Solutions:**
+
 1. Verify `WEB_URL` and `ADMIN_URL` in server env
 2. Ensure no trailing slashes in URLs
 3. Check that credentials are included in CORS config
@@ -546,6 +567,7 @@ Access to fetch has been blocked by CORS policy
 #### Stripe Webhook Failures
 
 **Solutions:**
+
 1. Verify `STRIPE_WEBHOOK_SECRET` is correct
 2. Ensure webhook endpoint receives raw body
 3. Check Stripe Dashboard > Webhooks for error logs
@@ -557,6 +579,7 @@ Module not found: @gem-auto-rentals/types
 ```
 
 **Solutions:**
+
 1. Ensure `pnpm install` runs at monorepo root
 2. Check that workspace packages are properly linked
 3. Verify `turbo.json` includes build dependencies
@@ -602,9 +625,10 @@ datasource db {
 ## Support
 
 For deployment assistance or issues:
+
 - Open an issue on GitHub
 - Contact: support@gemautorentals.com
 
 ---
 
-*Last updated: January 2024*
+_Last updated: January 2024_
