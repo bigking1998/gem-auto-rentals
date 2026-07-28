@@ -21,14 +21,13 @@ interface FeaturedVehicle {
   image: string;
 }
 
-
 const categoryColors: Record<string, string> = {
-  ECONOMY: 'bg-primary text-white shadow-md',
-  STANDARD: 'bg-primary text-white shadow-md',
-  PREMIUM: 'bg-primary text-white shadow-md',
-  LUXURY: 'bg-primary text-white shadow-md',
-  SUV: 'bg-primary text-white shadow-md',
-  VAN: 'bg-primary text-white shadow-md',
+  ECONOMY: 'bg-primary text-primary-foreground shadow-md',
+  STANDARD: 'bg-primary text-primary-foreground shadow-md',
+  PREMIUM: 'bg-primary text-primary-foreground shadow-md',
+  LUXURY: 'bg-primary text-primary-foreground shadow-md',
+  SUV: 'bg-primary text-primary-foreground shadow-md',
+  VAN: 'bg-primary text-primary-foreground shadow-md',
 };
 
 export default function FeaturedVehicles() {
@@ -69,7 +68,7 @@ export default function FeaturedVehicles() {
   }, []);
 
   return (
-    <section className="py-20 lg:py-28 bg-white">
+    <section className="bg-white py-20 lg:py-28">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -77,22 +76,20 @@ export default function FeaturedVehicles() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12 lg:mb-16"
+          className="mb-12 text-center lg:mb-16"
         >
-          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
+          <span className="bg-primary/10 text-primary mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
             Our Fleet
           </span>
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-            Popular Vehicles
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Explore our most popular vehicles, from economical options to luxury rides.
-            All vehicles are well-maintained and ready for your next adventure.
+          <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">Popular Vehicles</h2>
+          <p className="mx-auto max-w-2xl text-lg text-gray-600">
+            Explore our most popular vehicles, from economical options to luxury rides. All vehicles
+            are well-maintained and ready for your next adventure.
           </p>
         </motion.div>
 
         {/* Vehicle Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           {vehicles.map((vehicle, index) => {
             // Use EagerImage for first 2 vehicles (above the fold on desktop)
             // Use LazyImage for the rest
@@ -108,28 +105,30 @@ export default function FeaturedVehicles() {
               >
                 <Link
                   to={`/vehicles/${vehicle.id}`}
-                  className="group block bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  className="group block overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
                   {/* Image */}
-                  <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
+                  <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
                     {vehicle.image ? (
                       <ImageComponent
                         src={vehicle.image}
                         alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                         aspectRatio="4/3"
-                        className="group-hover:scale-105 transition-transform duration-300"
+                        className="transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Car className="w-20 h-20 text-gray-300" />
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Car className="h-20 w-20 text-gray-300" />
                       </div>
                     )}
 
                     {/* Category Badge */}
-                    <span className={cn(
-                      'absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-bold tracking-wide uppercase z-10',
-                      categoryColors[vehicle.category] || 'bg-gray-100 text-gray-800'
-                    )}>
+                    <span
+                      className={cn(
+                        'absolute left-3 top-3 z-10 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide',
+                        categoryColors[vehicle.category] || 'bg-gray-100 text-gray-800'
+                      )}
+                    >
                       {vehicle.category}
                     </span>
                   </div>
@@ -137,42 +136,46 @@ export default function FeaturedVehicles() {
                   {/* Content */}
                   <div className="p-5">
                     {/* Title */}
-                    <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors">
+                    <h3 className="group-hover:text-primary mb-1 text-lg font-bold text-gray-900 transition-colors">
                       {vehicle.year} {vehicle.make} {vehicle.model}
                     </h3>
 
                     {/* Rating */}
-                    <div className="flex items-center gap-1 mb-4">
-                      <Star className="w-4 h-4 text-primary fill-current" />
+                    <div className="mb-4 flex items-center gap-1">
+                      <Star className="text-primary h-4 w-4 fill-current" />
                       <span className="text-sm font-medium text-gray-900">{vehicle.rating}</span>
                       <span className="text-sm text-gray-500">({vehicle.reviewCount} reviews)</span>
                     </div>
 
                     {/* Specs */}
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                    <div className="mb-4 flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
+                        <Users className="h-4 w-4" />
                         <span>{vehicle.seats}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Settings2 className="w-4 h-4" />
+                        <Settings2 className="h-4 w-4" />
                         <span>{vehicle.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Fuel className="w-4 h-4" />
-                        <span>{vehicle.fuelType.charAt(0) + vehicle.fuelType.slice(1).toLowerCase()}</span>
+                        <Fuel className="h-4 w-4" />
+                        <span>
+                          {vehicle.fuelType.charAt(0) + vehicle.fuelType.slice(1).toLowerCase()}
+                        </span>
                       </div>
                     </div>
 
                     {/* Price & CTA */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                       <div>
-                        <span className="text-2xl font-bold text-gray-900">{formatCurrency(vehicle.dailyRate)}</span>
+                        <span className="text-2xl font-bold text-gray-900">
+                          {formatCurrency(vehicle.dailyRate)}
+                        </span>
                         <span className="text-gray-500">/day</span>
                       </div>
-                      <span className="inline-flex items-center text-sm font-bold text-primary group-hover:text-orange-700 uppercase tracking-wide">
+                      <span className="text-primary-ink group-hover:text-primary-dark inline-flex items-center text-sm font-bold uppercase tracking-wide">
                         View Details
-                        <ArrowRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </span>
                     </div>
                   </div>
@@ -188,14 +191,14 @@ export default function FeaturedVehicles() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="text-center mt-12"
+          className="mt-12 text-center"
         >
           <Link
             to="/vehicles"
-            className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-primary rounded-lg hover:bg-orange-600 transition-all shadow-lg hover:shadow-xl group"
+            className="text-primary-foreground bg-primary hover:bg-primary-dark group inline-flex items-center justify-center rounded-lg px-8 py-4 text-lg font-semibold shadow-lg transition-all hover:shadow-xl"
           >
             View All Vehicles
-            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>
       </div>

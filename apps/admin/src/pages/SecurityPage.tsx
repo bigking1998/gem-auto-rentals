@@ -241,7 +241,7 @@ export default function SecurityPage() {
                 className={cn(
                   'flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                   activeTab === tab.id
-                    ? 'text-primary bg-gradient-to-r from-orange-50 to-orange-100 shadow-sm'
+                    ? 'text-primary-ink bg-accent shadow-sm'
                     : 'text-gray-600 hover:bg-gray-50'
                 )}
               >
@@ -315,13 +315,13 @@ export default function SecurityPage() {
                   <div
                     className={cn(
                       'flex h-12 w-12 items-center justify-center rounded-xl',
-                      twoFactorEnabled ? 'bg-green-100' : 'bg-orange-100'
+                      twoFactorEnabled ? 'bg-green-100' : 'bg-accent'
                     )}
                   >
                     <Smartphone
                       className={cn(
                         'h-6 w-6',
-                        twoFactorEnabled ? 'text-green-600' : 'text-primary'
+                        twoFactorEnabled ? 'text-green-600' : 'text-primary-ink'
                       )}
                     />
                   </div>
@@ -349,7 +349,7 @@ export default function SecurityPage() {
                 {!twoFactorEnabled && !showSetup && (
                   <button
                     onClick={handleEnable2FA}
-                    className="bg-primary rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300"
+                    className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300"
                   >
                     Enable Two-Factor Authentication
                   </button>
@@ -396,7 +396,7 @@ export default function SecurityPage() {
                         <button
                           onClick={handleVerify2FA}
                           disabled={verificationCode.length !== 6}
-                          className="bg-primary rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                          className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                         >
                           Verify & Enable
                         </button>
@@ -433,8 +433,8 @@ export default function SecurityPage() {
               {twoFactorEnabled && (
                 <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                   <div className="mb-6 flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100">
-                      <Key className="h-6 w-6 text-amber-600" />
+                    <div className="bg-accent flex h-12 w-12 items-center justify-center rounded-xl">
+                      <Key className="text-primary-ink h-6 w-6" />
                     </div>
                     <div className="flex-1">
                       <h2 className="text-lg font-semibold text-gray-900">Backup Codes</h2>
@@ -500,7 +500,7 @@ export default function SecurityPage() {
 
               {isLoadingSessions ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="text-primary h-8 w-8 animate-spin" />
+                  <Loader2 className="text-primary-ink h-8 w-8 animate-spin" />
                 </div>
               ) : sessions.length === 0 ? (
                 <div className="py-12 text-center text-gray-500">No active sessions found</div>
@@ -600,7 +600,7 @@ export default function SecurityPage() {
 
               {isLoadingHistory ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="text-primary h-8 w-8 animate-spin" />
+                  <Loader2 className="text-primary-ink h-8 w-8 animate-spin" />
                 </div>
               ) : loginHistory.length === 0 ? (
                 <div className="py-12 text-center text-gray-500">No login activity found</div>

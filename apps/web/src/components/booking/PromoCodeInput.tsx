@@ -6,7 +6,12 @@ import { cn } from '@/lib/utils';
 
 interface PromoCodeInputProps {
   bookingAmount: number;
-  onPromoApplied: (discount: { code: string; type: string; amount: number; description: string }) => void;
+  onPromoApplied: (discount: {
+    code: string;
+    type: string;
+    amount: number;
+    description: string;
+  }) => void;
   onPromoRemoved: () => void;
   appliedPromo?: { code: string; type: string; amount: number; description: string } | null;
   className?: string;
@@ -67,16 +72,14 @@ export default function PromoCodeInput({
 
   if (appliedPromo) {
     return (
-      <div className={cn('bg-green-50 border border-green-200 rounded-lg p-4', className)}>
+      <div className={cn('rounded-lg border border-green-200 bg-green-50 p-4', className)}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <Check className="w-5 h-5 text-green-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+              <Check className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="font-medium text-green-800">
-                {appliedPromo.code} applied!
-              </p>
+              <p className="font-medium text-green-800">{appliedPromo.code} applied!</p>
               <p className="text-sm text-green-600">
                 {appliedPromo.description} (-${appliedPromo.amount.toFixed(2)})
               </p>
@@ -84,10 +87,10 @@ export default function PromoCodeInput({
           </div>
           <button
             onClick={handleRemove}
-            className="p-2 text-green-600 hover:text-green-800 hover:bg-green-100 rounded-lg transition-colors"
+            className="rounded-lg p-2 text-green-600 transition-colors hover:bg-green-100 hover:text-green-800"
             aria-label="Remove promo code"
           >
-            <X className="w-5 h-5" aria-hidden="true" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -99,9 +102,9 @@ export default function PromoCodeInput({
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 text-primary hover:text-orange-600 font-medium transition-colors"
+          className="text-primary-ink hover:text-primary-dark flex items-center gap-2 font-medium transition-colors"
         >
-          <Tag className="w-4 h-4" />
+          <Tag className="h-4 w-4" />
           Have a promo code?
         </button>
       ) : (
@@ -111,9 +114,9 @@ export default function PromoCodeInput({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-gray-50 rounded-lg p-4"
+            className="rounded-lg bg-gray-50 p-4"
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="mb-3 flex items-center justify-between">
               <label htmlFor="promo-code-input" className="text-sm font-medium text-gray-700">
                 Enter Promo Code
               </label>
@@ -126,7 +129,7 @@ export default function PromoCodeInput({
                 className="text-gray-400 hover:text-gray-600"
                 aria-label="Close promo code form"
               >
-                <X className="w-4 h-4" aria-hidden="true" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -140,7 +143,7 @@ export default function PromoCodeInput({
                   setError(null);
                 }}
                 placeholder="SUMMER2024"
-                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors uppercase"
+                className="focus:ring-primary/20 focus:border-primary flex-1 rounded-lg border border-gray-200 px-4 py-2 uppercase transition-colors focus:ring-2"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -152,23 +155,19 @@ export default function PromoCodeInput({
                 onClick={handleApply}
                 disabled={isValidating || !code.trim()}
                 className={cn(
-                  'px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2',
+                  'flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors',
                   code.trim()
-                    ? 'bg-primary text-white hover:bg-orange-600'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary-dark shadow-lg'
+                    : 'cursor-not-allowed bg-gray-100 text-gray-400'
                 )}
               >
-                {isValidating ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Apply'
-                )}
+                {isValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
               </button>
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
-                <AlertCircle className="w-4 h-4" />
+              <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
+                <AlertCircle className="h-4 w-4" />
                 <span>{error}</span>
               </div>
             )}

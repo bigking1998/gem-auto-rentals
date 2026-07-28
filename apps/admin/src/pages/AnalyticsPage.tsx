@@ -32,14 +32,15 @@ import {
   Cell,
 } from 'recharts';
 
-// Category colors for pie chart
+// Category colors for pie chart — brand-derived ramp (gold -> navy family),
+// alternating light/dark so adjacent slices stay distinguishable.
 const categoryColors: Record<string, string> = {
-  ECONOMY: '#10b981',
-  STANDARD: '#3b82f6',
-  PREMIUM: '#ec4899',
-  LUXURY: '#f59e0b',
-  SUV: '#ef4444',
-  VAN: '#06b6d4',
+  ECONOMY: '#D4AF37', // primary gold
+  STANDARD: '#1E3A6E', // secondary royal blue
+  PREMIUM: '#A87C1A', // primary dark gold
+  LUXURY: '#0A1929', // navy
+  SUV: '#F2D99A', // primary light gold
+  VAN: '#7E9AC4', // navy light
 };
 
 type Period = '7d' | '30d' | '90d' | '365d';
@@ -331,7 +332,7 @@ export default function AnalyticsPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-orange-500" />
+          <Loader2 className="text-primary-ink mx-auto mb-4 h-10 w-10 animate-spin" />
           <p className="text-gray-500">Loading analytics...</p>
         </div>
       </div>
@@ -385,7 +386,7 @@ export default function AnalyticsPage() {
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300"
+              className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 flex items-center gap-2 rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300"
             >
               <Download className="h-4 w-4" />
               Export
@@ -422,7 +423,7 @@ export default function AnalyticsPage() {
                     onClick={handleExportAllCSV}
                     className="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-gray-50"
                   >
-                    <FileSpreadsheet className="h-4 w-4 text-blue-500" />
+                    <FileSpreadsheet className="text-primary-ink h-4 w-4" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">Export All Data CSV</p>
                       <p className="text-xs text-gray-500">Complete analytics export</p>
@@ -446,8 +447,8 @@ export default function AnalyticsPage() {
             className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-xl"
           >
             <div className="mb-4 flex items-center justify-between">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100">
-                <stat.icon className="text-primary h-6 w-6" />
+              <div className="bg-accent flex h-12 w-12 items-center justify-center rounded-xl">
+                <stat.icon className="text-primary-ink h-6 w-6" />
               </div>
               <div
                 className={cn(
@@ -498,7 +499,7 @@ export default function AnalyticsPage() {
                   ]
                 );
               }}
-              className="text-primary flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-orange-50 hover:text-orange-600"
+              className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors"
             >
               <Download className="h-3 w-3" />
               CSV
@@ -530,7 +531,7 @@ export default function AnalyticsPage() {
                     }}
                     formatter={(value: number) => [formatCurrency(value), 'Revenue']}
                   />
-                  <Bar dataKey="revenue" fill="#FF871E" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="revenue" fill="#D4AF37" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -561,7 +562,7 @@ export default function AnalyticsPage() {
                   ]
                 );
               }}
-              className="text-primary flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-orange-50 hover:text-orange-600"
+              className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors"
             >
               <Download className="h-3 w-3" />
               CSV
@@ -590,10 +591,10 @@ export default function AnalyticsPage() {
                   <Line
                     type="monotone"
                     dataKey="bookings"
-                    stroke="#FF871E"
+                    stroke="#D4AF37"
                     strokeWidth={2}
-                    dot={{ fill: '#FF871E' }}
-                    activeDot={{ r: 6, fill: '#FF871E', stroke: '#fff', strokeWidth: 2 }}
+                    dot={{ fill: '#D4AF37' }}
+                    activeDot={{ r: 6, fill: '#D4AF37', stroke: '#fff', strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -629,7 +630,7 @@ export default function AnalyticsPage() {
                 ]
               );
             }}
-            className="text-primary flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-orange-50 hover:text-orange-600"
+            className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors"
           >
             <Download className="h-3 w-3" />
             CSV

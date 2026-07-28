@@ -81,9 +81,17 @@ export default function BookingsPage() {
   const filteredBookings = bookings.filter((booking) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    const customerName = booking.user ? `${booking.user.firstName} ${booking.user.lastName}`.toLowerCase() : '';
-    const vehicleName = booking.vehicle ? `${booking.vehicle.make} ${booking.vehicle.model}`.toLowerCase() : '';
-    return customerName.includes(query) || vehicleName.includes(query) || booking.id.toLowerCase().includes(query);
+    const customerName = booking.user
+      ? `${booking.user.firstName} ${booking.user.lastName}`.toLowerCase()
+      : '';
+    const vehicleName = booking.vehicle
+      ? `${booking.vehicle.make} ${booking.vehicle.model}`.toLowerCase()
+      : '';
+    return (
+      customerName.includes(query) ||
+      vehicleName.includes(query) ||
+      booking.id.toLowerCase().includes(query)
+    );
   });
 
   const handleStatusUpdate = async (bookingId: string, newStatus: Booking['status']) => {
@@ -166,15 +174,15 @@ export default function BookingsPage() {
       </motion.div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
+          className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
         >
-          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-gray-600" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+            <Calendar className="h-5 w-5 text-gray-600" />
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
@@ -185,13 +193,13 @@ export default function BookingsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
+          className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
         >
-          <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-yellow-600" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-100">
+            <Clock className="h-5 w-5 text-yellow-600" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
             <p className="text-sm text-gray-500">Pending</p>
           </div>
         </motion.div>
@@ -199,13 +207,13 @@ export default function BookingsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
+          className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
         >
-          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-            <CalendarCheck className="w-5 h-5 text-blue-600" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
+            <CalendarCheck className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-blue-600">{stats.confirmed}</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.confirmed}</p>
             <p className="text-sm text-gray-500">Confirmed</p>
           </div>
         </motion.div>
@@ -213,13 +221,13 @@ export default function BookingsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
+          className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
         >
-          <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-            <Car className="w-5 h-5 text-green-600" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100">
+            <Car className="h-5 w-5 text-green-600" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
             <p className="text-sm text-gray-500">Active</p>
           </div>
         </motion.div>
@@ -227,10 +235,10 @@ export default function BookingsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
+          className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
         >
-          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5 text-gray-600" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+            <CheckCircle2 className="h-5 w-5 text-gray-600" />
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-600">{stats.completed}</p>
@@ -240,9 +248,7 @@ export default function BookingsPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600">
-          {error}
-        </div>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600">{error}</div>
       )}
 
       {/* Search and Filters */}
@@ -250,33 +256,44 @@ export default function BookingsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+        className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
       >
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search by customer, vehicle, or booking ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+              className="focus:ring-primary w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2"
             />
           </div>
           <div className="relative">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 transition-colors hover:bg-gray-50"
             >
-              <Filter className="w-5 h-5 text-gray-500" />
-              <span className="text-gray-700">Status: {statusFilter === 'all' ? 'All' : statusFilter}</span>
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <Filter className="h-5 w-5 text-gray-500" />
+              <span className="text-gray-700">
+                Status: {statusFilter === 'all' ? 'All' : statusFilter}
+              </span>
+              <ChevronDown className="h-4 w-4 text-gray-500" />
             </button>
             {showFilters && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowFilters(false)} />
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-2">
-                  {(['all', 'PENDING', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] as StatusFilter[]).map((status) => (
+                <div className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-gray-100 bg-white py-2 shadow-xl">
+                  {(
+                    [
+                      'all',
+                      'PENDING',
+                      'CONFIRMED',
+                      'ACTIVE',
+                      'COMPLETED',
+                      'CANCELLED',
+                    ] as StatusFilter[]
+                  ).map((status) => (
                     <button
                       key={status}
                       onClick={() => {
@@ -285,7 +302,7 @@ export default function BookingsPage() {
                       }}
                       className={cn(
                         'w-full px-4 py-2 text-left text-sm hover:bg-gray-50',
-                        statusFilter === status && 'bg-orange-50 text-primary'
+                        statusFilter === status && 'bg-accent text-primary-ink'
                       )}
                     >
                       {status === 'all' ? 'All Bookings' : status}
@@ -303,17 +320,17 @@ export default function BookingsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
       >
         {isLoading ? (
           <div className="p-12 text-center">
-            <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+            <Loader2 className="text-primary-ink mx-auto mb-4 h-10 w-10 animate-spin" />
             <p className="text-gray-500">Loading bookings...</p>
           </div>
         ) : filteredBookings.length === 0 ? (
           <div className="p-12 text-center">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No bookings found</h3>
+            <Calendar className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">No bookings found</h3>
             <p className="text-gray-500">Try adjusting your search or filters</p>
           </div>
         ) : (
@@ -321,38 +338,52 @@ export default function BookingsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vehicle</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Dates</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Vehicle
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Customer
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Dates
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Location
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Amount
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {filteredBookings.map((booking) => {
                   const StatusIcon = statusIcons[booking.status] || Clock;
                   return (
-                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={booking.id} className="transition-colors hover:bg-gray-50">
                       {/* Vehicle */}
                       <td className="px-6 py-4">
                         <Link
                           to={`/fleet?search=${booking.vehicle?.licensePlate || booking.vehicle?.make || ''}`}
-                          className="flex items-center gap-3 hover:opacity-80 transition-opacity group"
+                          className="group flex items-center gap-3 transition-opacity hover:opacity-80"
                         >
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:ring-2 group-hover:ring-primary group-hover:ring-offset-2 transition-all">
+                          <div className="group-hover:ring-primary flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100 transition-all group-hover:ring-2 group-hover:ring-offset-2">
                             {booking.vehicle?.images?.[0] ? (
                               <img
                                 src={booking.vehicle.images[0]}
                                 alt={getVehicleName(booking)}
-                                className="w-full h-full object-cover"
+                                className="h-full w-full object-cover"
                               />
                             ) : (
-                              <Car className="w-5 h-5 text-gray-400" />
+                              <Car className="h-5 w-5 text-gray-400" />
                             )}
                           </div>
-                          <span className="font-medium text-gray-900 whitespace-nowrap group-hover:text-primary transition-colors">
+                          <span className="group-hover:text-primary-ink whitespace-nowrap font-medium text-gray-900 transition-colors">
                             {getVehicleName(booking)}
                           </span>
                         </Link>
@@ -362,12 +393,12 @@ export default function BookingsPage() {
                       <td className="px-6 py-4">
                         <Link
                           to={`/customers/${booking.user?.id}`}
-                          className="flex items-center gap-2 group hover:opacity-80 transition-opacity"
+                          className="group flex items-center gap-2 transition-opacity hover:opacity-80"
                         >
-                          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10 transition-colors">
-                            <User className="w-3.5 h-3.5 text-gray-400 group-hover:text-primary transition-colors" />
+                          <div className="group-hover:bg-primary/10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 transition-colors">
+                            <User className="group-hover:text-primary-ink h-3.5 w-3.5 text-gray-400 transition-colors" />
                           </div>
-                          <span className="text-sm text-gray-700 whitespace-nowrap group-hover:text-primary transition-colors">
+                          <span className="group-hover:text-primary-ink whitespace-nowrap text-sm text-gray-700 transition-colors">
                             {getCustomerName(booking)}
                           </span>
                         </Link>
@@ -376,9 +407,10 @@ export default function BookingsPage() {
                       {/* Dates */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 whitespace-nowrap">
-                            {formatDate(new Date(booking.startDate))} - {formatDate(new Date(booking.endDate))}
+                          <Calendar className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                          <span className="whitespace-nowrap text-sm text-gray-700">
+                            {formatDate(new Date(booking.startDate))} -{' '}
+                            {formatDate(new Date(booking.endDate))}
                           </span>
                         </div>
                       </td>
@@ -386,23 +418,29 @@ export default function BookingsPage() {
                       {/* Location */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 whitespace-nowrap">{booking.pickupLocation}</span>
+                          <MapPin className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                          <span className="whitespace-nowrap text-sm text-gray-700">
+                            {booking.pickupLocation}
+                          </span>
                         </div>
                       </td>
 
                       {/* Amount */}
                       <td className="px-6 py-4">
-                        <span className="font-medium text-gray-900">{formatCurrency(booking.totalAmount)}</span>
+                        <span className="font-medium text-gray-900">
+                          {formatCurrency(booking.totalAmount)}
+                        </span>
                       </td>
 
                       {/* Status */}
                       <td className="px-6 py-4">
-                        <span className={cn(
-                          'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium',
-                          statusColors[booking.status]
-                        )}>
-                          <StatusIcon className="w-3 h-3" />
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
+                            statusColors[booking.status]
+                          )}
+                        >
+                          <StatusIcon className="h-3 w-3" />
                           {booking.status}
                         </span>
                       </td>
@@ -411,29 +449,43 @@ export default function BookingsPage() {
                       <td className="px-6 py-4">
                         <div className="relative">
                           <button
-                            onClick={() => setActiveDropdown(activeDropdown === booking.id ? null : booking.id)}
-                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            onClick={() =>
+                              setActiveDropdown(activeDropdown === booking.id ? null : booking.id)
+                            }
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
                           >
-                            <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                            <MoreHorizontal className="h-5 w-5 text-gray-400" />
                           </button>
                           {activeDropdown === booking.id && (
                             <>
-                              <div className="fixed inset-0 z-10" onClick={() => setActiveDropdown(null)} />
-                              <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-2">
-                                <p className="px-4 py-1 text-xs text-gray-400 uppercase">Update Status</p>
-                                {(['PENDING', 'CONFIRMED', 'ACTIVE', 'COMPLETED'] as Booking['status'][]).map((status) => (
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setActiveDropdown(null)}
+                              />
+                              <div className="absolute right-0 z-20 mt-1 w-48 rounded-xl border border-gray-100 bg-white py-2 shadow-xl">
+                                <p className="px-4 py-1 text-xs uppercase text-gray-400">
+                                  Update Status
+                                </p>
+                                {(
+                                  [
+                                    'PENDING',
+                                    'CONFIRMED',
+                                    'ACTIVE',
+                                    'COMPLETED',
+                                  ] as Booking['status'][]
+                                ).map((status) => (
                                   <button
                                     key={status}
                                     onClick={() => handleStatusUpdate(booking.id, status)}
                                     className={cn(
                                       'w-full px-4 py-2 text-left text-sm hover:bg-gray-50',
-                                      booking.status === status && 'bg-orange-50 text-primary'
+                                      booking.status === status && 'bg-accent text-primary-ink'
                                     )}
                                   >
                                     {status}
                                   </button>
                                 ))}
-                                <div className="border-t border-gray-100 my-1" />
+                                <div className="my-1 border-t border-gray-100" />
                                 {booking.status !== 'CANCELLED' ? (
                                   <button
                                     onClick={() => handleCancelBooking(booking)}
@@ -458,7 +510,7 @@ export default function BookingsPage() {
             </table>
           </div>
         )}
-        <div className="px-6 py-3 border-t border-gray-100 text-sm text-gray-500">
+        <div className="border-t border-gray-100 px-6 py-3 text-sm text-gray-500">
           Showing {filteredBookings.length} of {bookings.length} bookings
         </div>
       </motion.div>
@@ -478,7 +530,7 @@ export default function BookingsPage() {
                   setCancelConfirmText('');
                 }
               }}
-              className="fixed inset-0 bg-black/50 z-50"
+              className="fixed inset-0 z-50 bg-black/50"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -486,13 +538,13 @@ export default function BookingsPage() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+              <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-white">
-                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
-                        <AlertTriangle className="w-5 h-5" />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
+                        <AlertTriangle className="h-5 w-5" />
                       </div>
                       <div>
                         <h2 className="text-lg font-semibold">Cancel Booking</h2>
@@ -507,26 +559,26 @@ export default function BookingsPage() {
                           setCancelConfirmText('');
                         }
                       }}
-                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                      className="rounded-lg p-2 transition-colors hover:bg-white/20"
                     >
-                      <X className="w-5 h-5 text-white" />
+                      <X className="h-5 w-5 text-white" />
                     </button>
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 space-y-4">
-                  <div className="p-3 bg-gray-50 rounded-xl space-y-2">
+                <div className="space-y-4 p-6">
+                  <div className="space-y-2 rounded-xl bg-gray-50 p-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
                         {cancelTarget.vehicle?.images?.[0] ? (
                           <img
                             src={cancelTarget.vehicle.images[0]}
                             alt={getVehicleName(cancelTarget)}
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover"
                           />
                         ) : (
-                          <Car className="w-5 h-5 text-gray-400" />
+                          <Car className="h-5 w-5 text-gray-400" />
                         )}
                       </div>
                       <div>
@@ -534,29 +586,34 @@ export default function BookingsPage() {
                         <p className="text-sm text-gray-500">{getCustomerName(cancelTarget)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 pt-1">
+                    <div className="flex items-center gap-4 pt-1 text-sm text-gray-600">
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        {formatDate(new Date(cancelTarget.startDate))} - {formatDate(new Date(cancelTarget.endDate))}
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        {formatDate(new Date(cancelTarget.startDate))} -{' '}
+                        {formatDate(new Date(cancelTarget.endDate))}
                       </span>
-                      <span className="font-medium">{formatCurrency(cancelTarget.totalAmount)}</span>
+                      <span className="font-medium">
+                        {formatCurrency(cancelTarget.totalAmount)}
+                      </span>
                     </div>
                   </div>
 
                   <p className="text-sm text-gray-600">
-                    Are you sure you want to cancel this booking? This will notify the customer and cannot be undone.
+                    Are you sure you want to cancel this booking? This will notify the customer and
+                    cannot be undone.
                   </p>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Type <span className="font-bold text-red-600">confirm</span> to cancel this booking
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Type <span className="font-bold text-red-600">confirm</span> to cancel this
+                      booking
                     </label>
                     <input
                       type="text"
                       value={cancelConfirmText}
                       onChange={(e) => setCancelConfirmText(e.target.value)}
                       placeholder="Type confirm here..."
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-500"
                       disabled={isCancelling}
                       autoFocus
                     />
@@ -564,7 +621,7 @@ export default function BookingsPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
+                <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
                   <button
                     onClick={() => {
                       setShowCancelModal(false);
@@ -572,23 +629,23 @@ export default function BookingsPage() {
                       setCancelConfirmText('');
                     }}
                     disabled={isCancelling}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className="rounded-lg border border-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                   >
                     Go Back
                   </button>
                   <button
                     onClick={confirmCancelBooking}
                     disabled={cancelConfirmText.toLowerCase() !== 'confirm' || isCancelling}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isCancelling ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Cancelling...
                       </>
                     ) : (
                       <>
-                        <CalendarX className="w-4 h-4" />
+                        <CalendarX className="h-4 w-4" />
                         Cancel Booking
                       </>
                     )}

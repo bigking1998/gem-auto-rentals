@@ -1,12 +1,7 @@
 import { useState } from 'react';
 import { X, Loader2, CreditCard } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
-import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements,
-} from '@stripe/react-stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -68,10 +63,8 @@ function PaymentForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
-          Card Details
-        </label>
-        <div className="p-3 border border-gray-300 rounded-lg bg-white">
+        <label className="block text-sm font-medium text-gray-700">Card Details</label>
+        <div className="rounded-lg border border-gray-300 bg-white p-3">
           <CardElement
             options={{
               style: {
@@ -92,32 +85,32 @@ function PaymentForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
           {error}
         </div>
       )}
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
+      <div className="flex justify-end gap-3 border-t pt-4">
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isLoading || !stripe}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+          className="text-primary-foreground bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               Adding...
             </>
           ) : (
             <>
-              <CreditCard className="w-4 h-4" />
+              <CreditCard className="h-4 w-4" />
               Add Card
             </>
           )}
@@ -137,15 +130,15 @@ export function AddPaymentMethodModal({ isOpen, onClose, onSuccess }: AddPayment
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md">
+        <div className="relative w-full max-w-md rounded-xl bg-white shadow-xl">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between border-b p-4">
             <h2 className="text-lg font-semibold text-gray-900">Add Payment Method</h2>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 

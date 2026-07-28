@@ -3,29 +3,55 @@
 @tailwind utilities;
 
 :root {
+  /* ============================================================
+     GEM CAR RENTALS — brand palette
+     Gold #D4AF37 + deep navy #0A1628, taken from the logo.
+
+     Contrast note: gold is a LIGHT colour. Gold text on white is
+     ~2.2:1, far below the 4.5:1 minimum. So:
+       --primary          gold, used as a BACKGROUND with navy text
+       --primary-foreground  navy — what sits ON gold
+       --primary-ink      darker gold, for gold-coloured TEXT on white
+     ============================================================ */
+
   --background: 0 0% 100%;
-  --foreground: 215 28% 17%;
-  /* Dark Navy */
+  --foreground: 215 45% 12%;
+  /* Deep navy #0A1628 */
 
   --card: 0 0% 100%;
-  --card-foreground: 215 28% 17%;
+  --card-foreground: 215 45% 12%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 215 28% 17%;
+  --popover-foreground: 215 45% 12%;
 
-  --primary: 28 100% 56%;
-  /* Orange #FF871E */
-  --primary-foreground: 0 0% 100%;
+  --primary: 46 65% 52%;
+  /* Gold #D4AF37 — use as a background */
+  --primary-foreground: 215 61% 10%;
+  /* Navy text on gold — 8.9:1, passes AAA */
+  --primary-ink: 42 73% 33%;
+  /* Darker gold #8A6715 for TEXT on white — 4.6:1, passes AA */
+  --primary-light: 43 82% 75%;
+  /* #F5D98B highlights, gradient tops */
+  --primary-dark: 42 73% 38%;
+  /* #A67C1A pressed states */
 
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  --navy: 215 61% 10%;
+  /* #0A1628 dark sections */
+  --navy-card: 214 56% 12%;
+  /* #0D1B2E cards on navy */
+  --navy-light: 213 38% 63%;
+  /* #7B9CC4 muted text on navy */
 
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --secondary: 217 57% 27%;
+  /* Royal blue #1E3A6E — the diamond */
+  --secondary-foreground: 0 0% 100%;
 
-  --accent: 28 100% 96%;
-  /* Very light orange tint */
-  --accent-foreground: 28 100% 56%;
+  --muted: 210 30% 96%;
+  --muted-foreground: 215 20% 42%;
+
+  --accent: 46 60% 95%;
+  /* Pale gold wash for tinted backgrounds */
+  --accent-foreground: 42 73% 33%;
 
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
@@ -39,9 +65,10 @@
   --info: 199 89% 48%;
   --info-foreground: 210 40% 98%;
 
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 28 100% 56%;
+  --border: 214 25% 90%;
+  --input: 214 25% 90%;
+  --ring: 46 65% 52%;
+  /* Gold focus ring */
 
   --radius: 0.3rem;
   /* Slightly sharper corners 5px approx */
@@ -50,25 +77,32 @@
 .dark {
   /* Forcing light theme values even in dark mode usage, or matching the user's desire for THIS look */
   --background: 0 0% 100%;
-  --foreground: 215 28% 17%;
+  --foreground: 215 45% 12%;
 
   --card: 0 0% 100%;
-  --card-foreground: 215 28% 17%;
+  --card-foreground: 215 45% 12%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 215 28% 17%;
+  --popover-foreground: 215 45% 12%;
 
-  --primary: 28 100% 56%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 46 65% 52%;
+  --primary-foreground: 215 61% 10%;
+  --primary-ink: 42 73% 33%;
+  --primary-light: 43 82% 75%;
+  --primary-dark: 42 73% 38%;
 
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  --navy: 215 61% 10%;
+  --navy-card: 214 56% 12%;
+  --navy-light: 213 38% 63%;
 
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --secondary: 217 57% 27%;
+  --secondary-foreground: 0 0% 100%;
 
-  --accent: 28 100% 96%;
-  --accent-foreground: 28 100% 56%;
+  --muted: 210 30% 96%;
+  --muted-foreground: 215 20% 42%;
+
+  --accent: 46 60% 95%;
+  --accent-foreground: 42 73% 33%;
 
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
@@ -84,9 +118,8 @@
 
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 28 100% 56%;
+  --ring: 46 65% 52%;
 }
-
 
 @layer base {
   * {
@@ -95,7 +128,9 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 }
 

@@ -109,26 +109,34 @@ export default function QuickPricingWidget() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
-      className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-6 mt-8"
+      className="mt-8 rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur-xl"
     >
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         {/* Pick-up Date */}
         <div>
-          <label className="block text-white/80 text-sm font-medium mb-2">
-            <Calendar className="inline w-4 h-4 mr-1" />
+          <label className="mb-2 block text-sm font-medium text-white/80">
+            <Calendar className="mr-1 inline h-4 w-4" />
             Pick-up Date
           </label>
           <Popover>
             <PopoverTrigger asChild>
-              <button className={cn(
-                "w-full h-[48px] flex items-center justify-start text-left font-medium px-4 rounded-xl border transition-all",
-                !startDate
-                  ? "text-white/50 border-white/20 bg-white/10 hover:bg-white/15"
-                  : "text-white border-primary bg-primary/20"
-              )}>
+              <button
+                className={cn(
+                  'flex h-[48px] w-full items-center justify-start rounded-xl border px-4 text-left font-medium transition-all',
+                  !startDate
+                    ? 'border-white/20 bg-white/10 text-white/50 hover:bg-white/15'
+                    : 'border-primary bg-primary/20 text-white'
+                )}
+              >
                 <Calendar className="mr-2 h-4 w-4 shrink-0 text-white/60" />
                 <span className="truncate">
-                  {startDate ? parseLocalDate(startDate)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Select Date"}
+                  {startDate
+                    ? parseLocalDate(startDate)?.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : 'Select Date'}
                 </span>
               </button>
             </PopoverTrigger>
@@ -173,21 +181,29 @@ export default function QuickPricingWidget() {
 
         {/* Return Date */}
         <div>
-          <label className="block text-white/80 text-sm font-medium mb-2">
-            <Calendar className="inline w-4 h-4 mr-1" />
+          <label className="mb-2 block text-sm font-medium text-white/80">
+            <Calendar className="mr-1 inline h-4 w-4" />
             Return Date
           </label>
           <Popover>
             <PopoverTrigger asChild>
-              <button className={cn(
-                "w-full h-[48px] flex items-center justify-start text-left font-medium px-4 rounded-xl border transition-all",
-                !endDate
-                  ? "text-white/50 border-white/20 bg-white/10 hover:bg-white/15"
-                  : "text-white border-primary bg-primary/20"
-              )}>
+              <button
+                className={cn(
+                  'flex h-[48px] w-full items-center justify-start rounded-xl border px-4 text-left font-medium transition-all',
+                  !endDate
+                    ? 'border-white/20 bg-white/10 text-white/50 hover:bg-white/15'
+                    : 'border-primary bg-primary/20 text-white'
+                )}
+              >
                 <Calendar className="mr-2 h-4 w-4 shrink-0 text-white/60" />
                 <span className="truncate">
-                  {endDate ? parseLocalDate(endDate)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Select Date"}
+                  {endDate
+                    ? parseLocalDate(endDate)?.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : 'Select Date'}
                 </span>
               </button>
             </PopoverTrigger>
@@ -223,8 +239,8 @@ export default function QuickPricingWidget() {
 
         {/* Category */}
         <div>
-          <label className="block text-white/80 text-sm font-medium mb-2">
-            <Car className="inline w-4 h-4 mr-1" />
+          <label className="mb-2 block text-sm font-medium text-white/80">
+            <Car className="mr-1 inline h-4 w-4" />
             Category
           </label>
           <select
@@ -235,7 +251,7 @@ export default function QuickPricingWidget() {
               // Save to store for sticky context
               setStoreCategory(newCategory);
             }}
-            className="w-full h-[48px] px-4 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none cursor-pointer"
+            className="focus:ring-primary/50 focus:border-primary h-[48px] w-full cursor-pointer appearance-none rounded-xl border border-white/20 bg-white/10 px-4 text-white focus:outline-none focus:ring-2"
           >
             {categories.map((cat) => (
               <option key={cat.value} value={cat.value} className="bg-gray-900 text-white">
@@ -248,15 +264,18 @@ export default function QuickPricingWidget() {
         {/* Search Button */}
         <div>
           {/* Invisible label spacer to match other columns */}
-          <div className="block text-transparent text-sm font-medium mb-2 select-none" aria-hidden="true">
+          <div
+            className="mb-2 block select-none text-sm font-medium text-transparent"
+            aria-hidden="true"
+          >
             &nbsp;
           </div>
           <button
             onClick={handleSearch}
             disabled={!startDate || !endDate}
-            className="w-full h-[48px] flex items-center justify-center gap-2 px-4 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="bg-primary hover:bg-primary-dark text-primary-foreground flex h-[48px] w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 font-bold shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Search className="w-5 h-5 flex-shrink-0" />
+            <Search className="h-5 w-5 flex-shrink-0" />
             <span>Search Vehicles</span>
           </button>
         </div>
@@ -268,30 +287,30 @@ export default function QuickPricingWidget() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           transition={{ duration: 0.3 }}
-          className="mt-6 pt-6 border-t border-white/10"
+          className="mt-6 border-t border-white/10 pt-6"
         >
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 text-white/70">
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
               <span>Checking availability...</span>
             </div>
           ) : pricing && pricing.availableCount > 0 ? (
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="text-white/80">
-                <span className="text-3xl font-bold text-white">
-                  {pricing.availableCount}
-                </span>
+                <span className="text-3xl font-bold text-white">{pricing.availableCount}</span>
                 <span className="ml-2">vehicles available</span>
                 {days > 0 && (
-                  <span className="text-white/60 ml-2">for {days} day{days !== 1 ? 's' : ''}</span>
+                  <span className="ml-2 text-white/60">
+                    for {days} day{days !== 1 ? 's' : ''}
+                  </span>
                 )}
               </div>
               <div className="text-right">
-                <div className="text-white/60 text-sm">Starting from</div>
-                <div className="text-2xl font-bold text-primary">
+                <div className="text-sm text-white/60">Starting from</div>
+                <div className="text-primary text-2xl font-bold">
                   ${pricing.estimatedMinTotal?.toFixed(0) || '—'}
                 </div>
-                <div className="text-white/50 text-xs">
+                <div className="text-xs text-white/50">
                   (${pricing.minDailyRate?.toFixed(0) || '—'}/day)
                 </div>
               </div>

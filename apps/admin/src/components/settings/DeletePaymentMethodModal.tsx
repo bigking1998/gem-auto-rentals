@@ -38,11 +38,11 @@ export function DeletePaymentMethodModal({
   const brandIcon = () => {
     const brand = paymentMethod.brand.toLowerCase();
     return (
-      <div className="w-10 h-6 bg-gray-100 rounded flex items-center justify-center text-xs font-medium text-gray-600 uppercase">
+      <div className="flex h-6 w-10 items-center justify-center rounded bg-gray-100 text-xs font-medium uppercase text-gray-600">
         {brand === 'visa' && 'VISA'}
         {brand === 'mastercard' && 'MC'}
         {brand === 'amex' && 'AMEX'}
-        {!['visa', 'mastercard', 'amex'].includes(brand) && <CreditCard className="w-4 h-4" />}
+        {!['visa', 'mastercard', 'amex'].includes(brand) && <CreditCard className="h-4 w-4" />}
       </div>
     );
   };
@@ -54,32 +54,30 @@ export function DeletePaymentMethodModal({
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm">
+        <div className="relative w-full max-w-sm rounded-xl bg-white shadow-xl">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between border-b p-4">
             <h2 className="text-lg font-semibold text-gray-900">Remove Payment Method</h2>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
           {/* Body */}
-          <div className="p-4 space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-              <p className="text-sm text-amber-800">
-                This action cannot be undone.
-              </p>
+          <div className="space-y-4 p-4">
+            <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
+              <p className="text-sm text-amber-800">This action cannot be undone.</p>
             </div>
 
             <p className="text-sm text-gray-600">
               Are you sure you want to remove this payment method?
             </p>
 
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
               {brandIcon()}
               <div>
                 <p className="text-sm font-medium text-gray-900">
@@ -90,7 +88,7 @@ export function DeletePaymentMethodModal({
                 </p>
               </div>
               {paymentMethod.isDefault && (
-                <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                <span className="bg-accent text-accent-foreground ml-auto rounded px-2 py-0.5 text-xs font-medium">
                   Default
                 </span>
               )}
@@ -98,22 +96,22 @@ export function DeletePaymentMethodModal({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 p-4 border-t">
+          <div className="flex justify-end gap-3 border-t p-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleDelete}
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+              className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Removing...
                 </>
               ) : (

@@ -316,7 +316,7 @@ export default function BookingPage() {
         <Header variant="booking" />
         <main className="flex flex-1 items-center justify-center py-12 pt-32">
           <div className="text-center">
-            <Loader2 className="text-primary mx-auto mb-4 h-12 w-12 animate-spin" />
+            <Loader2 className="text-primary-ink mx-auto mb-4 h-12 w-12 animate-spin" />
             <p className="text-gray-600">Loading vehicle details...</p>
           </div>
         </main>
@@ -337,7 +337,7 @@ export default function BookingPage() {
             <p className="mb-6 text-gray-600">{error || 'Vehicle not found'}</p>
             <button
               onClick={() => navigate('/vehicles')}
-              className="bg-primary rounded-lg px-6 py-3 text-white transition-colors hover:bg-orange-600"
+              className="bg-primary text-primary-foreground hover:bg-primary-dark rounded-lg px-6 py-3 transition-colors"
             >
               Browse Vehicles
             </button>
@@ -375,7 +375,7 @@ export default function BookingPage() {
                         isCompleted
                           ? 'border-green-500 bg-green-500 text-white'
                           : isCurrent
-                            ? 'bg-primary border-primary shadow-primary/25 scale-110 text-white shadow-lg'
+                            ? 'bg-primary border-primary shadow-primary/25 text-primary-foreground scale-110 shadow-lg'
                             : 'border-gray-200 bg-white text-gray-300'
                       )}
                     >
@@ -476,7 +476,7 @@ export default function BookingPage() {
                         'shadow-primary/20 flex transform items-center gap-2 rounded-xl px-8 py-2.5 text-sm font-bold shadow-lg transition-all duration-200 active:scale-95',
                         !canProceed() || isSubmitting
                           ? 'cursor-not-allowed bg-gray-100 text-gray-400 shadow-none'
-                          : 'bg-primary hover:shadow-primary/30 text-white hover:bg-orange-600'
+                          : 'bg-primary hover:shadow-primary/30 text-primary-foreground hover:bg-primary-dark'
                       )}
                     >
                       {isSubmitting ? (
@@ -546,7 +546,7 @@ export default function BookingPage() {
                     </div>
                     <div className="flex justify-between border-t border-gray-200/50 pt-2 text-sm">
                       <span className="font-medium text-gray-500">Duration</span>
-                      <span className="text-primary font-bold">{days} days</span>
+                      <span className="text-primary-ink font-bold">{days} days</span>
                     </div>
                   </div>
                 )}
@@ -606,7 +606,7 @@ export default function BookingPage() {
                 <div className="mt-8 border-t border-gray-100 pt-6">
                   <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider">
                     <span className="text-gray-400">Completion</span>
-                    <span className="text-primary">
+                    <span className="text-primary-ink">
                       {Math.round((currentStep / steps.length) * 100)}%
                     </span>
                   </div>

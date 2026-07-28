@@ -370,7 +370,7 @@ export default function SettingsPage() {
                 className={cn(
                   'flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                   activeTab === tab.id
-                    ? 'text-primary bg-gradient-to-r from-orange-50 to-orange-100 shadow-sm'
+                    ? 'text-primary-ink bg-accent shadow-sm'
                     : 'text-gray-600 hover:bg-gray-50'
                 )}
               >
@@ -397,10 +397,10 @@ export default function SettingsPage() {
                   <img
                     src={user.avatarUrl}
                     alt="Avatar"
-                    className="h-20 w-20 rounded-2xl object-cover shadow-lg shadow-orange-200"
+                    className="shadow-primary/20 h-20 w-20 rounded-2xl object-cover shadow-lg"
                   />
                 ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 text-2xl font-semibold text-white shadow-lg shadow-orange-200">
+                  <div className="from-primary-light to-primary-dark text-primary-foreground shadow-primary/20 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br text-2xl font-semibold shadow-lg">
                     {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '??'}
                   </div>
                 )}
@@ -415,7 +415,7 @@ export default function SettingsPage() {
                   <button
                     onClick={() => avatarInputRef.current?.click()}
                     disabled={isUploadingAvatar}
-                    className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isUploadingAvatar ? (
                       <>
@@ -488,7 +488,7 @@ export default function SettingsPage() {
                 <button
                   onClick={handleProfileSave}
                   disabled={isProfileSaving}
-                  className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 flex items-center gap-2 rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isProfileSaving ? (
                     <>
@@ -537,7 +537,7 @@ export default function SettingsPage() {
                     </div>
                     <label className="relative inline-flex cursor-pointer items-center">
                       <input type="checkbox" defaultChecked className="peer sr-only" />
-                      <div className="peer-checked:bg-primary peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300"></div>
+                      <div className="peer-checked:bg-primary peer-focus:ring-primary peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4"></div>
                     </label>
                   </div>
                 ))}
@@ -610,7 +610,7 @@ export default function SettingsPage() {
                 <button
                   onClick={handlePasswordChange}
                   disabled={passwordLoading}
-                  className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 flex items-center gap-2 rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {passwordLoading ? (
                     <>
@@ -628,19 +628,19 @@ export default function SettingsPage() {
           {activeTab === 'billing' && (
             <div className="space-y-6">
               {/* Current Plan */}
-              <div className="rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 p-6 text-white">
+              <div className="from-primary-light to-primary-dark text-primary-foreground rounded-2xl bg-gradient-to-r p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="mb-1 text-sm text-white/80">Current Plan</p>
+                    <p className="text-primary-foreground/80 mb-1 text-sm">Current Plan</p>
                     <h3 className="text-2xl font-bold">Professional</h3>
-                    <p className="mt-1 text-white/80">$299/month • Billed monthly</p>
+                    <p className="text-primary-foreground/80 mt-1">$299/month • Billed monthly</p>
                   </div>
                   <div className="text-right">
-                    <p className="mb-1 text-sm text-white/80">Next billing date</p>
+                    <p className="text-primary-foreground/80 mb-1 text-sm">Next billing date</p>
                     <p className="text-lg font-semibold">February 1, 2026</p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-4">
+                <div className="border-primary-foreground/20 mt-4 flex items-center justify-between border-t pt-4">
                   <div className="flex items-center gap-4 text-sm">
                     <span className="flex items-center gap-1">
                       <Check className="h-4 w-4" /> Unlimited vehicles
@@ -667,7 +667,7 @@ export default function SettingsPage() {
                   <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
                   <button
                     onClick={() => setIsAddPaymentModalOpen(true)}
-                    className="text-primary flex items-center gap-2 rounded-xl border border-orange-200 px-4 py-2 text-sm transition-colors hover:bg-orange-50"
+                    className="text-primary-ink border-primary hover:bg-accent flex items-center gap-2 rounded-xl border px-4 py-2 text-sm transition-colors"
                   >
                     <Plus className="h-4 w-4" />
                     Add Method
@@ -685,7 +685,7 @@ export default function SettingsPage() {
                       <p className="text-gray-500">No payment methods added yet</p>
                       <button
                         onClick={() => setIsAddPaymentModalOpen(true)}
-                        className="text-primary mt-3 text-sm hover:text-orange-600"
+                        className="text-primary-ink hover:text-primary-ink mt-3 text-sm"
                       >
                         Add your first payment method
                       </button>
@@ -697,7 +697,7 @@ export default function SettingsPage() {
                         className={cn(
                           'flex items-center justify-between rounded-xl border p-4 transition-colors',
                           method.isDefault
-                            ? 'border-orange-200 bg-orange-50'
+                            ? 'border-primary bg-accent'
                             : 'border-gray-200 bg-gray-50'
                         )}
                       >
@@ -722,7 +722,7 @@ export default function SettingsPage() {
                             </p>
                           </div>
                           {method.isDefault && (
-                            <span className="text-primary rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium">
+                            <span className="text-primary-ink bg-accent rounded-full px-2 py-0.5 text-xs font-medium">
                               Default
                             </span>
                           )}
@@ -766,7 +766,7 @@ export default function SettingsPage() {
                             </span>
                           </td>
                           <td className="py-4 text-right">
-                            <button className="text-primary ml-auto flex items-center gap-1 hover:text-orange-600">
+                            <button className="text-primary-ink hover:text-primary-ink ml-auto flex items-center gap-1">
                               <Download className="h-4 w-4" />
                               Download
                             </button>
@@ -791,10 +791,10 @@ export default function SettingsPage() {
                     <img
                       src={companyLogo}
                       alt="Company Logo"
-                      className="h-24 w-24 rounded-2xl border border-gray-200 bg-white object-contain shadow-lg shadow-orange-200"
+                      className="shadow-primary/20 h-24 w-24 rounded-2xl border border-gray-200 bg-white object-contain shadow-lg"
                     />
                   ) : (
-                    <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 text-3xl font-bold text-white shadow-lg shadow-orange-200">
+                    <div className="from-primary-light to-primary-dark text-primary-foreground shadow-primary/20 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br text-3xl font-bold shadow-lg">
                       GA
                     </div>
                   )}
@@ -809,7 +809,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => logoInputRef.current?.click()}
                       disabled={isUploadingLogo}
-                      className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isUploadingLogo ? (
                         <>
@@ -987,7 +987,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleCompanySave}
                     disabled={isCompanySaving}
-                    className="bg-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 flex items-center gap-2 rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isCompanySaving ? (
                       <>
@@ -1033,8 +1033,8 @@ export default function SettingsPage() {
                 </div>
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
-                      <RefreshCw className="h-5 w-5 text-orange-600" />
+                    <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-xl">
+                      <RefreshCw className="text-primary-ink h-5 w-5" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-gray-900">Live</p>
@@ -1051,7 +1051,7 @@ export default function SettingsPage() {
                   <button
                     onClick={fetchIntegrations}
                     disabled={isLoadingIntegrations}
-                    className="text-primary flex items-center gap-2 rounded-xl border border-orange-200 px-4 py-2 text-sm transition-colors hover:bg-orange-50 disabled:opacity-50"
+                    className="text-primary-ink border-primary hover:bg-accent flex items-center gap-2 rounded-xl border px-4 py-2 text-sm transition-colors disabled:opacity-50"
                   >
                     <RefreshCw className={cn('h-4 w-4', isLoadingIntegrations && 'animate-spin')} />
                     Refresh
@@ -1060,7 +1060,7 @@ export default function SettingsPage() {
 
                 {isLoadingIntegrations ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="text-primary h-8 w-8 animate-spin" />
+                    <Loader2 className="text-primary-ink h-8 w-8 animate-spin" />
                   </div>
                 ) : integrations.length === 0 ? (
                   <div className="py-12 text-center text-gray-500">No integrations available</div>
@@ -1073,7 +1073,7 @@ export default function SettingsPage() {
                           'flex items-center justify-between rounded-xl border p-4 transition-all',
                           integration.isConnected
                             ? 'border-green-200 bg-green-50'
-                            : 'border-gray-200 bg-gray-50 hover:border-orange-200'
+                            : 'hover:border-primary border-gray-200 bg-gray-50'
                         )}
                       >
                         <div className="flex items-center gap-4">
@@ -1109,7 +1109,7 @@ export default function SettingsPage() {
                           <button
                             onClick={() => api.integrations.connect(integration.provider, {})}
                             disabled={!integration.isEnabled}
-                            className="bg-primary rounded-xl px-4 py-2 text-sm font-medium text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 rounded-xl px-4 py-2 text-sm font-medium shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Connect
                           </button>
@@ -1130,7 +1130,9 @@ export default function SettingsPage() {
                 <div className="rounded-xl bg-gray-900 p-4">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm text-gray-400">API Key</span>
-                    <button className="text-primary text-sm hover:text-orange-600">Copy</button>
+                    <button className="text-primary-ink hover:text-primary-ink text-sm">
+                      Copy
+                    </button>
                   </div>
                   <code className="font-mono text-sm text-green-400">
                     gem_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -1144,7 +1146,7 @@ export default function SettingsPage() {
                   </button>
                   <a
                     href="#"
-                    className="text-primary flex items-center gap-2 text-sm hover:text-orange-600"
+                    className="text-primary-ink hover:text-primary-ink flex items-center gap-2 text-sm"
                   >
                     <ExternalLink className="h-4 w-4" />
                     View API Documentation

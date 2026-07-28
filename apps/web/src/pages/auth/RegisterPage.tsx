@@ -175,9 +175,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="flex min-h-screen">
       {/* Left Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto bg-white relative">
+      <div className="relative flex flex-1 items-center justify-center overflow-y-auto bg-white p-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -187,27 +187,25 @@ export default function RegisterPage() {
           <div className="mb-8">
             <Link
               to="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors"
+              className="hover:text-primary-ink inline-flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="h-4 w-4" />
               <span>Back to Home</span>
             </Link>
           </div>
 
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Create an account</h1>
-            <p className="text-gray-500 mt-2">
-              Get started with your free account today
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Create an account</h1>
+            <p className="mt-2 text-gray-500">Get started with your free account today</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error Alert */}
             {(errors.general || authError) && (
-              <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+                <AlertCircle className="h-5 w-5 flex-shrink-0" />
                 <p className="text-sm">{errors.general || authError}</p>
               </div>
             )}
@@ -215,106 +213,92 @@ export default function RegisterPage() {
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  First Name
-                </label>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">First Name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => updateField('firstName', e.target.value)}
                     placeholder="John"
                     className={cn(
-                      'w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
+                      'focus:ring-primary/20 focus:border-primary w-full rounded-xl border py-3 pl-10 pr-4 transition-all focus:ring-2',
                       errors.firstName ? 'border-red-300' : 'border-gray-200'
                     )}
                   />
                 </div>
                 {errors.firstName && (
-                  <p className="text-sm text-red-500 mt-1">{errors.firstName}</p>
+                  <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Last Name
-                </label>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Last Name</label>
                 <input
                   type="text"
                   value={formData.lastName}
                   onChange={(e) => updateField('lastName', e.target.value)}
                   placeholder="Doe"
                   className={cn(
-                    'w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
+                    'focus:ring-primary/20 focus:border-primary w-full rounded-xl border px-4 py-3 transition-all focus:ring-2',
                     errors.lastName ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
-                {errors.lastName && (
-                  <p className="text-sm text-red-500 mt-1">{errors.lastName}</p>
-                )}
+                {errors.lastName && <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>}
               </div>
             </div>
 
             {/* Email Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateField('email', e.target.value)}
                   placeholder="you@example.com"
                   className={cn(
-                    'w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
+                    'focus:ring-primary/20 focus:border-primary w-full rounded-xl border py-3 pl-10 pr-4 transition-all focus:ring-2',
                     errors.email ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
               </div>
-              {errors.email && (
-                <p className="text-sm text-red-500 mt-1">{errors.email}</p>
-              )}
+              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
             </div>
 
             {/* Phone Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Phone Number
-              </label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Phone Number</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => updateField('phone', e.target.value)}
                   placeholder="+1 (555) 123-4567"
                   className={cn(
-                    'w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
+                    'focus:ring-primary/20 focus:border-primary w-full rounded-xl border py-3 pl-10 pr-4 transition-all focus:ring-2',
                     errors.phone ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
               </div>
-              {errors.phone && (
-                <p className="text-sm text-red-500 mt-1">{errors.phone}</p>
-              )}
+              {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
             </div>
 
             {/* Password Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Password
-              </label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => updateField('password', e.target.value)}
                   placeholder="Create a strong password"
                   className={cn(
-                    'w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
+                    'focus:ring-primary/20 focus:border-primary w-full rounded-xl border py-3 pl-10 pr-12 transition-all focus:ring-2',
                     errors.password ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
@@ -323,7 +307,7 @@ export default function RegisterPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
 
@@ -340,7 +324,9 @@ export default function RegisterPage() {
                           passed ? 'text-green-600' : 'text-gray-400'
                         )}
                       >
-                        <Check className={cn('w-3.5 h-3.5', passed ? 'opacity-100' : 'opacity-50')} />
+                        <Check
+                          className={cn('h-3.5 w-3.5', passed ? 'opacity-100' : 'opacity-50')}
+                        />
                         {req.label}
                       </div>
                     );
@@ -351,18 +337,18 @@ export default function RegisterPage() {
 
             {/* Confirm Password Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={(e) => updateField('confirmPassword', e.target.value)}
                   placeholder="Confirm your password"
                   className={cn(
-                    'w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
+                    'focus:ring-primary/20 focus:border-primary w-full rounded-xl border py-3 pl-10 pr-12 transition-all focus:ring-2',
                     errors.confirmPassword ? 'border-red-300' : 'border-gray-200'
                   )}
                 />
@@ -371,36 +357,40 @@ export default function RegisterPage() {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-500 mt-1">{errors.confirmPassword}</p>
+                <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
               )}
             </div>
 
             {/* Terms Checkbox */}
             <div>
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
                   checked={formData.agreeToTerms}
                   onChange={(e) => updateField('agreeToTerms', e.target.checked)}
-                  className="w-4 h-4 mt-0.5 text-primary border-gray-300 rounded focus:ring-primary"
+                  className="text-primary-ink focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
                 />
                 <span className="text-sm text-gray-600">
                   I agree to the{' '}
-                  <Link to="/terms" className="text-primary hover:underline font-medium">
+                  <Link to="/terms" className="text-primary-ink font-medium hover:underline">
                     Terms of Service
                   </Link>{' '}
                   and{' '}
-                  <Link to="/privacy" className="text-primary hover:underline font-medium">
+                  <Link to="/privacy" className="text-primary-ink font-medium hover:underline">
                     Privacy Policy
                   </Link>
                 </span>
               </label>
               {errors.agreeToTerms && (
-                <p className="text-sm text-red-500 mt-1">{errors.agreeToTerms}</p>
+                <p className="mt-1 text-sm text-red-500">{errors.agreeToTerms}</p>
               )}
             </div>
 
@@ -409,22 +399,20 @@ export default function RegisterPage() {
               type="submit"
               disabled={isLoading}
               className={cn(
-                'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold transition-all shadow-lg shadow-orange-200 hover:shadow-orange-300',
-                'bg-primary hover:bg-orange-600',
-                isLoading
-                  ? 'opacity-70 cursor-not-allowed'
-                  : ''
+                'text-primary-foreground flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 font-bold shadow-lg transition-all',
+                'bg-primary hover:bg-primary-dark',
+                isLoading ? 'cursor-not-allowed opacity-70' : ''
               )}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                   Creating account...
                 </>
               ) : (
                 <>
                   Create Account
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="h-5 w-5" />
                 </>
               )}
             </button>
@@ -433,10 +421,7 @@ export default function RegisterPage() {
           {/* Login Link */}
           <p className="mt-6 text-center text-gray-600">
             Already have an account?{' '}
-            <Link
-              to="/login"
-              className="text-primary hover:text-orange-600 font-bold"
-            >
+            <Link to="/login" className="text-primary-ink font-bold hover:underline">
               Sign in
             </Link>
           </p>
@@ -444,36 +429,36 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Side - Image/Branding */}
-      <div className="hidden lg:flex lg:flex-1 bg-gray-900 relative overflow-hidden">
+      <div className="relative hidden overflow-hidden bg-gray-900 lg:flex lg:flex-1">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gray-900/90 z-10" />
+          <div className="absolute inset-0 z-10 bg-gray-900/90" />
           <img
             src="https://images.unsplash.com/photo-1503376763036-066120622c74?w=1920"
             alt="Luxury SUV"
-            className="w-full h-full object-cover opacity-50 grayscale"
+            className="h-full w-full object-cover opacity-50 grayscale"
           />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center p-12 text-white h-full">
+        <div className="relative z-10 flex h-full flex-col items-center justify-center p-12 text-white">
           {/* Logo */}
-          <div className="absolute top-8 left-8">
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-all">
-                <Car className="w-6 h-6 text-white" />
+          <div className="absolute left-8 top-8">
+            <Link to="/" className="group flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 backdrop-blur-md transition-all group-hover:bg-white/20">
+                <Car className="h-6 w-6 text-white" />
               </div>
               <span className="text-xl font-bold text-white">Gem Auto Rentals</span>
             </Link>
           </div>
 
           <div className="max-w-md text-center">
-            <h2 className="text-4xl font-bold mb-6">
+            <h2 className="mb-6 text-4xl font-bold">
               Join Gem <span className="text-primary">Auto Rentals</span>
             </h2>
-            <p className="text-gray-300 text-lg mb-12">
-              Create your account and unlock access to our premium fleet of vehicles
-              at competitive rates.
+            <p className="mb-12 text-lg text-gray-300">
+              Create your account and unlock access to our premium fleet of vehicles at competitive
+              rates.
             </p>
 
             {/* Benefits */}
@@ -486,9 +471,9 @@ export default function RegisterPage() {
               ].map((benefit, index) => (
                 <div
                   key={index}
-                  className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10"
+                  className="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm"
                 >
-                  <h3 className="font-bold mb-2 text-primary">{benefit.title}</h3>
+                  <h3 className="text-primary mb-2 font-bold">{benefit.title}</h3>
                   <p className="text-sm text-gray-400">{benefit.desc}</p>
                 </div>
               ))}

@@ -84,7 +84,10 @@ export default function MyBookingsPage() {
       const endDate = new Date(booking.endDate);
 
       if (tab === 'active') {
-        return booking.status === 'ACTIVE' || (booking.status === 'CONFIRMED' && startDate <= now && endDate >= now);
+        return (
+          booking.status === 'ACTIVE' ||
+          (booking.status === 'CONFIRMED' && startDate <= now && endDate >= now)
+        );
       }
       if (tab === 'upcoming') {
         return (booking.status === 'PENDING' || booking.status === 'CONFIRMED') && startDate > now;
@@ -144,13 +147,13 @@ export default function MyBookingsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
-          <p className="text-gray-500 mt-1">View and manage all your vehicle rentals</p>
+          <p className="mt-1 text-gray-500">View and manage all your vehicle rentals</p>
         </div>
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+          <Loader2 className="text-primary-ink h-8 w-8 animate-spin" />
         </div>
       </div>
     );
@@ -158,13 +161,13 @@ export default function MyBookingsPage() {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
-          <p className="text-gray-500 mt-1">View and manage all your vehicle rentals</p>
+          <p className="mt-1 text-gray-500">View and manage all your vehicle rentals</p>
         </div>
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+        <div className="rounded-xl border border-gray-200 bg-white py-16 text-center">
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
           <p className="text-gray-600">{error}</p>
         </div>
       </div>
@@ -172,17 +175,15 @@ export default function MyBookingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl">
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
-        <p className="text-gray-500 mt-1">
-          View and manage all your vehicle rentals
-        </p>
+        <p className="mt-1 text-gray-500">View and manage all your vehicle rentals</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200">
+      <div className="mb-6 flex gap-2 border-b border-gray-200">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const count = filterBookings(tab.id).length;
@@ -191,20 +192,20 @@ export default function MyBookingsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 -mb-px',
+                '-mb-px flex items-center gap-2 border-b-2 px-4 py-3 font-medium transition-colors',
                 activeTab === tab.id
-                  ? 'border-orange-600 text-orange-600'
+                  ? 'border-primary text-primary-ink'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               )}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="h-4 w-4" />
               {tab.label}
               {count > 0 && (
                 <span
                   className={cn(
-                    'px-2 py-0.5 text-xs font-semibold rounded-full',
+                    'rounded-full px-2 py-0.5 text-xs font-semibold',
                     activeTab === tab.id
-                      ? 'bg-orange-100 text-orange-700'
+                      ? 'bg-accent text-primary-ink'
                       : 'bg-gray-100 text-gray-600'
                   )}
                 >
@@ -222,26 +223,24 @@ export default function MyBookingsPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 bg-white rounded-xl border border-gray-200"
+            className="rounded-xl border border-gray-200 bg-white py-16 text-center"
           >
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Calendar className="w-8 h-8 text-gray-400" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+              <Calendar className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No {activeTab} bookings
-            </h3>
-            <p className="text-gray-500 mb-6">
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">No {activeTab} bookings</h3>
+            <p className="mb-6 text-gray-500">
               {activeTab === 'active'
                 ? "You don't have any active rentals at the moment."
                 : activeTab === 'upcoming'
-                ? "You don't have any upcoming reservations."
-                : "You haven't completed any rentals yet."}
+                  ? "You don't have any upcoming reservations."
+                  : "You haven't completed any rentals yet."}
             </p>
             <Link
               to="/vehicles"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
+              className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-6 py-3 font-medium"
             >
-              <Car className="w-5 h-5" />
+              <Car className="h-5 w-5" />
               Browse Vehicles
             </Link>
           </motion.div>
@@ -250,7 +249,9 @@ export default function MyBookingsPage() {
             const status = statusConfig[booking.status];
             const StatusIcon = status.icon;
             const vehicle = booking.vehicle;
-            const vehicleImage = vehicle?.images?.[0] || 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400';
+            const vehicleImage =
+              vehicle?.images?.[0] ||
+              'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400';
 
             return (
               <motion.div
@@ -258,21 +259,21 @@ export default function MyBookingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-md"
               >
                 <div className="flex flex-col sm:flex-row">
                   {/* Vehicle Image */}
-                  <div className="sm:w-48 h-40 sm:h-auto">
+                  <div className="h-40 sm:h-auto sm:w-48">
                     <img
                       src={vehicleImage}
                       alt={vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Vehicle'}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   </div>
 
                   {/* Booking Details */}
                   <div className="flex-1 p-5">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="mb-3 flex items-start justify-between">
                       <div>
                         <h3 className="font-semibold text-gray-900">
                           {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Vehicle'}
@@ -283,24 +284,24 @@ export default function MyBookingsPage() {
                       </div>
                       <span
                         className={cn(
-                          'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium',
+                          'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
                           status.className
                         )}
                       >
-                        <StatusIcon className="w-3.5 h-3.5" />
+                        <StatusIcon className="h-3.5 w-3.5" />
                         {status.label}
                       </span>
                     </div>
 
-                    <div className="grid sm:grid-cols-2 gap-3 mb-4">
+                    <div className="mb-4 grid gap-3 sm:grid-cols-2">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <Calendar className="h-4 w-4 text-gray-400" />
                         <span>
                           {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="w-4 h-4 text-gray-400" />
+                        <MapPin className="h-4 w-4 text-gray-400" />
                         <span>
                           {booking.pickupLocation}
                           {booking.pickupLocation !== booking.dropoffLocation && (
@@ -310,7 +311,7 @@ export default function MyBookingsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between border-t border-gray-100 pt-3">
                       <div>
                         <span className="text-sm text-gray-500">Total:</span>
                         <span className="ml-2 text-lg font-bold text-gray-900">
@@ -321,7 +322,7 @@ export default function MyBookingsPage() {
                         {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
                           <button
                             onClick={() => handleCancelBooking(booking.id)}
-                            className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
                           >
                             Cancel
                           </button>
@@ -331,21 +332,21 @@ export default function MyBookingsPage() {
                             <button
                               onClick={() => handleDownloadReceipt(booking)}
                               disabled={downloadingReceipt === booking.id}
-                              className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
                             >
                               {downloadingReceipt === booking.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <FileText className="w-4 h-4" />
+                                <FileText className="h-4 w-4" />
                               )}
                               Receipt
                             </button>
                             {vehicle && (
                               <Link
                                 to={`/vehicles/${vehicle.id}/book`}
-                                className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                                className="text-primary-ink hover:bg-accent inline-flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                               >
-                                <RotateCcw className="w-4 h-4" />
+                                <RotateCcw className="h-4 w-4" />
                                 Book Again
                               </Link>
                             )}
@@ -353,10 +354,10 @@ export default function MyBookingsPage() {
                         )}
                         <Link
                           to={`/dashboard/bookings/${booking.id}`}
-                          className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
                         >
                           View Details
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="h-4 w-4" />
                         </Link>
                       </div>
                     </div>

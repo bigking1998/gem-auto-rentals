@@ -32,10 +32,34 @@ import { useAuthStore } from '@/stores/authStore';
 import { useBookingDates, useBookingStore } from '@/stores/bookingStore';
 
 const extras = [
-  { id: 'insurance', name: 'Full Insurance', price: 25, icon: Shield, description: 'Complete coverage for peace of mind' },
-  { id: 'gps', name: 'GPS Navigation', price: 10, icon: Navigation, description: 'Never get lost on your journey' },
-  { id: 'childSeat', name: 'Child Seat', price: 8, icon: Baby, description: 'Safety-certified child seat' },
-  { id: 'additionalDriver', name: 'Additional Driver', price: 15, icon: UserPlus, description: 'Add another driver to your rental' },
+  {
+    id: 'insurance',
+    name: 'Full Insurance',
+    price: 25,
+    icon: Shield,
+    description: 'Complete coverage for peace of mind',
+  },
+  {
+    id: 'gps',
+    name: 'GPS Navigation',
+    price: 10,
+    icon: Navigation,
+    description: 'Never get lost on your journey',
+  },
+  {
+    id: 'childSeat',
+    name: 'Child Seat',
+    price: 8,
+    icon: Baby,
+    description: 'Safety-certified child seat',
+  },
+  {
+    id: 'additionalDriver',
+    name: 'Additional Driver',
+    price: 15,
+    icon: UserPlus,
+    description: 'Add another driver to your rental',
+  },
 ];
 
 export default function VehicleDetailPage() {
@@ -140,11 +164,11 @@ export default function VehicleDetailPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
-        <main className="flex-1 flex items-center justify-center py-12 pt-32">
+        <main className="flex flex-1 items-center justify-center py-12 pt-32">
           <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <Loader2 className="text-primary-ink mx-auto mb-4 h-12 w-12 animate-spin" />
             <p className="text-gray-600">Loading vehicle details...</p>
           </div>
         </main>
@@ -156,16 +180,18 @@ export default function VehicleDetailPage() {
   // Error state
   if (error || !vehicle) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
-        <main className="flex-1 flex items-center justify-center py-12 pt-32">
-          <div className="text-center max-w-md">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Vehicle Not Found</h2>
-            <p className="text-gray-600 mb-6">{error || 'The vehicle you are looking for does not exist.'}</p>
+        <main className="flex flex-1 items-center justify-center py-12 pt-32">
+          <div className="max-w-md text-center">
+            <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <h2 className="mb-2 text-xl font-bold text-gray-900">Vehicle Not Found</h2>
+            <p className="mb-6 text-gray-600">
+              {error || 'The vehicle you are looking for does not exist.'}
+            </p>
             <button
               onClick={() => navigate('/vehicles')}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors"
+              className="bg-primary text-primary-foreground hover:bg-primary-dark rounded-lg px-6 py-3 transition-colors"
             >
               Browse Vehicles
             </button>
@@ -200,12 +226,11 @@ export default function VehicleDetailPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 pt-24">
+    <div className="flex min-h-screen flex-col bg-gray-50 pt-24">
       <Header />
 
       <main className="flex-1">
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
           {/* Back Navigation */}
           <div className="mb-6">
             <button
@@ -216,19 +241,19 @@ export default function VehicleDetailPage() {
                   navigate('/vehicles');
                 }
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary hover:border-primary/30 transition-all shadow-sm group"
+              className="hover:text-primary-ink hover:border-primary/30 group inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50"
             >
-              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
               Back to vehicles
             </button>
           </div>
 
-          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
+          <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
             {/* Left Column - Images & Details (8 cols) */}
-            <div className="lg:col-span-8 space-y-8">
+            <div className="space-y-8 lg:col-span-8">
               {/* Image Gallery */}
               <div className="space-y-4">
-                <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 shadow-md group">
+                <div className="group relative aspect-[16/9] overflow-hidden rounded-2xl bg-gray-100 shadow-md">
                   <motion.img
                     key={activeImageIndex}
                     initial={{ opacity: 0 }}
@@ -236,48 +261,48 @@ export default function VehicleDetailPage() {
                     transition={{ duration: 0.3 }}
                     src={vehicle.images[activeImageIndex]}
                     alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
 
                   {/* Navigation Arrows */}
-                  <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
                       onClick={prevImage}
-                      className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white text-gray-900 transition-colors transform hover:scale-105"
+                      className="transform rounded-full bg-white/90 p-2 text-gray-900 shadow-lg transition-colors hover:scale-105 hover:bg-white"
                     >
-                      <ChevronLeft className="w-6 h-6" />
+                      <ChevronLeft className="h-6 w-6" />
                     </button>
                     <button
                       onClick={nextImage}
-                      className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white text-gray-900 transition-colors transform hover:scale-105"
+                      className="transform rounded-full bg-white/90 p-2 text-gray-900 shadow-lg transition-colors hover:scale-105 hover:bg-white"
                     >
-                      <ChevronRight className="w-6 h-6" />
+                      <ChevronRight className="h-6 w-6" />
                     </button>
                   </div>
 
                   {/* Image Counter */}
-                  <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/70 backdrop-blur-md text-white text-xs font-bold rounded-full">
+                  <div className="absolute bottom-4 right-4 rounded-full bg-black/70 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md">
                     {activeImageIndex + 1} / {vehicle.images.length}
                   </div>
                 </div>
 
                 {/* Thumbnails */}
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
                   {vehicle.images.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setActiveImageIndex(index)}
                       className={cn(
-                        'shrink-0 w-24 aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all',
+                        'aspect-[4/3] w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all',
                         index === activeImageIndex
-                          ? 'border-primary ring-2 ring-primary/20'
+                          ? 'border-primary ring-primary/20 ring-2'
                           : 'border-transparent hover:border-gray-300'
                       )}
                     >
                       <img
                         src={image}
                         alt={`View ${index + 1}`}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     </button>
                   ))}
@@ -285,13 +310,13 @@ export default function VehicleDetailPage() {
               </div>
 
               {/* Title & Specs */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+                <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                   <div>
-                    <span className="inline-block px-3 py-1 text-xs font-bold text-white bg-primary shadow-lg shadow-orange-200 rounded-full mb-3">
+                    <span className="text-primary-foreground bg-primary mb-3 inline-block rounded-full px-3 py-1 text-xs font-bold shadow-lg">
                       {vehicle.category}
                     </span>
-                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+                    <h1 className="mb-2 text-3xl font-bold text-gray-900 sm:text-4xl">
                       {vehicle.year} {vehicle.make} {vehicle.model}
                     </h1>
                     <div className="flex items-center gap-2">
@@ -300,16 +325,20 @@ export default function VehicleDetailPage() {
                           <Star
                             key={i}
                             className={cn(
-                              'w-4 h-4',
+                              'h-4 w-4',
                               i < Math.floor(vehicle.averageRating ?? 0)
                                 ? 'text-primary fill-primary'
-                                : 'text-gray-200 fill-gray-200'
+                                : 'fill-gray-200 text-gray-200'
                             )}
                           />
                         ))}
                       </div>
-                      <span className="font-bold text-gray-900">{vehicle.averageRating?.toFixed(1) ?? 'New'}</span>
-                      <span className="text-gray-500 text-sm">({vehicle.reviewCount ?? 0} reviews)</span>
+                      <span className="font-bold text-gray-900">
+                        {vehicle.averageRating?.toFixed(1) ?? 'New'}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        ({vehicle.reviewCount ?? 0} reviews)
+                      </span>
                     </div>
                   </div>
 
@@ -317,51 +346,55 @@ export default function VehicleDetailPage() {
                     <FavoriteButton vehicleId={vehicle.id} size="lg" />
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-bold text-gray-900">${vehicle.dailyRate}</span>
-                      <span className="text-gray-500 font-medium">/day</span>
+                      <span className="font-medium text-gray-500">/day</span>
                     </div>
-                    <p className="text-green-600 text-sm font-medium flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Best Price Guarantee
+                    <p className="flex items-center gap-1 text-sm font-medium text-green-600">
+                      <Check className="h-3 w-3" /> Best Price Guarantee
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-gray-100">
-                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl">
-                    <Users className="w-6 h-6 text-gray-400 mb-2" />
+                <div className="grid grid-cols-2 gap-4 border-y border-gray-100 py-6 md:grid-cols-4">
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-gray-50 p-4">
+                    <Users className="mb-2 h-6 w-6 text-gray-400" />
                     <span className="font-bold text-gray-900">{vehicle.seats} Seats</span>
                     <span className="text-xs text-gray-500">Capacity</span>
                   </div>
-                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl">
-                    <Gauge className="w-6 h-6 text-gray-400 mb-2" />
-                    <span className="font-bold text-gray-900">{vehicle.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</span>
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-gray-50 p-4">
+                    <Gauge className="mb-2 h-6 w-6 text-gray-400" />
+                    <span className="font-bold text-gray-900">
+                      {vehicle.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}
+                    </span>
                     <span className="text-xs text-gray-500">Transmission</span>
                   </div>
-                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl">
-                    <Fuel className="w-6 h-6 text-gray-400 mb-2" />
-                    <span className="font-bold text-gray-900 capitalize">{vehicle.fuelType.toLowerCase()}</span>
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-gray-50 p-4">
+                    <Fuel className="mb-2 h-6 w-6 text-gray-400" />
+                    <span className="font-bold capitalize text-gray-900">
+                      {vehicle.fuelType.toLowerCase()}
+                    </span>
                     <span className="text-xs text-gray-500">Fuel Type</span>
                   </div>
-                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl">
-                    <MapPin className="w-6 h-6 text-gray-400 mb-2" />
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-gray-50 p-4">
+                    <MapPin className="mb-2 h-6 w-6 text-gray-400" />
                     <span className="font-bold text-gray-900">{vehicle.doors} Doors</span>
                     <span className="text-xs text-gray-500">Access</span>
                   </div>
                 </div>
 
                 <div className="mt-8">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Description</h3>
-                  <p className="text-gray-600 leading-relaxed text-lg">{vehicle.description}</p>
+                  <h3 className="mb-3 text-lg font-bold text-gray-900">Description</h3>
+                  <p className="text-lg leading-relaxed text-gray-600">{vehicle.description}</p>
                 </div>
 
                 <div className="mt-8">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Key Features</h3>
-                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6">
+                  <h3 className="mb-4 text-lg font-bold text-gray-900">Key Features</h3>
+                  <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 md:grid-cols-3">
                     {vehicle.features.map((feature) => (
                       <div key={feature} className="flex items-center gap-2.5">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                          <Check className="w-3 h-3 text-green-600" />
+                        <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
+                          <Check className="h-3 w-3 text-green-600" />
                         </div>
-                        <span className="text-gray-700 font-medium">{feature}</span>
+                        <span className="font-medium text-gray-700">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -379,29 +412,35 @@ export default function VehicleDetailPage() {
             {/* Right Column - Booking Card (4 cols) */}
             <div className="lg:col-span-4">
               <div className="space-y-4">
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                  <div className="p-6 bg-gray-900 text-white">
-                    <h3 className="font-bold text-lg mb-1">Book This Vehicle</h3>
-                    <p className="text-gray-400 text-sm">Complete your reservation securely</p>
+                <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
+                  <div className="bg-gray-900 p-6 text-white">
+                    <h3 className="mb-1 text-lg font-bold">Book This Vehicle</h3>
+                    <p className="text-sm text-gray-400">Complete your reservation securely</p>
                   </div>
 
                   <div className="p-6">
                     {/* Dates */}
-                    <div className="space-y-4 mb-6">
+                    <div className="mb-6 space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                          <label className="mb-1.5 block text-sm font-bold text-gray-700">
                             Pick-up Date
                           </label>
                           <Popover>
                             <PopoverTrigger asChild>
-                              <button className={cn(
-                                "w-full flex items-center justify-start text-left font-medium p-3 rounded-xl border transition-all",
-                                !startDate ? "text-gray-500 border-gray-200 hover:border-primary/50" : "text-gray-900 border-primary bg-primary/5"
-                              )}>
+                              <button
+                                className={cn(
+                                  'flex w-full items-center justify-start rounded-xl border p-3 text-left font-medium transition-all',
+                                  !startDate
+                                    ? 'hover:border-primary/50 border-gray-200 text-gray-500'
+                                    : 'border-primary bg-primary/5 text-gray-900'
+                                )}
+                              >
                                 <Calendar className="mr-2 h-4 w-4 shrink-0" />
                                 <span className="truncate">
-                                  {startDate ? parseLocalDate(startDate)?.toLocaleDateString() : "Select Date"}
+                                  {startDate
+                                    ? parseLocalDate(startDate)?.toLocaleDateString()
+                                    : 'Select Date'}
                                 </span>
                               </button>
                             </PopoverTrigger>
@@ -425,18 +464,24 @@ export default function VehicleDetailPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                          <label className="mb-1.5 block text-sm font-bold text-gray-700">
                             Return Date
                           </label>
                           <Popover>
                             <PopoverTrigger asChild>
-                              <button className={cn(
-                                "w-full flex items-center justify-start text-left font-medium p-3 rounded-xl border transition-all",
-                                !endDate ? "text-gray-500 border-gray-200 hover:border-primary/50" : "text-gray-900 border-primary bg-primary/5"
-                              )}>
+                              <button
+                                className={cn(
+                                  'flex w-full items-center justify-start rounded-xl border p-3 text-left font-medium transition-all',
+                                  !endDate
+                                    ? 'hover:border-primary/50 border-gray-200 text-gray-500'
+                                    : 'border-primary bg-primary/5 text-gray-900'
+                                )}
+                              >
                                 <Calendar className="mr-2 h-4 w-4 shrink-0" />
                                 <span className="truncate">
-                                  {endDate ? parseLocalDate(endDate)?.toLocaleDateString() : "Select Date"}
+                                  {endDate
+                                    ? parseLocalDate(endDate)?.toLocaleDateString()
+                                    : 'Select Date'}
                                 </span>
                               </button>
                             </PopoverTrigger>
@@ -452,7 +497,9 @@ export default function VehicleDetailPage() {
                                     setEndDate('');
                                   }
                                 }}
-                                minDate={startDate ? parseLocalDate(startDate) || new Date() : new Date()}
+                                minDate={
+                                  startDate ? parseLocalDate(startDate) || new Date() : new Date()
+                                }
                                 selectionMode="end"
                               />
                             </PopoverContent>
@@ -463,7 +510,7 @@ export default function VehicleDetailPage() {
 
                     {/* Extras */}
                     <div className="mb-6">
-                      <label className="block text-sm font-bold text-gray-700 mb-3">
+                      <label className="mb-3 block text-sm font-bold text-gray-700">
                         Optional Extras
                       </label>
                       <div className="space-y-2">
@@ -471,17 +518,23 @@ export default function VehicleDetailPage() {
                           <label
                             key={extra.id}
                             className={cn(
-                              'flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md',
+                              'flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all hover:shadow-md',
                               selectedExtras.includes(extra.id)
-                                ? 'border-primary bg-primary/5 shadow-orange-100'
-                                : 'border-gray-200 hover:border-primary/50'
+                                ? 'border-primary bg-primary/5'
+                                : 'hover:border-primary/50 border-gray-200'
                             )}
                           >
-                            <div className={cn(
-                              "w-5 h-5 rounded border flex items-center justify-center transition-colors",
-                              selectedExtras.includes(extra.id) ? "bg-primary border-primary" : "border-gray-300 bg-white"
-                            )}>
-                              {selectedExtras.includes(extra.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                            <div
+                              className={cn(
+                                'flex h-5 w-5 items-center justify-center rounded border transition-colors',
+                                selectedExtras.includes(extra.id)
+                                  ? 'bg-primary border-primary'
+                                  : 'border-gray-300 bg-white'
+                              )}
+                            >
+                              {selectedExtras.includes(extra.id) && (
+                                <Check className="text-primary-foreground h-3.5 w-3.5" />
+                              )}
                               <input
                                 type="checkbox"
                                 checked={selectedExtras.includes(extra.id)}
@@ -489,11 +542,13 @@ export default function VehicleDetailPage() {
                                 className="hidden"
                               />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-gray-900 truncate">{extra.name}</p>
-                              <p className="text-xs text-gray-500 truncate">{extra.description}</p>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-bold text-gray-900">
+                                {extra.name}
+                              </p>
+                              <p className="truncate text-xs text-gray-500">{extra.description}</p>
                             </div>
-                            <span className="text-sm font-bold text-primary">
+                            <span className="text-primary-ink text-sm font-bold">
                               +${extra.price}
                             </span>
                           </label>
@@ -503,7 +558,7 @@ export default function VehicleDetailPage() {
 
                     {/* Summary */}
                     {days > 0 && (
-                      <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-3">
+                      <div className="mb-6 space-y-3 rounded-xl bg-gray-50 p-4">
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">
                             ${vehicle.dailyRate} x {days} days
@@ -516,7 +571,7 @@ export default function VehicleDetailPage() {
                             <span className="font-bold text-gray-900">${extrasPrice}</span>
                           </div>
                         )}
-                        <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-3 text-gray-900">
+                        <div className="flex justify-between border-t border-gray-200 pt-3 text-lg font-bold text-gray-900">
                           <span>Total</span>
                           <span>${totalPrice}</span>
                         </div>
@@ -527,32 +582,35 @@ export default function VehicleDetailPage() {
                       onClick={handleBookNow}
                       disabled={days <= 0}
                       className={cn(
-                        'block w-full py-4 text-center text-lg font-bold rounded-xl transition-all shadow-lg transform active:scale-[0.98]',
+                        'block w-full transform rounded-xl py-4 text-center text-lg font-bold shadow-lg transition-all active:scale-[0.98]',
                         days > 0
-                          ? 'bg-primary text-white hover:bg-orange-600 shadow-orange-200 hover:shadow-orange-300'
-                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          ? 'bg-primary text-primary-foreground hover:bg-primary-dark'
+                          : 'cursor-not-allowed bg-gray-100 text-gray-400'
                       )}
                     >
                       {days > 0 ? 'Book Now' : 'Select Dates'}
                     </button>
 
-                    <div className="flex items-center justify-center gap-2 mt-4 text-xs text-gray-500">
-                      <Shield className="w-3.5 h-3.5" />
+                    <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+                      <Shield className="h-3.5 w-3.5" />
                       <span>Secure SSL Booking</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Help Card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
-                      <Users className="w-5 h-5" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+                      <Users className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900 text-sm">Need Help?</p>
+                      <p className="text-sm font-bold text-gray-900">Need Help?</p>
                       <p className="text-xs text-gray-500">Call our expert support team</p>
-                      <a href="tel:+1234567890" className="text-primary font-bold text-sm block mt-0.5 hover:underline">
+                      <a
+                        href="tel:+1234567890"
+                        className="text-primary-ink mt-0.5 block text-sm font-bold hover:underline"
+                      >
                         +1 (555) 123-4567
                       </a>
                     </div>

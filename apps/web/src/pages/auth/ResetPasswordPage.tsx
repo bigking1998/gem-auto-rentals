@@ -83,28 +83,25 @@ export default function ResetPasswordPage() {
   // Invalid token state
   if (!isTokenValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-8 h-8 text-red-600" />
+          <div className="rounded-2xl bg-white p-8 text-center shadow-xl">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <AlertCircle className="h-8 w-8 text-red-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Invalid or Expired Link
-            </h2>
-            <p className="text-gray-500 mb-6">
-              This password reset link is invalid or has expired.
-              Please request a new one.
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">Invalid or Expired Link</h2>
+            <p className="mb-6 text-gray-500">
+              This password reset link is invalid or has expired. Please request a new one.
             </p>
             <Link
               to="/auth/forgot-password"
               className={cn(
-                'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-all w-full',
-                'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700'
+                'text-primary-foreground inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all',
+                'from-primary-light to-primary-dark hover:from-primary hover:to-primary-dark bg-gradient-to-r'
               )}
             >
               Request New Link
@@ -114,7 +111,7 @@ export default function ResetPasswordPage() {
                 to="/auth/login"
                 className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="h-4 w-4" />
                 Back to login
               </Link>
             </div>
@@ -125,28 +122,26 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="rounded-2xl bg-white p-8 shadow-xl">
           {/* Logo */}
-          <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center">
-              <Car className="w-7 h-7 text-white" />
+          <Link to="/" className="mb-8 flex items-center justify-center gap-2">
+            <div className="from-primary-light to-primary-dark flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br">
+              <Car className="text-primary-foreground h-7 w-7" />
             </div>
           </Link>
 
           {!isSuccess ? (
             <>
               {/* Header */}
-              <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Set new password
-                </h1>
-                <p className="text-gray-500 mt-2">
+              <div className="mb-8 text-center">
+                <h1 className="text-2xl font-bold text-gray-900">Set new password</h1>
+                <p className="mt-2 text-gray-500">
                   Your new password must be different from previous passwords.
                 </p>
               </div>
@@ -155,11 +150,11 @@ export default function ResetPasswordPage() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* New Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
                     New Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
@@ -169,7 +164,7 @@ export default function ResetPasswordPage() {
                       }}
                       placeholder="Enter new password"
                       className={cn(
-                        'w-full pl-10 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
+                        'focus:ring-primary focus:border-primary w-full rounded-lg border py-2.5 pl-10 pr-12 focus:ring-2',
                         errors.password ? 'border-red-300' : 'border-gray-200'
                       )}
                     />
@@ -178,11 +173,7 @@ export default function ResetPasswordPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
 
@@ -200,10 +191,7 @@ export default function ResetPasswordPage() {
                             )}
                           >
                             <Check
-                              className={cn(
-                                'w-3.5 h-3.5',
-                                passed ? 'opacity-100' : 'opacity-50'
-                              )}
+                              className={cn('h-3.5 w-3.5', passed ? 'opacity-100' : 'opacity-50')}
                             />
                             {req.label}
                           </div>
@@ -215,11 +203,11 @@ export default function ResetPasswordPage() {
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
                     Confirm Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={formData.confirmPassword}
@@ -229,7 +217,7 @@ export default function ResetPasswordPage() {
                       }}
                       placeholder="Confirm new password"
                       className={cn(
-                        'w-full pl-10 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
+                        'focus:ring-primary focus:border-primary w-full rounded-lg border py-2.5 pl-10 pr-12 focus:ring-2',
                         errors.confirmPassword ? 'border-red-300' : 'border-gray-200'
                       )}
                     />
@@ -239,16 +227,14 @@ export default function ResetPasswordPage() {
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="w-5 h-5" />
+                        <EyeOff className="h-5 w-5" />
                       ) : (
-                        <Eye className="w-5 h-5" />
+                        <Eye className="h-5 w-5" />
                       )}
                     </button>
                   </div>
                   {errors.confirmPassword && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.confirmPassword}
-                    </p>
+                    <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
                   )}
                 </div>
 
@@ -256,16 +242,16 @@ export default function ResetPasswordPage() {
                   type="submit"
                   disabled={isLoading}
                   className={cn(
-                    'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-all',
-                    'bg-gradient-to-r from-orange-500 to-amber-600',
+                    'text-primary-foreground flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all',
+                    'from-primary-light to-primary-dark bg-gradient-to-r',
                     isLoading
-                      ? 'opacity-70 cursor-not-allowed'
-                      : 'hover:from-orange-600 hover:to-amber-700'
+                      ? 'cursor-not-allowed opacity-70'
+                      : 'hover:from-primary hover:to-primary-dark'
                   )}
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin" />
                       Resetting...
                     </>
                   ) : (
@@ -281,22 +267,20 @@ export default function ResetPasswordPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center"
             >
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Password reset successful
-              </h2>
-              <p className="text-gray-500 mb-6">
-                Your password has been successfully reset.
-                You&apos;ll be redirected to the login page shortly.
+              <h2 className="mb-2 text-2xl font-bold text-gray-900">Password reset successful</h2>
+              <p className="mb-6 text-gray-500">
+                Your password has been successfully reset. You&apos;ll be redirected to the login
+                page shortly.
               </p>
 
               <Link
                 to="/auth/login"
                 className={cn(
-                  'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-all w-full',
-                  'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700'
+                  'text-primary-foreground inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all',
+                  'from-primary-light to-primary-dark hover:from-primary hover:to-primary-dark bg-gradient-to-r'
                 )}
               >
                 Continue to Login
@@ -311,7 +295,7 @@ export default function ResetPasswordPage() {
                 to="/auth/login"
                 className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="h-4 w-4" />
                 Back to login
               </Link>
             </div>

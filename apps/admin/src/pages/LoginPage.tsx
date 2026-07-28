@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Car, Mail, Lock, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { tokenManager, api } from '@/lib/api';
 
@@ -109,9 +109,9 @@ export default function LoginPage() {
   // Show loading state while processing SSO token
   if (ssoLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-white to-orange-100 p-4">
+      <div className="from-accent to-accent flex min-h-screen items-center justify-center bg-gradient-to-br via-white p-4">
         <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-orange-500" />
+          <Loader2 className="text-primary-ink mx-auto mb-4 h-12 w-12 animate-spin" />
           <p className="font-medium text-gray-600">Signing you in...</p>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-white to-orange-100 p-4">
+    <div className="from-accent to-accent flex min-h-screen items-center justify-center bg-gradient-to-br via-white p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -128,8 +128,8 @@ export default function LoginPage() {
         <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-xl">
           {/* Logo */}
           <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-200">
-              <Car className="h-8 w-8 text-white" />
+            <div className="bg-navy mb-4 inline-flex h-20 w-20 items-center justify-center rounded-2xl shadow-lg">
+              <img src="/logo-mark.svg" alt="Gem Car Rentals" className="h-12 w-auto" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
             <p className="mt-1 text-gray-500">Sign in to manage your fleet</p>
@@ -160,7 +160,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className="focus:ring-primary w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 transition-all focus:border-transparent focus:ring-2"
                   placeholder="admin@gemautorentals.com"
                   required
                   autoComplete="email"
@@ -176,7 +176,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 py-3 pl-10 pr-12 transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className="focus:ring-primary w-full rounded-xl border border-gray-200 py-3 pl-10 pr-12 transition-all focus:border-transparent focus:ring-2"
                   placeholder="Enter your password"
                   required
                   autoComplete="current-password"
@@ -198,7 +198,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 py-3 font-semibold text-white shadow-lg shadow-orange-200 transition-all hover:shadow-xl hover:shadow-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
+              className="from-primary-light to-primary-dark text-primary-foreground shadow-primary/20 hover:shadow-primary/30 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r py-3 font-semibold shadow-lg transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <>

@@ -5,7 +5,7 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 215 28% 17%;
+    --foreground: 215 45% 12%;
     /* Dark Navy - matches customer site */
 
     --card: 0 0% 100%;
@@ -14,19 +14,25 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 28% 17%;
 
-    --primary: 28 100% 56%;
-    /* Orange #FF871E - matches customer site */
-    --primary-foreground: 0 0% 100%;
+    --primary: 46 65% 52%;
+    --primary-ink: 42 73% 33%;
+    --primary-light: 43 82% 75%;
+    --primary-dark: 42 73% 38%;
+    --navy: 215 61% 10%;
+    --navy-card: 214 56% 12%;
+    --navy-light: 213 38% 63%;
+    /* Gold #D4AF37 - matches customer site */
+    --primary-foreground: 215 61% 10%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217 57% 27%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 28 100% 96%;
-    /* Very light orange tint - matches customer site */
-    --accent-foreground: 28 100% 56%;
+    --accent: 46 60% 95%;
+    /* Pale gold wash - matches customer site */
+    --accent-foreground: 42 73% 33%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -42,8 +48,8 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 28 100% 56%;
-    /* Orange ring - matches customer site */
+    --ring: 46 65% 52%;
+    /* Gold focus ring */
 
     --radius: 0.3rem;
     /* Matches customer site border radius */
@@ -52,15 +58,15 @@
     --sidebar-background: 215 28% 17%;
     /* Dark Navy matching foreground */
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 28 100% 56%;
-    /* Orange primary */
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 46 65% 52%;
+    /* Gold primary #D4AF37 */
+    --sidebar-primary-foreground: 215 61% 10%;
     --sidebar-accent: 215 28% 22%;
     /* Slightly lighter navy */
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 215 28% 22%;
-    --sidebar-ring: 28 100% 56%;
-    /* Orange ring */
+    --sidebar-ring: 46 65% 52%;
+    /* Gold focus ring */
   }
 
   .dark {
@@ -74,8 +80,17 @@
     --popover: 0 0% 10%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 28 100% 56%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 46 65% 52%;
+    --primary-foreground: 215 61% 10%;
+    /* On dark backgrounds gold IS readable as text, so ink shifts brighter
+       rather than darker — the light-theme value would disappear here. */
+    --primary-ink: 46 70% 62%;
+    --primary-light: 43 82% 75%;
+    --primary-dark: 42 73% 38%;
+
+    --navy: 215 61% 10%;
+    --navy-card: 214 56% 14%;
+    --navy-light: 213 38% 63%;
 
     --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 95%;
@@ -83,8 +98,8 @@
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 28 100% 15%;
-    --accent-foreground: 28 100% 70%;
+    --accent: 46 55% 18%;
+    --accent-foreground: 46 70% 70%;
 
     --destructive: 0 62.8% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -100,7 +115,7 @@
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 28 100% 56%;
+    --ring: 46 65% 52%;
 
     /* Sidebar in dark mode */
     --sidebar-background: 0 0% 5%;
@@ -117,7 +132,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 
   /* Dark mode overrides for common patterns - true dark with proper contrast */
@@ -186,9 +203,8 @@
   }
 
   /* Fix for colored backgrounds that might have white text issues */
-  .dark .bg-orange-50,
-  .dark .bg-orange-100 {
-    background-color: #2d1f0f !important;
+  .dark .bg-accent {
+    background-color: #2d2410 !important;
   }
   .dark .bg-green-50,
   .dark .bg-green-100 {
@@ -213,11 +229,13 @@
   .dark .shadow-md,
   .dark .shadow-lg,
   .dark .shadow-xl {
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5) !important;
+    box-shadow:
+      0 1px 3px 0 rgb(0 0 0 / 0.5),
+      0 1px 2px -1px rgb(0 0 0 / 0.5) !important;
   }
 
   /* Ensure dropdown/popover menus are dark */
-  .dark [class*="rounded-2xl"][class*="shadow-xl"] {
+  .dark [class*='rounded-2xl'][class*='shadow-xl'] {
     background-color: #1a1a1a !important;
     border-color: #333333 !important;
   }

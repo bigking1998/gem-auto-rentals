@@ -29,7 +29,7 @@ interface Document {
 const mockDocuments: Document[] = [
   {
     id: '1',
-    name: 'Driver\'s License',
+    name: "Driver's License",
     type: 'drivers_license',
     status: 'verified',
     uploadedAt: '2025-01-15',
@@ -57,7 +57,7 @@ const mockDocuments: Document[] = [
 ];
 
 const documentTypes = [
-  { value: 'drivers_license', label: 'Driver\'s License', icon: CreditCard },
+  { value: 'drivers_license', label: "Driver's License", icon: CreditCard },
   { value: 'passport', label: 'Passport', icon: FileText },
   { value: 'insurance', label: 'Insurance Card', icon: FileText },
   { value: 'other', label: 'Other', icon: FileText },
@@ -109,33 +109,31 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-          <p className="text-gray-500 mt-1">
-            Manage your identification and insurance documents
-          </p>
+          <p className="mt-1 text-gray-500">Manage your identification and insurance documents</p>
         </div>
         <button
           onClick={() => setShowUploadModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
+          className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium transition-colors"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="h-5 w-5" />
           Upload Document
         </button>
       </div>
 
       {/* Required Documents Notice */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+      <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
         <div className="flex gap-3">
-          <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <FileText className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
           <div>
             <h3 className="font-medium text-blue-900">Required Documents</h3>
-            <p className="text-sm text-blue-700 mt-1">
-              To complete your bookings, please upload a valid driver&apos;s license.
-              Additional documents like passport or insurance may be required for certain rentals.
+            <p className="mt-1 text-sm text-blue-700">
+              To complete your bookings, please upload a valid driver&apos;s license. Additional
+              documents like passport or insurance may be required for certain rentals.
             </p>
           </div>
         </div>
@@ -144,21 +142,17 @@ export default function DocumentsPage() {
       {/* Documents List */}
       <div className="space-y-4">
         {documents.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-gray-400" />
+          <div className="rounded-xl border border-gray-200 bg-white py-16 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+              <FileText className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No documents uploaded
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Upload your documents to start booking vehicles.
-            </p>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">No documents uploaded</h3>
+            <p className="mb-6 text-gray-500">Upload your documents to start booking vehicles.</p>
             <button
               onClick={() => setShowUploadModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
+              className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-6 py-3 font-medium"
             >
-              <Upload className="w-5 h-5" />
+              <Upload className="h-5 w-5" />
               Upload Your First Document
             </button>
           </div>
@@ -175,7 +169,7 @@ export default function DocumentsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 className={cn(
-                  'bg-white rounded-xl border overflow-hidden',
+                  'overflow-hidden rounded-xl border bg-white',
                   doc.status === 'expired' ? 'border-amber-200' : 'border-gray-200'
                 )}
               >
@@ -184,26 +178,26 @@ export default function DocumentsPage() {
                     {/* Document Icon */}
                     <div
                       className={cn(
-                        'w-12 h-12 rounded-lg flex items-center justify-center',
+                        'flex h-12 w-12 items-center justify-center rounded-lg',
                         doc.status === 'verified'
                           ? 'bg-green-100'
                           : doc.status === 'pending'
-                          ? 'bg-amber-100'
-                          : doc.status === 'expired'
-                          ? 'bg-gray-100'
-                          : 'bg-red-100'
+                            ? 'bg-amber-100'
+                            : doc.status === 'expired'
+                              ? 'bg-gray-100'
+                              : 'bg-red-100'
                       )}
                     >
                       <DocIcon
                         className={cn(
-                          'w-6 h-6',
+                          'h-6 w-6',
                           doc.status === 'verified'
                             ? 'text-green-600'
                             : doc.status === 'pending'
-                            ? 'text-amber-600'
-                            : doc.status === 'expired'
-                            ? 'text-gray-600'
-                            : 'text-red-600'
+                              ? 'text-amber-600'
+                              : doc.status === 'expired'
+                                ? 'text-gray-600'
+                                : 'text-red-600'
                         )}
                       />
                     </div>
@@ -213,37 +207,34 @@ export default function DocumentsPage() {
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="font-semibold text-gray-900">{doc.name}</h3>
-                          <p className="text-sm text-gray-500 mt-0.5">
+                          <p className="mt-0.5 text-sm text-gray-500">
                             Uploaded {formatDate(doc.uploadedAt)}
-                            {doc.expiresAt && (
-                              <>
-                                {' '}• Expires {formatDate(doc.expiresAt)}
-                              </>
-                            )}
+                            {doc.expiresAt && <> • Expires {formatDate(doc.expiresAt)}</>}
                           </p>
                         </div>
                         <span
                           className={cn(
-                            'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium',
+                            'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
                             status.className
                           )}
                         >
-                          <StatusIcon className="w-3.5 h-3.5" />
+                          <StatusIcon className="h-3.5 w-3.5" />
                           {status.label}
                         </span>
                       </div>
 
                       {/* Status Description */}
                       {doc.status === 'rejected' && (
-                        <div className="mt-3 p-3 bg-red-50 rounded-lg">
+                        <div className="mt-3 rounded-lg bg-red-50 p-3">
                           <p className="text-sm text-red-700">
-                            <strong>Reason:</strong> The document image is unclear. Please upload a clearer image.
+                            <strong>Reason:</strong> The document image is unclear. Please upload a
+                            clearer image.
                           </p>
                         </div>
                       )}
 
                       {doc.status === 'expired' && (
-                        <div className="mt-3 p-3 bg-amber-50 rounded-lg">
+                        <div className="mt-3 rounded-lg bg-amber-50 p-3">
                           <p className="text-sm text-amber-700">
                             This document has expired. Please upload an updated version.
                           </p>
@@ -251,19 +242,19 @@ export default function DocumentsPage() {
                       )}
 
                       {/* Actions */}
-                      <div className="flex gap-2 mt-4">
-                        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                          <Eye className="w-4 h-4" />
+                      <div className="mt-4 flex gap-2">
+                        <button className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200">
+                          <Eye className="h-4 w-4" />
                           View
                         </button>
                         {(doc.status === 'rejected' || doc.status === 'expired') && (
-                          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors">
-                            <Upload className="w-4 h-4" />
+                          <button className="text-primary-ink bg-accent hover:bg-primary/20 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors">
+                            <Upload className="h-4 w-4" />
                             Re-upload
                           </button>
                         )}
-                        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4" />
+                        <button className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50">
+                          <Trash2 className="h-4 w-4" />
                           Delete
                         </button>
                       </div>
@@ -279,25 +270,18 @@ export default function DocumentsPage() {
       {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowUploadModal(false)}
-          />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowUploadModal(false)} />
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6"
+            className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
           >
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Upload Document
-            </h2>
+            <h2 className="mb-4 text-xl font-semibold text-gray-900">Upload Document</h2>
 
             {/* Document Type Selection */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Document Type
-              </label>
-              <select className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+              <label className="mb-2 block text-sm font-medium text-gray-700">Document Type</label>
+              <select className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2">
                 {documentTypes.map((type) => (
                   <option key={type.value} value={type.value}>
                     {type.label}
@@ -308,49 +292,45 @@ export default function DocumentsPage() {
 
             {/* Expiration Date */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Expiration Date (if applicable)
               </label>
               <input
                 type="date"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2"
               />
             </div>
 
             {/* Drop Zone */}
             <div
               className={cn(
-                'border-2 border-dashed rounded-xl p-8 text-center transition-colors',
-                dragActive
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                'rounded-xl border-2 border-dashed p-8 text-center transition-colors',
+                dragActive ? 'border-primary bg-accent' : 'border-gray-200 hover:border-gray-300'
               )}
               onDragEnter={() => setDragActive(true)}
               onDragLeave={() => setDragActive(false)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => setDragActive(false)}
             >
-              <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 mb-1">
-                <span className="text-orange-600 font-medium cursor-pointer hover:underline">
+              <Upload className="mx-auto mb-3 h-10 w-10 text-gray-400" />
+              <p className="mb-1 text-gray-600">
+                <span className="text-primary-ink cursor-pointer font-medium hover:underline">
                   Click to upload
                 </span>{' '}
                 or drag and drop
               </p>
-              <p className="text-sm text-gray-500">
-                PNG, JPG or PDF (max. 10MB)
-              </p>
+              <p className="text-sm text-gray-500">PNG, JPG or PDF (max. 10MB)</p>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 mt-6">
+            <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="flex-1 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
               >
                 Cancel
               </button>
-              <button className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors">
+              <button className="text-primary-foreground bg-primary hover:bg-primary-dark flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors">
                 Upload Document
               </button>
             </div>

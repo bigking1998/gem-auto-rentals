@@ -150,29 +150,31 @@ export default function ExtensionModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md mx-4 bg-white rounded-xl shadow-xl overflow-hidden"
+            className="relative mx-4 w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="extend-modal-title"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 id="extend-modal-title" className="text-lg font-semibold text-gray-900">Extend Your Rental</h2>
+            <div className="flex items-center justify-between border-b border-gray-200 p-4">
+              <h2 id="extend-modal-title" className="text-lg font-semibold text-gray-900">
+                Extend Your Rental
+              </h2>
               <button
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:text-gray-600"
                 aria-label="Close"
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-4 space-y-4">
+            <div className="space-y-4 p-4">
               {/* Vehicle Info */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                  <Car className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+                <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-full">
+                  <Car className="text-primary h-5 w-5" />
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">
@@ -186,7 +188,10 @@ export default function ExtensionModal({
 
               {/* Date Picker */}
               <div>
-                <label htmlFor="new-return-date" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="new-return-date"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
                   New Return Date
                 </label>
                 <div className="relative">
@@ -200,9 +205,12 @@ export default function ExtensionModal({
                       setError(null);
                     }}
                     min={minDateStr}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    className="focus:ring-primary/20 focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-3 transition-colors focus:ring-2"
                   />
-                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" aria-hidden="true" />
+                  <Calendar
+                    className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
+                    aria-hidden="true"
+                  />
                 </div>
               </div>
 
@@ -211,49 +219,45 @@ export default function ExtensionModal({
                 <button
                   onClick={handlePreview}
                   disabled={isLoading || !newEndDate}
-                  className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-200"
                 >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    'Check Availability'
-                  )}
+                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Check Availability'}
                 </button>
               )}
 
               {/* Preview Results */}
               {preview && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   {preview.available ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center gap-2 text-green-700 mb-2">
-                        <Check className="w-5 h-5" />
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                      <div className="mb-2 flex items-center gap-2 text-green-700">
+                        <Check className="h-5 w-5" />
                         <span className="font-medium">Vehicle Available!</span>
                       </div>
                       <div className="space-y-1 text-sm text-green-600">
                         <p>Additional days: {preview.additionalDays}</p>
                         <p>Daily rate: ${booking.dailyRate.toFixed(2)}</p>
-                        <p className="font-semibold text-green-700 text-base pt-1 border-t border-green-200 mt-2">
+                        <p className="mt-2 border-t border-green-200 pt-1 text-base font-semibold text-green-700">
                           Total: ${preview.additionalAmount.toFixed(2)}
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                       <div className="flex items-center gap-2 text-red-700">
-                        <AlertCircle className="w-5 h-5" />
+                        <AlertCircle className="h-5 w-5" />
                         <span className="font-medium">Not Available</span>
                       </div>
-                      <p className="text-sm text-red-600 mt-1">
-                        The vehicle is booked starting {preview.conflictDate ? formatDate(preview.conflictDate) : 'during this period'}.
-                        Please choose an earlier date.
+                      <p className="mt-1 text-sm text-red-600">
+                        The vehicle is booked starting{' '}
+                        {preview.conflictDate
+                          ? formatDate(preview.conflictDate)
+                          : 'during this period'}
+                        . Please choose an earlier date.
                       </p>
                       <button
                         onClick={() => setPreview(null)}
-                        className="text-sm text-red-600 underline mt-2"
+                        className="mt-2 text-sm text-red-600 underline"
                       >
                         Try a different date
                       </button>
@@ -264,8 +268,8 @@ export default function ExtensionModal({
 
               {/* Error */}
               {error && (
-                <div className="flex items-center gap-2 text-red-600 text-sm">
-                  <AlertCircle className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4" />
                   <span>{error}</span>
                 </div>
               )}
@@ -273,26 +277,24 @@ export default function ExtensionModal({
 
             {/* Footer */}
             {preview?.available && (
-              <div className="p-4 border-t border-gray-200 bg-gray-50">
+              <div className="border-t border-gray-200 bg-gray-50 p-4">
                 <button
                   onClick={handleExtend}
                   disabled={isPaying}
                   className={cn(
-                    'w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2',
+                    'flex w-full items-center justify-center gap-2 rounded-lg py-3 font-semibold transition-all',
                     isPaying
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-primary text-white hover:bg-orange-600 shadow-lg shadow-orange-200'
+                      ? 'cursor-not-allowed bg-gray-300 text-gray-500'
+                      : 'bg-primary text-primary-foreground hover:bg-primary-dark shadow-lg'
                   )}
                 >
                   {isPaying ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin" />
                       Processing...
                     </>
                   ) : (
-                    <>
-                      Pay ${preview.additionalAmount.toFixed(2)} & Extend
-                    </>
+                    <>Pay ${preview.additionalAmount.toFixed(2)} & Extend</>
                   )}
                 </button>
               </div>

@@ -87,7 +87,7 @@ export default function ContactPage() {
                 className="space-y-6"
               >
                 <div>
-                  <span className="text-primary mb-4 inline-block rounded-full bg-orange-100 px-4 py-1.5 text-sm font-semibold">
+                  <span className="text-primary-ink bg-accent mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
                     Get in Touch
                   </span>
                   <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">
@@ -102,22 +102,22 @@ export default function ContactPage() {
                 <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
                   <div className="space-y-6">
                     <div className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-orange-50">
-                        <Phone className="text-primary h-5 w-5" />
+                      <div className="bg-accent flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+                        <Phone className="text-primary-ink h-5 w-5" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Call Us</p>
                         <p className="text-gray-600">
                           <a
                             href={`tel:${PRIMARY_PHONE}`}
-                            className="hover:text-primary transition-colors"
+                            className="hover:text-primary-ink transition-colors"
                           >
                             {PRIMARY_PHONE}
                           </a>
                           <span className="mx-2 text-gray-300">/</span>
                           <a
                             href={`tel:${SECONDARY_PHONE}`}
-                            className="hover:text-primary transition-colors"
+                            className="hover:text-primary-ink transition-colors"
                           >
                             {SECONDARY_PHONE}
                           </a>
@@ -126,14 +126,14 @@ export default function ContactPage() {
                     </div>
 
                     <div className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-orange-50">
-                        <Mail className="text-primary h-5 w-5" />
+                      <div className="bg-accent flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+                        <Mail className="text-primary-ink h-5 w-5" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Email Us</p>
                         <a
                           href={`mailto:${CONTACT_EMAIL}`}
-                          className="hover:text-primary break-all text-gray-600 transition-colors"
+                          className="hover:text-primary-ink break-all text-gray-600 transition-colors"
                         >
                           {CONTACT_EMAIL}
                         </a>
@@ -141,8 +141,8 @@ export default function ContactPage() {
                     </div>
 
                     <div className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-orange-50">
-                        <MapPin className="text-primary h-5 w-5" />
+                      <div className="bg-accent flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+                        <MapPin className="text-primary-ink h-5 w-5" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Visit Us</p>
@@ -155,7 +155,7 @@ export default function ContactPage() {
                 {/* Operating Hours */}
                 <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
                   <h3 className="mb-6 flex items-center text-xl font-bold text-gray-900">
-                    <Clock className="text-primary mr-3 h-6 w-6" />
+                    <Clock className="text-primary-ink mr-3 h-6 w-6" />
                     Operating Hours
                   </h3>
                   <div className="space-y-4">
@@ -194,7 +194,7 @@ export default function ContactPage() {
                     to{' '}
                     <a
                       href={`mailto:${CONTACT_EMAIL}`}
-                      className="text-primary break-all font-medium hover:underline"
+                      className="text-primary-ink break-all font-medium hover:underline"
                     >
                       {CONTACT_EMAIL}
                     </a>
@@ -272,7 +272,7 @@ export default function ContactPage() {
 
                     <button
                       type="submit"
-                      className="bg-primary group inline-flex w-full items-center justify-center rounded-lg px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:bg-orange-600 hover:shadow-xl"
+                      className="bg-primary text-primary-foreground hover:bg-primary-dark group inline-flex w-full items-center justify-center rounded-lg px-8 py-4 text-lg font-semibold shadow-lg transition-all hover:shadow-xl"
                     >
                       <Send className="mr-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                       Open in My Email App
@@ -283,7 +283,7 @@ export default function ContactPage() {
                     Prefer to talk it through? Call{' '}
                     <a
                       href={`tel:${PRIMARY_PHONE}`}
-                      className="text-primary font-medium hover:underline"
+                      className="text-primary-ink font-medium hover:underline"
                     >
                       {PRIMARY_PHONE}
                     </a>{' '}

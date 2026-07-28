@@ -5,32 +5,36 @@ const steps = [
   {
     icon: Search,
     title: 'Browse & Select',
-    description: 'Explore our diverse fleet and find the perfect vehicle for your needs. Filter by category, price, or features.',
-    color: 'from-orange-400 to-orange-600',
+    description:
+      'Explore our diverse fleet and find the perfect vehicle for your needs. Filter by category, price, or features.',
+    color: 'from-primary-light to-primary-dark',
   },
   {
     icon: CalendarCheck,
     title: 'Book & Verify',
-    description: 'Choose your dates, add optional extras, and complete a quick verification process.',
-    color: 'from-orange-400 to-orange-600',
+    description:
+      'Choose your dates, add optional extras, and complete a quick verification process.',
+    color: 'from-primary-light to-primary-dark',
   },
   {
     icon: FileSignature,
     title: 'Sign & Pay',
-    description: 'Review and sign the rental agreement digitally. Secure payment with multiple options.',
-    color: 'from-orange-400 to-orange-600',
+    description:
+      'Review and sign the rental agreement digitally. Secure payment with multiple options.',
+    color: 'from-primary-light to-primary-dark',
   },
   {
     icon: Car,
     title: 'Pick Up & Go',
-    description: 'Collect your vehicle at the designated location. Our team will walk you through everything.',
-    color: 'from-orange-400 to-orange-600',
+    description:
+      'Collect your vehicle at the designated location. Our team will walk you through everything.',
+    color: 'from-primary-light to-primary-dark',
   },
 ];
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-20 lg:py-28 bg-gray-50">
+    <section id="how-it-works" className="bg-gray-50 py-20 lg:py-28">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -38,15 +42,13 @@ export default function HowItWorks() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12 lg:mb-16"
+          className="mb-12 text-center lg:mb-16"
         >
-          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
+          <span className="bg-primary/10 text-primary mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
             Simple Process
           </span>
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-            How It Works
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">How It Works</h2>
+          <p className="mx-auto max-w-2xl text-lg text-gray-600">
             Renting a car has never been easier. Follow these simple steps to get on the road.
           </p>
         </motion.div>
@@ -54,9 +56,9 @@ export default function HowItWorks() {
         {/* Steps Grid */}
         <div className="relative">
           {/* Connector Line (Desktop) */}
-          <div className="hidden lg:block absolute top-24 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-gray-200 via-orange-200 to-gray-200" />
+          <div className="via-primary absolute left-[12%] right-[12%] top-24 hidden h-0.5 bg-gradient-to-r from-gray-200 to-gray-200 lg:block" />
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
             {steps.map((step, index) => (
               <motion.div
                 key={step.title}
@@ -68,22 +70,20 @@ export default function HowItWorks() {
               >
                 <div className="text-center">
                   {/* Step Number */}
-                  <div className="relative inline-flex mb-6">
-                    <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}>
-                      <step.icon className="w-10 h-10 text-white" />
+                  <div className="relative mb-6 inline-flex">
+                    <div
+                      className={`h-20 w-20 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}
+                    >
+                      <step.icon className="h-10 w-10 text-white" />
                     </div>
-                    <span className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-sm font-bold text-gray-900">
+                    <span className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold text-gray-900 shadow-md">
                       {index + 1}
                     </span>
                   </div>
 
                   {/* Content */}
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">
-                    {step.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {step.description}
-                  </p>
+                  <h3 className="mb-3 text-xl font-bold text-gray-900">{step.title}</h3>
+                  <p className="leading-relaxed text-gray-600">{step.description}</p>
                 </div>
               </motion.div>
             ))}

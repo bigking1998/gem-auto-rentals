@@ -234,8 +234,8 @@ export function VehicleForm({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-orange-100 p-2">
-            <Car className="text-primary h-5 w-5" />
+          <div className="bg-accent rounded-lg p-2">
+            <Car className="text-accent-foreground h-5 w-5" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -257,7 +257,7 @@ export function VehicleForm({
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Vehicle Images
               {isUploading && (
-                <span className="ml-2 text-xs text-orange-500">
+                <span className="text-primary-ink ml-2 text-xs">
                   <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
                   Uploading...
                 </span>
@@ -296,14 +296,14 @@ export function VehicleForm({
               {pendingPreviews.map((preview, index) => (
                 <div
                   key={`pending-${index}`}
-                  className="group relative aspect-square overflow-hidden rounded-lg border-2 border-dashed border-orange-300"
+                  className="border-primary group relative aspect-square overflow-hidden rounded-lg border-2 border-dashed"
                 >
                   <img
                     src={preview}
                     alt={`Pending ${index + 1}`}
                     className="h-full w-full object-cover opacity-80"
                   />
-                  <div className="absolute left-1 top-1 rounded bg-orange-500 px-1.5 py-0.5 text-[10px] text-white">
+                  <div className="bg-primary text-primary-foreground absolute left-1 top-1 rounded px-1.5 py-0.5 text-[10px]">
                     Pending
                   </div>
                   <button
@@ -322,7 +322,7 @@ export function VehicleForm({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
-                  className="hover:border-primary hover:text-primary flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  className="hover:border-primary hover:text-primary-ink flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isUploading ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -345,7 +345,7 @@ export function VehicleForm({
             <p className="mt-2 text-xs text-gray-500">
               Upload up to 8 images (JPEG, PNG, WebP). Max 5MB each.
               {!isEditing && pendingPreviews.length > 0 && (
-                <span className="ml-1 text-orange-500">
+                <span className="text-primary-ink ml-1">
                   Pending images will be uploaded when the vehicle is saved.
                 </span>
               )}
@@ -548,8 +548,8 @@ export function VehicleForm({
                   className={cn(
                     'rounded-full border px-3 py-1.5 text-sm transition-colors',
                     selectedFeatures.includes(feature)
-                      ? 'bg-primary border-primary text-white'
-                      : 'hover:border-primary hover:text-primary border-gray-200 text-gray-600'
+                      ? 'bg-primary border-primary text-primary-foreground'
+                      : 'hover:border-primary hover:text-primary-ink border-gray-200 text-gray-600'
                   )}
                 >
                   {feature}
@@ -618,7 +618,7 @@ export function VehicleForm({
           <button
             type="submit"
             disabled={isLoading}
-            className="bg-primary rounded-lg px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-primary text-primary-foreground hover:bg-primary-dark rounded-lg px-6 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? 'Saving...' : isEditing ? 'Update Vehicle' : 'Add Vehicle'}
           </button>

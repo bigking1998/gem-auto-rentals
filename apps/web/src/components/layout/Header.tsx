@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Car, User, LogOut, ChevronDown, Shield, Loader2 } from 'lucide-react';
+import { Menu, X, User, LogOut, ChevronDown, Shield, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/lib/api';
@@ -61,33 +61,45 @@ export default function Header({ variant = 'default' }: HeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 pt-6 px-4 sm:px-6 lg:px-8 transition-all duration-300">
+    <header className="fixed left-0 right-0 top-0 z-50 px-4 pt-6 transition-all duration-300 sm:px-6 lg:px-8">
       <div
         className={`
-          max-w-7xl mx-auto rounded-2xl transition-all duration-300
-          ${isScrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-lg py-3 px-6'
-            : 'bg-white shadow-md py-4 px-8'}
+          mx-auto max-w-7xl rounded-2xl transition-all duration-300
+          ${
+            isScrolled
+              ? 'bg-white/95 px-6 py-3 shadow-lg backdrop-blur-md'
+              : 'bg-white px-8 py-4 shadow-md'
+          }
         `}
       >
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center transition-transform group-hover:scale-105">
-              <Car className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900 tracking-tight">
-              Gem Auto Rentals
+          <Link to="/" className="group flex items-center gap-2.5">
+            <img
+              src="/logo-mark.svg"
+              alt=""
+              aria-hidden="true"
+              width={40}
+              height={36}
+              className="h-9 w-auto transition-transform group-hover:scale-105"
+            />
+            <span className="flex flex-col leading-none">
+              <span className="text-navy font-serif text-xl font-bold tracking-tight">
+                GEM
+                <span className="text-primary-ink ml-1.5 text-lg font-semibold tracking-[0.12em]">
+                  CAR RENTALS
+                </span>
+              </span>
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden items-center space-x-8 md:flex">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-gray-600 hover:text-primary transition-colors hover:bg-gray-50 px-3 py-2 rounded-lg"
+                className="hover:text-primary rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
               >
                 {link.label}
               </a>
@@ -95,13 +107,13 @@ export default function Header({ variant = 'default' }: HeaderProps) {
           </nav>
 
           {/* Auth Buttons / User Menu */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden items-center space-x-4 md:flex">
             {isAuthenticated && user ? (
               variant === 'booking' ? (
                 // Booking page - show "Select Different Car" button
                 <Link
                   to="/vehicles"
-                  className="text-sm font-bold bg-primary hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all"
+                  className="bg-primary hover:bg-primary-dark text-primary-foreground rounded-lg px-5 py-2.5 text-sm font-bold shadow-lg transition-all"
                 >
                   Select Different Car
                 </Link>
@@ -110,13 +122,15 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-primary px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="hover:text-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                   >
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-primary" />
+                    <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
+                      <User className="text-primary h-4 w-4" />
                     </div>
                     <span>{user.firstName}</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`}
+                    />
                   </button>
 
                   <AnimatePresence>
@@ -125,7 +139,7 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
+                        className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-gray-100 bg-white py-2 shadow-lg"
                       >
                         <Link
                           to="/dashboard/bookings"
@@ -138,12 +152,12 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                           <button
                             onClick={handleAdminRedirect}
                             disabled={isAdminRedirecting}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 font-medium disabled:opacity-50"
+                            className="text-primary-ink hover:bg-accent flex w-full items-center gap-2 px-4 py-2 text-sm font-medium disabled:opacity-50"
                           >
                             {isAdminRedirecting ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              <Shield className="w-4 h-4" />
+                              <Shield className="h-4 w-4" />
                             )}
                             {isAdminRedirecting ? 'Redirecting...' : 'My Admin'}
                           </button>
@@ -154,9 +168,9 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                             setIsUserMenuOpen(false);
                             handleLogout();
                           }}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                         >
-                          <LogOut className="w-4 h-4" />
+                          <LogOut className="h-4 w-4" />
                           Sign Out
                         </button>
                       </motion.div>
@@ -167,10 +181,16 @@ export default function Header({ variant = 'default' }: HeaderProps) {
             ) : (
               // Not authenticated - show login/signup
               <>
-                <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-primary hover:bg-orange-50 px-4 py-2 rounded-lg transition-colors">
+                <Link
+                  to="/login"
+                  className="hover:text-primary hover:bg-accent rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors"
+                >
                   Log in
                 </Link>
-                <Link to="/signup" className="text-sm font-bold bg-primary hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all">
+                <Link
+                  to="/signup"
+                  className="bg-primary hover:bg-primary-dark text-primary-foreground rounded-lg px-5 py-2.5 text-sm font-bold shadow-lg transition-all"
+                >
                   Sign up
                 </Link>
               </>
@@ -179,7 +199,7 @@ export default function Header({ variant = 'default' }: HeaderProps) {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-gray-600 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
+            className="hover:text-primary rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-50 md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -194,25 +214,25 @@ export default function Header({ variant = 'default' }: HeaderProps) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-[calc(100%+0.5rem)] left-4 right-4 bg-white rounded-2xl shadow-xl p-6 md:hidden border border-gray-100"
+            className="absolute left-4 right-4 top-[calc(100%+0.5rem)] rounded-2xl border border-gray-100 bg-white p-6 shadow-xl md:hidden"
           >
             <nav className="flex flex-col space-y-4">
               {navLinks.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-lg font-medium text-gray-600 hover:text-primary hover:bg-gray-50 px-4 py-3 rounded-xl transition-colors"
+                  className="hover:text-primary rounded-xl px-4 py-3 text-lg font-medium text-gray-600 transition-colors hover:bg-gray-50"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="pt-4 border-t border-gray-100 flex flex-col space-y-3">
+              <div className="flex flex-col space-y-3 border-t border-gray-100 pt-4">
                 {isAuthenticated && user ? (
                   variant === 'booking' ? (
                     <Link
                       to="/vehicles"
-                      className="w-full text-center bg-primary hover:bg-orange-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-orange-200 block"
+                      className="bg-primary hover:bg-primary-dark text-primary-foreground block w-full rounded-lg py-3 text-center font-bold shadow-lg"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Select Different Car
@@ -221,7 +241,7 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                     <>
                       <Link
                         to="/dashboard/bookings"
-                        className="w-full text-center text-gray-700 hover:bg-gray-50 hover:text-primary font-medium py-3 rounded-lg border border-gray-200 block"
+                        className="hover:text-primary block w-full rounded-lg border border-gray-200 py-3 text-center font-medium text-gray-700 hover:bg-gray-50"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         My Dashboard
@@ -230,12 +250,12 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                         <button
                           onClick={handleAdminRedirect}
                           disabled={isAdminRedirecting}
-                          className="w-full text-center text-orange-600 hover:bg-orange-50 font-medium py-3 rounded-lg border border-orange-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                          className="text-primary-ink hover:bg-accent border-primary flex w-full items-center justify-center gap-2 rounded-lg border py-3 text-center font-medium disabled:opacity-50"
                         >
                           {isAdminRedirecting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Shield className="w-4 h-4" />
+                            <Shield className="h-4 w-4" />
                           )}
                           {isAdminRedirecting ? 'Redirecting...' : 'My Admin'}
                         </button>
@@ -245,7 +265,7 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                           setIsMobileMenuOpen(false);
                           handleLogout();
                         }}
-                        className="w-full text-center text-red-600 hover:bg-red-50 font-medium py-3 rounded-lg border border-red-200 block"
+                        className="block w-full rounded-lg border border-red-200 py-3 text-center font-medium text-red-600 hover:bg-red-50"
                       >
                         Sign Out
                       </button>
@@ -253,10 +273,18 @@ export default function Header({ variant = 'default' }: HeaderProps) {
                   )
                 ) : (
                   <>
-                    <Link to="/login" className="w-full text-center text-gray-700 hover:bg-gray-50 hover:text-primary font-medium py-3 rounded-lg border border-gray-200 block" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link
+                      to="/login"
+                      className="hover:text-primary block w-full rounded-lg border border-gray-200 py-3 text-center font-medium text-gray-700 hover:bg-gray-50"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
                       Log in
                     </Link>
-                    <Link to="/signup" className="w-full text-center bg-primary hover:bg-orange-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-orange-200 block" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link
+                      to="/signup"
+                      className="bg-primary hover:bg-primary-dark text-primary-foreground block w-full rounded-lg py-3 text-center font-bold shadow-lg"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
                       Sign up
                     </Link>
                   </>

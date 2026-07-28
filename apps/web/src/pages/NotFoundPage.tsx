@@ -23,11 +23,11 @@ export default function NotFoundPage() {
               transition={{ duration: 0.6 }}
               className="mx-auto max-w-2xl text-center"
             >
-              <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-orange-100">
-                <Compass className="text-primary h-10 w-10" />
+              <div className="bg-accent mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl">
+                <Compass className="text-primary-ink h-10 w-10" />
               </div>
 
-              <p className="text-primary mb-4 text-6xl font-bold lg:text-8xl">404</p>
+              <p className="text-primary-ink mb-4 text-6xl font-bold lg:text-8xl">404</p>
               <h1 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">
                 This Page Took a Wrong Turn
               </h1>
@@ -39,7 +39,7 @@ export default function NotFoundPage() {
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link
                   to="/"
-                  className="bg-primary inline-flex w-full items-center justify-center rounded-lg px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:bg-orange-600 hover:shadow-xl sm:w-auto"
+                  className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex w-full items-center justify-center rounded-lg px-8 py-4 text-lg font-semibold shadow-lg transition-all hover:shadow-xl sm:w-auto"
                 >
                   <Home className="mr-2 h-5 w-5" />
                   Back to Home
@@ -47,7 +47,7 @@ export default function NotFoundPage() {
 
                 <Link
                   to="/vehicles"
-                  className="hover:border-primary hover:text-primary group inline-flex w-full items-center justify-center rounded-lg border-2 border-gray-200 bg-white px-8 py-4 text-lg font-semibold text-gray-900 transition-all sm:w-auto"
+                  className="hover:border-primary hover:text-primary-ink group inline-flex w-full items-center justify-center rounded-lg border-2 border-gray-200 bg-white px-8 py-4 text-lg font-semibold text-gray-900 transition-all sm:w-auto"
                 >
                   <Car className="mr-2 h-5 w-5" />
                   Browse Vehicles
@@ -57,7 +57,7 @@ export default function NotFoundPage() {
 
               <p className="mt-10 text-sm text-gray-500">
                 Still stuck?{' '}
-                <Link to="/contact" className="text-primary font-medium hover:underline">
+                <Link to="/contact" className="text-primary-ink font-medium hover:underline">
                   Contact us
                 </Link>{' '}
                 and we will point you in the right direction.

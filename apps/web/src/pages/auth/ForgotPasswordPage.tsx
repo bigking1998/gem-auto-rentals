@@ -38,26 +38,26 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="rounded-2xl bg-white p-8 shadow-xl">
           {/* Logo */}
-          <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-              <Car className="w-7 h-7 text-primary" />
+          <Link to="/" className="mb-8 flex items-center justify-center gap-2">
+            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-xl">
+              <Car className="text-primary-ink h-7 w-7" />
             </div>
           </Link>
 
           {!isSubmitted ? (
             <>
               {/* Header */}
-              <div className="text-center mb-8">
+              <div className="mb-8 text-center">
                 <h1 className="text-2xl font-bold text-gray-900">Forgot password?</h1>
-                <p className="text-gray-500 mt-2">
+                <p className="mt-2 text-gray-500">
                   No worries, we&apos;ll send you reset instructions.
                 </p>
               </div>
@@ -65,11 +65,11 @@ export default function ForgotPasswordPage() {
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
                     Email Address
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                     <input
                       type="email"
                       value={email}
@@ -79,28 +79,26 @@ export default function ForgotPasswordPage() {
                       }}
                       placeholder="Enter your email"
                       className={cn(
-                        'w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all',
+                        'focus:ring-primary/20 focus:border-primary w-full rounded-lg border py-2.5 pl-10 pr-4 transition-all focus:ring-2',
                         error ? 'border-red-300' : 'border-gray-200'
                       )}
                     />
                   </div>
-                  {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+                  {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
                   className={cn(
-                    'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-all',
-                    'bg-primary hover:bg-orange-600 shadow-lg shadow-orange-200',
-                    isLoading
-                      ? 'opacity-70 cursor-not-allowed'
-                      : ''
+                    'text-primary-foreground flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all',
+                    'bg-primary hover:bg-primary-dark shadow-lg',
+                    isLoading ? 'cursor-not-allowed opacity-70' : ''
                   )}
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin" />
                       Sending...
                     </>
                   ) : (
@@ -116,13 +114,11 @@ export default function ForgotPasswordPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center"
             >
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Check your email
-              </h2>
-              <p className="text-gray-500 mb-6">
+              <h2 className="mb-2 text-2xl font-bold text-gray-900">Check your email</h2>
+              <p className="mb-6 text-gray-500">
                 We sent a password reset link to
                 <br />
                 <span className="font-medium text-gray-900">{email}</span>
@@ -131,11 +127,11 @@ export default function ForgotPasswordPage() {
               <button
                 onClick={() => window.open('mailto:', '_blank')}
                 className={cn(
-                  'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-all mb-4',
-                  'bg-primary hover:bg-orange-600 shadow-lg shadow-orange-200'
+                  'text-primary-foreground mb-4 flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all',
+                  'bg-primary hover:bg-primary-dark shadow-lg'
                 )}
               >
-                <Mail className="w-5 h-5" />
+                <Mail className="h-5 w-5" />
                 Open Email App
               </button>
 
@@ -146,7 +142,7 @@ export default function ForgotPasswordPage() {
                     setIsSubmitted(false);
                     setEmail('');
                   }}
-                  className="text-primary hover:text-orange-700 font-medium"
+                  className="text-primary-ink font-medium hover:underline"
                 >
                   Click to resend
                 </button>
@@ -160,12 +156,11 @@ export default function ForgotPasswordPage() {
               to="/login"
               className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="h-4 w-4" />
               Back to login
             </Link>
           </div>
         </div>
-
       </motion.div>
     </div>
   );

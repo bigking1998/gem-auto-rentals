@@ -336,8 +336,8 @@ export default function DocumentUploadStep({ data, onChange }: DocumentUploadSte
       {/* Verification Notice */}
       <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
-            <FileText className="h-4 w-4 text-orange-600" />
+          <div className="bg-accent flex h-8 w-8 items-center justify-center rounded-full">
+            <FileText className="text-primary-ink h-4 w-4" />
           </div>
           <div>
             <h4 className="text-sm font-medium text-gray-900">Document Verification</h4>
@@ -410,15 +410,15 @@ function UploadArea({
       className={cn(
         'relative cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all',
         isDragging
-          ? 'border-orange-500 bg-orange-50'
+          ? 'border-primary bg-accent'
           : error
             ? 'border-red-300 bg-red-50'
-            : 'border-gray-300 hover:border-orange-400 hover:bg-gray-50'
+            : 'hover:border-primary border-gray-300 hover:bg-gray-50'
       )}
     >
       {isUploading ? (
         <div className="flex flex-col items-center">
-          <Loader2 className="mb-4 h-12 w-12 animate-spin text-orange-500" />
+          <Loader2 className="text-primary-ink mb-4 h-12 w-12 animate-spin" />
           <p className="font-medium text-gray-600">Uploading...</p>
         </div>
       ) : (
@@ -431,7 +431,7 @@ function UploadArea({
           {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-700"
+            className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
           >
             <Upload className="h-4 w-4" />
             Select File

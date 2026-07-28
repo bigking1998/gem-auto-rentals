@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements,
-} from '@stripe/react-stripe-js';
-import { CreditCard, Lock, Check, Shield, Calendar, MapPin, User, AlertCircle, Loader2 } from 'lucide-react';
+  CreditCard,
+  Lock,
+  Check,
+  Shield,
+  Calendar,
+  MapPin,
+  User,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react';
 import type { BookingData } from '@/pages/BookingPage';
 import { cn } from '@/lib/utils';
 import { getStripe, stripeAppearance } from '@/lib/stripe';
@@ -53,7 +58,9 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [cardComplete, setCardComplete] = useState(false);
-  const [nameOnCard, setNameOnCard] = useState(`${data.customer.firstName} ${data.customer.lastName}`);
+  const [nameOnCard, setNameOnCard] = useState(
+    `${data.customer.firstName} ${data.customer.lastName}`
+  );
   const [useDemoMode, setUseDemoMode] = useState(true); // Demo mode toggle
 
   const handleCardChange = (event: { complete: boolean; error?: { message: string } }) => {
@@ -138,40 +145,36 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
 
   return (
     <form onSubmit={handleSubmit} className="p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">
-        Review & Payment
-      </h2>
-      <p className="text-gray-500 mb-6">
+      <h2 className="mb-2 text-xl font-semibold text-gray-900">Review & Payment</h2>
+      <p className="mb-6 text-gray-500">
         Please review your booking details and complete the payment.
       </p>
 
       <div className="space-y-6">
         {/* Booking Summary */}
-        <div className="bg-gray-50 rounded-xl p-5">
-          <h3 className="font-medium text-gray-900 mb-4">Booking Summary</h3>
+        <div className="rounded-xl bg-gray-50 p-5">
+          <h3 className="mb-4 font-medium text-gray-900">Booking Summary</h3>
 
           {/* Vehicle */}
-          <div className="flex gap-4 pb-4 border-b border-gray-200">
+          <div className="flex gap-4 border-b border-gray-200 pb-4">
             <img
               src={vehicle.images[0]}
               alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-              className="w-24 h-18 object-cover rounded-lg"
+              className="h-18 w-24 rounded-lg object-cover"
             />
             <div>
               <h4 className="font-semibold text-gray-900">
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </h4>
               <p className="text-sm text-gray-500">{vehicle.category}</p>
-              <p className="text-sm text-orange-600 font-medium mt-1">
-                ${vehicle.dailyRate}/day
-              </p>
+              <p className="text-primary-ink mt-1 text-sm font-medium">${vehicle.dailyRate}/day</p>
             </div>
           </div>
 
           {/* Dates & Location */}
-          <div className="py-4 border-b border-gray-200 space-y-3">
+          <div className="space-y-3 border-b border-gray-200 py-4">
             <div className="flex items-start gap-3">
-              <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+              <Calendar className="mt-0.5 h-5 w-5 text-gray-400" />
               <div>
                 <p className="text-sm font-medium text-gray-900">
                   {new Date(data.startDate).toLocaleDateString('en-US', {
@@ -195,24 +198,20 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
             </div>
 
             <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+              <MapPin className="mt-0.5 h-5 w-5 text-gray-400" />
               <div>
-                <p className="text-sm font-medium text-gray-900">
-                  {data.pickupLocation}
-                </p>
+                <p className="text-sm font-medium text-gray-900">{data.pickupLocation}</p>
                 {data.pickupLocation !== data.dropoffLocation && (
-                  <p className="text-xs text-gray-500">
-                    Return to: {data.dropoffLocation}
-                  </p>
+                  <p className="text-xs text-gray-500">Return to: {data.dropoffLocation}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Customer */}
-          <div className="py-4 border-b border-gray-200">
+          <div className="border-b border-gray-200 py-4">
             <div className="flex items-start gap-3">
-              <User className="w-5 h-5 text-gray-400 mt-0.5" />
+              <User className="mt-0.5 h-5 w-5 text-gray-400" />
               <div>
                 <p className="text-sm font-medium text-gray-900">
                   {data.customer.firstName} {data.customer.lastName}
@@ -225,28 +224,31 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
           </div>
 
           {/* Extras */}
-          {(data.extras.insurance || data.extras.gps || data.extras.childSeat || data.extras.additionalDriver) && (
+          {(data.extras.insurance ||
+            data.extras.gps ||
+            data.extras.childSeat ||
+            data.extras.additionalDriver) && (
             <div className="pt-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Extras</h4>
+              <h4 className="mb-2 text-sm font-medium text-gray-700">Selected Extras</h4>
               <div className="flex flex-wrap gap-2">
                 {data.extras.insurance && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                    <Shield className="w-3 h-3" />
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+                    <Shield className="h-3 w-3" />
                     Full Insurance
                   </span>
                 )}
                 {data.extras.gps && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
                     GPS Navigation
                   </span>
                 )}
                 {data.extras.childSeat && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-medium">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-pink-100 px-2.5 py-1 text-xs font-medium text-pink-700">
                     Child Seat
                   </span>
                 )}
                 {data.extras.additionalDriver && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+                  <span className="bg-accent text-accent-foreground inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
                     Additional Driver
                   </span>
                 )}
@@ -256,26 +258,24 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
         </div>
 
         {/* Payment Form */}
-        <div className="bg-gray-50 rounded-xl p-5">
-          <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-orange-600" />
+        <div className="rounded-xl bg-gray-50 p-5">
+          <h3 className="mb-4 flex items-center gap-2 font-medium text-gray-900">
+            <CreditCard className="text-primary-ink h-5 w-5" />
             Payment Details
           </h3>
 
           {/* Demo Mode Toggle */}
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <label className="flex items-center gap-3 cursor-pointer">
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <label className="flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={useDemoMode}
                 onChange={(e) => setUseDemoMode(e.target.checked)}
-                className="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
               />
               <div>
                 <span className="text-sm font-medium text-amber-800">Demo Mode</span>
-                <p className="text-xs text-amber-600">
-                  Skip actual payment processing for testing
-                </p>
+                <p className="text-xs text-amber-600">Skip actual payment processing for testing</p>
               </div>
             </label>
           </div>
@@ -283,33 +283,28 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
           <div className="space-y-4">
             {/* Name on Card */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Name on Card
-              </label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Name on Card</label>
               <input
                 type="text"
                 value={nameOnCard}
                 onChange={(e) => setNameOnCard(e.target.value)}
                 placeholder="John Doe"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2"
                 required
               />
             </div>
 
             {/* Stripe Card Element */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Card Information
               </label>
-              <div className="p-4 border border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-orange-500 transition-all">
-                <CardElement
-                  options={cardElementOptions}
-                  onChange={handleCardChange}
-                />
+              <div className="focus-within:ring-primary focus-within:border-primary rounded-lg border border-gray-200 bg-white p-4 transition-all focus-within:ring-2">
+                <CardElement options={cardElementOptions} onChange={handleCardChange} />
               </div>
               {paymentError && (
-                <div className="flex items-center gap-2 mt-2 text-sm text-red-600">
-                  <AlertCircle className="w-4 h-4" />
+                <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4" />
                   {paymentError}
                 </div>
               )}
@@ -319,13 +314,13 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
             <div className="flex items-center gap-3 pt-2">
               <span className="text-xs text-gray-500">Accepted cards:</span>
               <div className="flex gap-2">
-                <div className="w-10 h-6 bg-white border border-gray-200 rounded flex items-center justify-center">
+                <div className="flex h-6 w-10 items-center justify-center rounded border border-gray-200 bg-white">
                   <span className="text-[10px] font-bold text-blue-700">VISA</span>
                 </div>
-                <div className="w-10 h-6 bg-white border border-gray-200 rounded flex items-center justify-center">
+                <div className="flex h-6 w-10 items-center justify-center rounded border border-gray-200 bg-white">
                   <span className="text-[10px] font-bold text-red-600">MC</span>
                 </div>
-                <div className="w-10 h-6 bg-white border border-gray-200 rounded flex items-center justify-center">
+                <div className="flex h-6 w-10 items-center justify-center rounded border border-gray-200 bg-white">
                   <span className="text-[10px] font-bold text-blue-500">AMEX</span>
                 </div>
               </div>
@@ -333,49 +328,49 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
           </div>
 
           {/* Security Notice */}
-          <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
-            <Lock className="w-4 h-4" />
+          <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+            <Lock className="h-4 w-4" />
             Your payment is secured with 256-bit SSL encryption
           </div>
         </div>
 
         {/* Price Breakdown */}
-        <div className="bg-orange-50 rounded-xl p-5">
-          <h3 className="font-medium text-orange-900 mb-3">Price Breakdown</h3>
+        <div className="bg-accent rounded-xl p-5">
+          <h3 className="text-navy mb-3 font-medium">Price Breakdown</h3>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-orange-700">
+              <span className="text-primary-ink">
                 ${vehicle.dailyRate} x {days} days
               </span>
-              <span className="text-orange-900">${vehicle.dailyRate * days}</span>
+              <span className="text-navy">${vehicle.dailyRate * days}</span>
             </div>
             {data.extras.insurance && (
               <div className="flex justify-between text-sm">
-                <span className="text-orange-700">Full Insurance</span>
-                <span className="text-orange-900">${25 * days}</span>
+                <span className="text-primary-ink">Full Insurance</span>
+                <span className="text-navy">${25 * days}</span>
               </div>
             )}
             {data.extras.gps && (
               <div className="flex justify-between text-sm">
-                <span className="text-orange-700">GPS Navigation</span>
-                <span className="text-orange-900">${10 * days}</span>
+                <span className="text-primary-ink">GPS Navigation</span>
+                <span className="text-navy">${10 * days}</span>
               </div>
             )}
             {data.extras.childSeat && (
               <div className="flex justify-between text-sm">
-                <span className="text-orange-700">Child Seat</span>
-                <span className="text-orange-900">${8 * days}</span>
+                <span className="text-primary-ink">Child Seat</span>
+                <span className="text-navy">${8 * days}</span>
               </div>
             )}
             {data.extras.additionalDriver && (
               <div className="flex justify-between text-sm">
-                <span className="text-orange-700">Additional Driver</span>
-                <span className="text-orange-900">${15 * days}</span>
+                <span className="text-primary-ink">Additional Driver</span>
+                <span className="text-navy">${15 * days}</span>
               </div>
             )}
-            <div className="flex justify-between pt-3 border-t border-orange-200">
-              <span className="font-semibold text-orange-900">Total</span>
-              <span className="text-xl font-bold text-orange-600">${total}</span>
+            <div className="border-primary flex justify-between border-t pt-3">
+              <span className="text-navy font-semibold">Total</span>
+              <span className="text-primary-ink text-xl font-bold">${total}</span>
             </div>
           </div>
         </div>
@@ -385,21 +380,21 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
           type="submit"
           disabled={isProcessing || (!useDemoMode && (!stripe || !cardComplete || !nameOnCard))}
           className={cn(
-            'w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-lg font-semibold transition-all',
-            'bg-gradient-to-r from-orange-500 to-amber-600 text-white',
-            'hover:from-orange-600 hover:to-amber-700',
-            'focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2',
-            'disabled:opacity-50 disabled:cursor-not-allowed'
+            'flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-lg font-semibold transition-all',
+            'from-primary to-primary-dark text-primary-foreground bg-gradient-to-r',
+            'hover:from-primary-dark hover:to-primary-dark',
+            'focus:ring-primary focus:outline-none focus:ring-2 focus:ring-offset-2',
+            'disabled:cursor-not-allowed disabled:opacity-50'
           )}
         >
           {isProcessing ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
               Processing Payment...
             </>
           ) : (
             <>
-              <Lock className="w-5 h-5" />
+              <Lock className="h-5 w-5" />
               Pay ${total} and Confirm Booking
             </>
           )}
@@ -408,15 +403,15 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
         {/* Trust Badges */}
         <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
           <div className="flex items-center gap-1">
-            <Check className="w-4 h-4 text-green-500" />
+            <Check className="h-4 w-4 text-green-500" />
             Secure Payment
           </div>
           <div className="flex items-center gap-1">
-            <Check className="w-4 h-4 text-green-500" />
+            <Check className="h-4 w-4 text-green-500" />
             Instant Confirmation
           </div>
           <div className="flex items-center gap-1">
-            <Check className="w-4 h-4 text-green-500" />
+            <Check className="h-4 w-4 text-green-500" />
             Free Cancellation
           </div>
         </div>
@@ -444,9 +439,9 @@ export default function PaymentStep(props: PaymentStepProps) {
 
   if (!stripeLoaded) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
+      <div className="flex min-h-[400px] items-center justify-center p-6">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-orange-600 mx-auto mb-4" />
+          <Loader2 className="text-primary-ink mx-auto mb-4 h-8 w-8 animate-spin" />
           <p className="text-gray-500">Loading payment form...</p>
         </div>
       </div>

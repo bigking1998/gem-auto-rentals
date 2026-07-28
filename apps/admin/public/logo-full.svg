@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 190" role="img" aria-label="Gem Car Rentals">
+  <title>Gem Car Rentals</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F5D98B"/>
+      <stop offset="45%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#A67C1A"/>
+    </linearGradient>
+    <linearGradient id="fL" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2C4F8C"/>
+      <stop offset="100%" stop-color="#1E3A6E"/>
+    </linearGradient>
+    <linearGradient id="fD" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E3A6E"/>
+      <stop offset="100%" stop-color="#122747"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ============ MARK ============ -->
+  <g transform="translate(150,4) scale(1.0)">
+    <polygon points="20,34 40,34 30,14"   fill="url(#fL)"/>
+    <polygon points="40,34 60,34 50,14"   fill="url(#fD)"/>
+    <polygon points="60,34 80,34 70,14"   fill="url(#fL)"/>
+    <polygon points="80,34 100,34 90,14"  fill="url(#fD)"/>
+    <polygon points="30,14 90,14 80,34 40,34" fill="url(#fL)" opacity="0.55"/>
+    <polygon points="20,34 60,34 60,74"   fill="url(#fD)"/>
+    <polygon points="60,34 100,34 60,74"  fill="url(#fL)"/>
+    <polygon points="40,34 60,34 60,74"   fill="url(#fL)" opacity="0.35"/>
+    <polygon points="60,34 80,34 60,74"   fill="url(#fD)" opacity="0.5"/>
+    <g fill="none" stroke="url(#g)" stroke-width="3.2" stroke-linejoin="round">
+      <polygon points="20,34 100,34 60,74"/>
+      <polygon points="30,14 90,14 100,34 20,34"/>
+      <path d="M30 14 L40 34 M50 14 L60 34 M70 14 L80 34"/>
+      <path d="M40 34 L60 74 M80 34 L60 74"/>
+    </g>
+    <g fill="none" stroke="url(#g)" stroke-linecap="round">
+      <path d="M6 100 C 26 100, 34 78, 60 78 C 86 78, 96 96, 114 100" stroke-width="3.4"/>
+      <path d="M30 96 C 40 84, 52 82, 62 82 C 74 82, 82 86, 90 94" stroke-width="2.2" opacity="0.95"/>
+      <path d="M64 83 L 78 92" stroke-width="1.8" opacity="0.8"/>
+    </g>
+  </g>
+
+  <!-- ============ WORDMARK ============ -->
+  <text x="210" y="152"
+        text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="42" letter-spacing="1.5"
+        fill="url(#g)">
+    <tspan font-size="46">GEM</tspan><tspan dx="10" font-size="38" letter-spacing="2.5">CAR RENTALS</tspan>
+  </text>
+
+  <!-- divider -->
+  <g stroke="url(#g)" stroke-width="1.4" opacity="0.85">
+    <line x1="120" y1="170" x2="196" y2="170"/>
+    <line x1="224" y1="170" x2="300" y2="170"/>
+  </g>
+  <path d="M210 163 L214 170 L210 177 L206 170 Z" fill="url(#g)"/>
+</svg>

@@ -72,7 +72,7 @@ export default function EditVehiclePage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-orange-500" />
+          <Loader2 className="text-primary-ink mx-auto mb-4 h-10 w-10 animate-spin" />
           <p className="text-gray-500">Loading vehicle details...</p>
         </div>
       </div>

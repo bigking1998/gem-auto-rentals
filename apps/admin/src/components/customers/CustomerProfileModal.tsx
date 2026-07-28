@@ -126,19 +126,19 @@ export function CustomerProfileModal({
           {/* Header */}
           <div className="relative">
             {/* Background gradient */}
-            <div className="h-24 bg-gradient-to-r from-orange-400 to-orange-600" />
+            <div className="from-primary-light to-primary-dark h-24 bg-gradient-to-r" />
 
             {/* Close button */}
             <button
               onClick={onClose}
               className="absolute right-4 top-4 rounded-lg bg-white/20 p-2 transition-colors hover:bg-white/30"
             >
-              <X className="h-5 w-5 text-white" />
+              <X className="text-primary-foreground h-5 w-5" />
             </button>
 
             {/* Customer info overlay */}
             <div className="absolute -bottom-12 left-6 flex items-end gap-4">
-              <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-orange-400 to-orange-600 text-2xl font-bold text-white shadow-lg">
+              <div className="from-primary-light to-primary-dark text-primary-foreground flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br text-2xl font-bold shadow-lg">
                 {customer.name
                   .split(' ')
                   .map((n) => n[0])
@@ -187,7 +187,7 @@ export function CustomerProfileModal({
                 className={cn(
                   'px-4 py-3 text-sm font-medium transition-colors',
                   activeTab === tab
-                    ? 'text-primary border-primary border-b-2'
+                    ? 'text-primary-ink border-primary border-b-2'
                     : 'text-gray-500 hover:text-gray-700'
                 )}
               >
@@ -279,8 +279,8 @@ export function CustomerProfileModal({
                 <div className="space-y-6">
                   {/* Statistics */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-xl bg-orange-50 p-4 text-center">
-                      <Car className="text-primary mx-auto mb-2 h-8 w-8" />
+                    <div className="bg-accent rounded-xl p-4 text-center">
+                      <Car className="text-accent-foreground mx-auto mb-2 h-8 w-8" />
                       <p className="text-2xl font-bold text-gray-900">{customer.totalBookings}</p>
                       <p className="text-sm text-gray-500">Total Bookings</p>
                     </div>
@@ -291,15 +291,15 @@ export function CustomerProfileModal({
                       </p>
                       <p className="text-sm text-gray-500">Total Spent</p>
                     </div>
-                    <div className="rounded-xl bg-amber-50 p-4 text-center">
-                      <Star className="mx-auto mb-2 h-8 w-8 text-amber-600" />
+                    <div className="bg-accent rounded-xl p-4 text-center">
+                      <Star className="text-accent-foreground mx-auto mb-2 h-8 w-8" />
                       <p className="text-2xl font-bold text-gray-900">
                         {formatCurrency(averageBookingValue)}
                       </p>
                       <p className="text-sm text-gray-500">Avg. Booking</p>
                     </div>
-                    <div className="rounded-xl bg-orange-50 p-4 text-center">
-                      <Calendar className="mx-auto mb-2 h-8 w-8 text-orange-600" />
+                    <div className="bg-accent rounded-xl p-4 text-center">
+                      <Calendar className="text-accent-foreground mx-auto mb-2 h-8 w-8" />
                       <p className="text-2xl font-bold text-gray-900">
                         {Math.floor(
                           (Date.now() - customer.createdAt.getTime()) / (1000 * 60 * 60 * 24)
@@ -350,8 +350,8 @@ export function CustomerProfileModal({
                       className="flex items-center justify-between rounded-xl bg-gray-50 p-4 transition-colors hover:bg-gray-100"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
-                          <Car className="text-primary h-5 w-5" />
+                        <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-lg">
+                          <Car className="text-accent-foreground h-5 w-5" />
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">{booking.vehicle}</p>
@@ -394,8 +394,8 @@ export function CustomerProfileModal({
                       className="flex items-center justify-between rounded-xl bg-gray-50 p-4"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                          <FileText className="h-5 w-5 text-blue-600" />
+                        <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-lg">
+                          <FileText className="text-accent-foreground h-5 w-5" />
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">
@@ -415,7 +415,7 @@ export function CustomerProfileModal({
                         ) : (
                           <button
                             onClick={() => onVerifyDocument?.(customer.id, doc.id)}
-                            className="bg-primary flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-orange-600"
+                            className="bg-primary text-primary-foreground hover:bg-primary-dark flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                           >
                             <Shield className="h-3 w-3" />
                             Verify
@@ -462,7 +462,7 @@ export function CustomerProfileModal({
                     <button
                       onClick={handleAddNote}
                       disabled={!newNote.trim()}
-                      className="bg-primary rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="bg-primary text-primary-foreground hover:bg-primary-dark rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Add Note
                     </button>
@@ -475,7 +475,7 @@ export function CustomerProfileModal({
                     <div key={note.id} className="rounded-xl bg-gray-50 p-4">
                       <div className="mb-2 flex items-start justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="text-primary flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-sm font-medium">
+                          <div className="text-accent-foreground bg-accent flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                             {note.author
                               .split(' ')
                               .map((n) => n[0])

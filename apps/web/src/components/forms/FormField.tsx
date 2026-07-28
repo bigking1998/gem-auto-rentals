@@ -1,10 +1,5 @@
 import { ReactNode } from 'react';
-import {
-  useFormContext,
-  FieldValues,
-  Path,
-  RegisterOptions,
-} from 'react-hook-form';
+import { useFormContext, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { cn } from '@/lib/utils';
 
 interface FormFieldProps<T extends FieldValues> {
@@ -47,18 +42,13 @@ export function FormField<T extends FieldValues>({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label
-          htmlFor={name}
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor={name} className="block text-sm font-medium text-gray-700">
           {label}
         </label>
       )}
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            {icon}
-          </div>
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</div>
         )}
         <input
           id={name}
@@ -67,14 +57,12 @@ export function FormField<T extends FieldValues>({
           disabled={disabled}
           {...register(name, rules)}
           className={cn(
-            'w-full px-4 py-2.5 border rounded-lg transition-colors',
-            'focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
-            'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
+            'w-full rounded-lg border px-4 py-2.5 transition-colors',
+            'focus:ring-primary focus:border-primary focus:ring-2',
+            'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
             icon && 'pl-10',
             rightIcon && 'pr-12',
-            error
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-200',
+            error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200',
             inputClassName
           )}
         />
@@ -88,12 +76,8 @@ export function FormField<T extends FieldValues>({
           </button>
         )}
       </div>
-      {errorMessage && (
-        <p className="text-sm text-red-500">{errorMessage}</p>
-      )}
-      {helperText && !errorMessage && (
-        <p className="text-sm text-gray-500">{helperText}</p>
-      )}
+      {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+      {helperText && !errorMessage && <p className="text-sm text-gray-500">{helperText}</p>}
     </div>
   );
 }
@@ -128,10 +112,7 @@ export function FormSelect<T extends FieldValues>({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label
-          htmlFor={name}
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor={name} className="block text-sm font-medium text-gray-700">
           {label}
         </label>
       )}
@@ -140,12 +121,10 @@ export function FormSelect<T extends FieldValues>({
         disabled={disabled}
         {...register(name, rules)}
         className={cn(
-          'w-full px-4 py-2.5 border rounded-lg transition-colors',
-          'focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
-          'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
-          error
-            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-            : 'border-gray-200'
+          'w-full rounded-lg border px-4 py-2.5 transition-colors',
+          'focus:ring-primary focus:border-primary focus:ring-2',
+          'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
+          error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200'
         )}
       >
         {placeholder && (
@@ -159,9 +138,7 @@ export function FormSelect<T extends FieldValues>({
           </option>
         ))}
       </select>
-      {errorMessage && (
-        <p className="text-sm text-red-500">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
     </div>
   );
 }
@@ -191,22 +168,20 @@ export function FormCheckbox<T extends FieldValues>({
 
   return (
     <div className={cn('space-y-1', className)}>
-      <label className="flex items-start gap-3 cursor-pointer">
+      <label className="flex cursor-pointer items-start gap-3">
         <input
           type="checkbox"
           disabled={disabled}
           {...register(name, rules)}
           className={cn(
-            'w-4 h-4 mt-0.5 rounded border-gray-300',
-            'text-orange-600 focus:ring-orange-500',
+            'mt-0.5 h-4 w-4 rounded border-gray-300',
+            'text-primary-ink focus:ring-primary',
             'disabled:cursor-not-allowed'
           )}
         />
         <span className="text-sm text-gray-600">{label}</span>
       </label>
-      {errorMessage && (
-        <p className="text-sm text-red-500 ml-7">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="ml-7 text-sm text-red-500">{errorMessage}</p>}
     </div>
   );
 }
@@ -241,10 +216,7 @@ export function FormTextarea<T extends FieldValues>({
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label
-          htmlFor={name}
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor={name} className="block text-sm font-medium text-gray-700">
           {label}
         </label>
       )}
@@ -255,17 +227,13 @@ export function FormTextarea<T extends FieldValues>({
         disabled={disabled}
         {...register(name, rules)}
         className={cn(
-          'w-full px-4 py-2.5 border rounded-lg transition-colors resize-none',
-          'focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
-          'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
-          error
-            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-            : 'border-gray-200'
+          'w-full resize-none rounded-lg border px-4 py-2.5 transition-colors',
+          'focus:ring-primary focus:border-primary focus:ring-2',
+          'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
+          error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200'
         )}
       />
-      {errorMessage && (
-        <p className="text-sm text-red-500">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
     </div>
   );
 }

@@ -65,7 +65,7 @@ export default function FavoritesPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
+        <Loader2 className="text-primary-ink h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -95,7 +95,7 @@ export default function FavoritesPage() {
         </div>
         <Link
           to="/vehicles"
-          className="bg-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors hover:bg-orange-600"
+          className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors"
         >
           <Car className="h-4 w-4" />
           Browse More
@@ -112,7 +112,7 @@ export default function FavoritesPage() {
           </p>
           <Link
             to="/vehicles"
-            className="bg-primary inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
+            className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold transition-colors"
           >
             <Car className="h-5 w-5" />
             Browse Vehicles
@@ -154,7 +154,7 @@ export default function FavoritesPage() {
 
               <div className="p-4">
                 <Link to={`/vehicles/${favorite.vehicle.id}`}>
-                  <h3 className="hover:text-primary font-bold text-gray-900 transition-colors">
+                  <h3 className="hover:text-primary-ink font-bold text-gray-900 transition-colors">
                     {favorite.vehicle.year} {favorite.vehicle.make} {favorite.vehicle.model}
                   </h3>
                 </Link>

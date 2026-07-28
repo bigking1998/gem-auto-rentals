@@ -239,7 +239,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                     }}
                     onFocus={() => customers.length > 0 && setShowCustomerDropdown(true)}
                     placeholder="Search by name or email..."
-                    className="w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2"
                   />
                   {isSearchingCustomers && (
                     <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
@@ -254,7 +254,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                         onClick={() => selectCustomer(customer)}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
                       >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-sm font-medium text-orange-600">
+                        <div className="bg-accent text-accent-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                           {customer.firstName[0]}
                           {customer.lastName[0]}
                         </div>
@@ -270,7 +270,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                 )}
               </div>
               {selectedCustomer && (
-                <div className="flex items-center gap-2 rounded-lg bg-orange-50 p-2 text-sm text-orange-700">
+                <div className="bg-accent text-accent-foreground flex items-center gap-2 rounded-lg p-2 text-sm">
                   <User className="h-4 w-4" />
                   Selected: {selectedCustomer.firstName} {selectedCustomer.lastName}
                 </div>
@@ -297,7 +297,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                       className={cn(
                         'rounded-xl border p-3 text-left transition-all',
                         selectedVehicle?.id === vehicle.id
-                          ? 'border-orange-500 bg-orange-50'
+                          ? 'border-primary bg-accent'
                           : 'border-gray-200 hover:border-gray-300'
                       )}
                     >
@@ -305,7 +305,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                         {vehicle.year} {vehicle.make} {vehicle.model}
                       </p>
                       <p className="text-xs text-gray-500">{vehicle.category}</p>
-                      <p className="mt-1 text-sm font-semibold text-orange-600">
+                      <p className="text-primary-ink mt-1 text-sm font-semibold">
                         {formatCurrency(vehicle.dailyRate)}/day
                       </p>
                     </button>
@@ -331,7 +331,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   min={new Date().toISOString().slice(0, 16)}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2"
                 />
               </div>
               <div className="space-y-2">
@@ -344,7 +344,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   min={startDate || new Date().toISOString().slice(0, 16)}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2"
                 />
               </div>
             </div>
@@ -361,7 +361,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                   value={pickupLocation}
                   onChange={(e) => setPickupLocation(e.target.value)}
                   placeholder="e.g., Miami Airport"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2"
                 />
               </div>
               <div className="space-y-2">
@@ -374,7 +374,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                   value={dropoffLocation}
                   onChange={(e) => setDropoffLocation(e.target.value)}
                   placeholder="e.g., Miami Downtown"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2"
                 />
               </div>
             </div>
@@ -391,13 +391,13 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                     className={cn(
                       'rounded-xl border p-3 text-left transition-all',
                       selectedExtras[extra.id]
-                        ? 'border-orange-500 bg-orange-50'
+                        ? 'border-primary bg-accent'
                         : 'border-gray-200 hover:border-gray-300'
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium text-gray-900">{extra.label}</p>
-                      <span className="text-xs font-semibold text-orange-600">
+                      <span className="text-primary-ink text-xs font-semibold">
                         +{formatCurrency(extra.price)}/day
                       </span>
                     </div>
@@ -415,7 +415,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Any special requests or notes..."
                 rows={2}
-                className="w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="focus:ring-primary w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2"
               />
             </div>
 
@@ -446,7 +446,9 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                   ))}
                 <div className="mt-2 flex justify-between border-t pt-2">
                   <span className="font-semibold text-gray-900">Total</span>
-                  <span className="text-lg font-bold text-orange-600">{formatCurrency(total)}</span>
+                  <span className="text-primary-ink text-lg font-bold">
+                    {formatCurrency(total)}
+                  </span>
                 </div>
               </div>
             )}
@@ -472,7 +474,7 @@ export function CreateBookingModal({ isOpen, onClose, onSuccess }: CreateBooking
                 !pickupLocation ||
                 !dropoffLocation
               }
-              className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-white transition-all hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-primary text-primary-foreground hover:bg-primary-dark flex items-center gap-2 rounded-xl px-5 py-2.5 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

@@ -31,57 +31,75 @@ const faqs: FAQ[] = [
   {
     id: '1',
     question: 'How do I add a new vehicle to the fleet?',
-    answer: 'Navigate to Fleet Management from the sidebar, then click the "Add Vehicle" button in the top right corner. Fill in all the required vehicle details including make, model, year, daily rate, and upload vehicle images. Click "Add Vehicle" to save.',
+    answer:
+      'Navigate to Fleet Management from the sidebar, then click the "Add Vehicle" button in the top right corner. Fill in all the required vehicle details including make, model, year, daily rate, and upload vehicle images. Click "Add Vehicle" to save.',
     category: 'fleet',
   },
   {
     id: '2',
     question: 'How do I process a refund for a customer?',
-    answer: 'Go to the Bookings page and find the relevant booking. Click on the booking to open details, then click "View Payments". In the payment tracking modal, find the payment you want to refund and click the "Refund" button. Enter the refund amount and confirm.',
+    answer:
+      'Go to the Bookings page and find the relevant booking. Click on the booking to open details, then click "View Payments". In the payment tracking modal, find the payment you want to refund and click the "Refund" button. Enter the refund amount and confirm.',
     category: 'payments',
   },
   {
     id: '3',
-    question: 'How do I verify a customer\'s documents?',
-    answer: 'Navigate to Customers, then click on the customer profile. Go to the "Documents" tab where you\'ll see all uploaded documents. Review each document and click the "Verify" button to mark it as verified.',
+    question: "How do I verify a customer's documents?",
+    answer:
+      'Navigate to Customers, then click on the customer profile. Go to the "Documents" tab where you\'ll see all uploaded documents. Review each document and click the "Verify" button to mark it as verified.',
     category: 'customers',
   },
   {
     id: '4',
     question: 'How do I schedule vehicle maintenance?',
-    answer: 'In Fleet Management, find the vehicle you want to schedule maintenance for. Click the three-dot menu on the right and select "Schedule Maintenance". Choose the maintenance type, date, and add any notes. The vehicle status will automatically change to "Maintenance".',
+    answer:
+      'In Fleet Management, find the vehicle you want to schedule maintenance for. Click the three-dot menu on the right and select "Schedule Maintenance". Choose the maintenance type, date, and add any notes. The vehicle status will automatically change to "Maintenance".',
     category: 'fleet',
   },
   {
     id: '5',
     question: 'How do I export booking reports?',
-    answer: 'Go to the Analytics page from the sidebar. Use the date filters to select your desired time period. Click the "Export" button in the top right corner to download the report in CSV or PDF format.',
+    answer:
+      'Go to the Analytics page from the sidebar. Use the date filters to select your desired time period. Click the "Export" button in the top right corner to download the report in CSV or PDF format.',
     category: 'reports',
   },
   {
     id: '6',
     question: 'How do I change my notification settings?',
-    answer: 'Click on Settings in the sidebar, then navigate to the "Notifications" tab. Here you can toggle different notification types including booking alerts, payment confirmations, and weekly reports.',
+    answer:
+      'Click on Settings in the sidebar, then navigate to the "Notifications" tab. Here you can toggle different notification types including booking alerts, payment confirmations, and weekly reports.',
     category: 'settings',
   },
   {
     id: '7',
     question: 'What should I do if a customer wants to extend their rental?',
-    answer: 'Find the active booking in the Bookings page and click to open details. Click "Extend Booking" and select the new end date. The system will calculate any additional charges. Process the additional payment and confirm the extension.',
+    answer:
+      'Find the active booking in the Bookings page and click to open details. Click "Extend Booking" and select the new end date. The system will calculate any additional charges. Process the additional payment and confirm the extension.',
     category: 'bookings',
   },
   {
     id: '8',
     question: 'How do I set up two-factor authentication?',
-    answer: 'Go to Security from the sidebar. Under the "Two-Factor Auth" tab, click "Enable Two-Factor Authentication". Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.) and enter the verification code to complete setup.',
+    answer:
+      'Go to Security from the sidebar. Under the "Two-Factor Auth" tab, click "Enable Two-Factor Authentication". Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.) and enter the verification code to complete setup.',
     category: 'security',
   },
 ];
 
 const quickLinks = [
   { icon: Zap, label: 'Getting Started', description: 'New to Gem Auto? Start here', href: '#' },
-  { icon: BookOpen, label: 'Documentation', description: 'Full admin guide & tutorials', href: '#' },
-  { icon: MessageCircle, label: 'Contact Support', description: 'Get help from our team', href: '#' },
+  {
+    icon: BookOpen,
+    label: 'Documentation',
+    description: 'Full admin guide & tutorials',
+    href: '#',
+  },
+  {
+    icon: MessageCircle,
+    label: 'Contact Support',
+    description: 'Get help from our team',
+    href: '#',
+  },
   { icon: Video, label: 'Video Tutorials', description: 'Watch step-by-step guides', href: '#' },
 ];
 
@@ -119,19 +137,21 @@ export default function HelpPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-8 text-white"
+        className="from-primary-light to-primary-dark text-primary-foreground rounded-2xl bg-gradient-to-r p-8"
       >
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-3xl font-bold mb-3">How can we help you?</h1>
-          <p className="text-white/80 mb-6">Search our help center or browse topics below</p>
+        <div className="mx-auto max-w-2xl text-center">
+          <h1 className="mb-3 text-3xl font-bold">How can we help you?</h1>
+          <p className="text-primary-foreground/80 mb-6">
+            Search our help center or browse topics below
+          </p>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search for help..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-white/30 shadow-lg"
+              className="w-full rounded-xl bg-white py-3.5 pl-12 pr-4 text-gray-900 shadow-lg focus:outline-none focus:ring-4 focus:ring-white/30"
             />
           </div>
         </div>
@@ -143,8 +163,8 @@ export default function HelpPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Quick Links</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {quickLinks.map((link, index) => (
             <motion.a
               key={link.label}
@@ -152,19 +172,19 @@ export default function HelpPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 + index * 0.05 }}
-              className="group bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg hover:border-orange-200 transition-all duration-300"
+              className="hover:border-primary group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                  <link.icon className="w-6 h-6 text-primary" />
+                <div className="bg-accent group-hover:bg-primary-light flex h-12 w-12 items-center justify-center rounded-xl transition-colors">
+                  <link.icon className="text-primary-ink h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-primary transition-colors">
+                  <h3 className="group-hover:text-primary-ink font-semibold text-gray-900 transition-colors">
                     {link.label}
                   </h3>
                   <p className="text-sm text-gray-500">{link.description}</p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="group-hover:text-primary-ink h-5 w-5 text-gray-400 transition-all group-hover:translate-x-1" />
               </div>
             </motion.a>
           ))}
@@ -176,10 +196,10 @@ export default function HelpPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
       >
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Frequently Asked Questions</h2>
+        <div className="border-b border-gray-100 p-6">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Frequently Asked Questions</h2>
 
           {/* Category Filter */}
           <div className="flex flex-wrap gap-2">
@@ -188,9 +208,9 @@ export default function HelpPage() {
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                   selectedCategory === category.id
-                    ? 'bg-orange-100 text-primary'
+                    ? 'bg-accent text-primary-ink'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 )}
               >
@@ -203,7 +223,7 @@ export default function HelpPage() {
         <div className="divide-y divide-gray-100">
           {filteredFaqs.length === 0 ? (
             <div className="p-8 text-center">
-              <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <HelpCircle className="mx-auto mb-3 h-12 w-12 text-gray-300" />
               <p className="text-gray-500">No FAQs found matching your search.</p>
             </div>
           ) : (
@@ -216,13 +236,13 @@ export default function HelpPage() {
               >
                 <button
                   onClick={() => toggleFaq(faq.id)}
-                  className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
+                  className="flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-gray-50"
                 >
-                  <span className="font-medium text-gray-900 pr-4">{faq.question}</span>
+                  <span className="pr-4 font-medium text-gray-900">{faq.question}</span>
                   {expandedFaq === faq.id ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <ChevronUp className="h-5 w-5 flex-shrink-0 text-gray-400" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <ChevronDown className="h-5 w-5 flex-shrink-0 text-gray-400" />
                   )}
                 </button>
                 {expandedFaq === faq.id && (
@@ -232,7 +252,7 @@ export default function HelpPage() {
                     exit={{ opacity: 0, height: 0 }}
                     className="px-5 pb-5"
                   >
-                    <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                    <p className="leading-relaxed text-gray-600">{faq.answer}</p>
                   </motion.div>
                 )}
               </motion.div>
@@ -247,43 +267,43 @@ export default function HelpPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Support</h2>
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-            <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-4">
-              <MessageCircle className="w-6 h-6 text-green-600" />
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Contact Support</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-green-100">
+              <MessageCircle className="h-6 w-6 text-green-600" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
-            <p className="text-sm text-gray-500 mb-4">Get instant help from our support team</p>
-            <div className="flex items-center gap-2 text-sm text-green-600 mb-4">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <h3 className="mb-2 font-semibold text-gray-900">Live Chat</h3>
+            <p className="mb-4 text-sm text-gray-500">Get instant help from our support team</p>
+            <div className="mb-4 flex items-center gap-2 text-sm text-green-600">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
               Available now
             </div>
-            <button className="w-full px-4 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:bg-orange-600 transition-all duration-300 text-sm font-medium">
+            <button className="bg-primary text-primary-foreground shadow-primary/20 hover:shadow-primary/30 hover:bg-primary-dark w-full rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg transition-all duration-300">
               Start Chat
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-              <Mail className="w-6 h-6 text-blue-600" />
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
+            <div className="bg-accent mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
+              <Mail className="text-primary-ink h-6 w-6" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
-            <p className="text-sm text-gray-500 mb-4">Send us a detailed message</p>
-            <p className="text-sm text-gray-600 mb-4">support@gemauto.com</p>
-            <button className="w-full px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+            <h3 className="mb-2 font-semibold text-gray-900">Email Support</h3>
+            <p className="mb-4 text-sm text-gray-500">Send us a detailed message</p>
+            <p className="mb-4 text-sm text-gray-600">support@gemauto.com</p>
+            <button className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
               Send Email
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-            <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mb-4">
-              <Phone className="w-6 h-6 text-orange-600" />
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
+            <div className="bg-accent mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
+              <Phone className="text-primary-ink h-6 w-6" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Phone Support</h3>
-            <p className="text-sm text-gray-500 mb-4">Call us during business hours</p>
-            <p className="text-sm text-gray-600 mb-4">+1 (800) GEM-AUTO</p>
-            <button className="w-full px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+            <h3 className="mb-2 font-semibold text-gray-900">Phone Support</h3>
+            <p className="mb-4 text-sm text-gray-500">Call us during business hours</p>
+            <p className="mb-4 text-sm text-gray-600">+1 (800) GEM-AUTO</p>
+            <button className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
               Call Now
             </button>
           </div>
@@ -295,10 +315,10 @@ export default function HelpPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-gray-50 rounded-2xl p-6"
+        className="rounded-2xl bg-gray-50 p-6"
       >
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Additional Resources</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Additional Resources</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { icon: Car, label: 'Fleet Setup Guide', href: '#' },
             { icon: CreditCard, label: 'Payment Integration', href: '#' },
@@ -308,13 +328,13 @@ export default function HelpPage() {
             <a
               key={resource.label}
               href={resource.href}
-              className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-orange-200 hover:shadow-md transition-all group"
+              className="hover:border-primary group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-all hover:shadow-md"
             >
-              <resource.icon className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors" />
-              <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">
+              <resource.icon className="group-hover:text-primary-ink h-5 w-5 text-gray-400 transition-colors" />
+              <span className="text-sm font-medium text-gray-700 transition-colors group-hover:text-gray-900">
                 {resource.label}
               </span>
-              <ExternalLink className="w-4 h-4 text-gray-400 ml-auto group-hover:text-primary transition-colors" />
+              <ExternalLink className="group-hover:text-primary-ink ml-auto h-4 w-4 text-gray-400 transition-colors" />
             </a>
           ))}
         </div>

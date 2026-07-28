@@ -32,16 +32,16 @@ class LazyLoadErrorBoundary extends Component<{ children: ReactNode }, ErrorBoun
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-[400px] flex items-center justify-center">
+        <div className="flex min-h-[400px] items-center justify-center">
           <div className="text-center">
-            <AlertTriangle className="w-10 h-10 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Failed to load page</h2>
-            <p className="text-sm text-gray-500 mb-4">
+            <AlertTriangle className="mx-auto mb-4 h-10 w-10 text-amber-500" />
+            <h2 className="mb-2 text-lg font-semibold text-gray-900">Failed to load page</h2>
+            <p className="mb-4 text-sm text-gray-500">
               There was a problem loading this page. Please try again.
             </p>
             <button
               onClick={this.handleRetry}
-              className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+              className="bg-primary text-primary-foreground hover:bg-primary-dark rounded-lg px-4 py-2 font-medium transition-colors"
             >
               Retry
             </button>
@@ -72,9 +72,9 @@ const TrashPage = lazy(() => import('./pages/TrashPage'));
 // Page loader component for Suspense fallback
 function PageLoader() {
   return (
-    <div className="min-h-[400px] flex items-center justify-center">
+    <div className="flex min-h-[400px] items-center justify-center">
       <div className="text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
+        <Loader2 className="text-primary-ink mx-auto mb-2 h-8 w-8 animate-spin" />
         <p className="text-sm text-gray-500">Loading...</p>
       </div>
     </div>
@@ -89,9 +89,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Show loading spinner while checking auth state
   if (!isInitialized || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
+          <Loader2 className="text-primary-ink mx-auto mb-4 h-10 w-10 animate-spin" />
           <p className="text-gray-500">Loading...</p>
         </div>
       </div>
@@ -113,9 +113,9 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   // Show loading spinner while checking auth state
   if (!isInitialized || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto mb-4" />
+          <Loader2 className="text-primary-ink mx-auto mb-4 h-10 w-10 animate-spin" />
           <p className="text-gray-500">Loading...</p>
         </div>
       </div>
@@ -163,19 +163,136 @@ function App() {
           }
         >
           {/* Wrap lazy-loaded routes in Suspense with Error Boundary */}
-          <Route index element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><DashboardHome /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="fleet" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><FleetManagement /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="fleet/new" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><AddVehiclePage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="fleet/:id" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><EditVehiclePage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="bookings" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><BookingsPage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="customers" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><CustomersPage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="customers/:id" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><CustomerProfilePage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="analytics" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><AnalyticsPage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="settings" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><SettingsPage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="messages" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><MessagesPage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="security" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><SecurityPage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="trash" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><TrashPage /></Suspense></LazyLoadErrorBoundary>} />
-          <Route path="help" element={<LazyLoadErrorBoundary><Suspense fallback={<PageLoader />}><HelpPage /></Suspense></LazyLoadErrorBoundary>} />
+          <Route
+            index
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <DashboardHome />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="fleet"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <FleetManagement />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="fleet/new"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <AddVehiclePage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="fleet/:id"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <EditVehiclePage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="bookings"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <BookingsPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="customers"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <CustomersPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="customers/:id"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <CustomerProfilePage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="analytics"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <AnalyticsPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <SettingsPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="messages"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <MessagesPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="security"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <SecurityPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="trash"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <TrashPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="help"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <HelpPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
         </Route>
 
         {/* Catch all - redirect to dashboard or login */}

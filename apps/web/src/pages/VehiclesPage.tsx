@@ -281,7 +281,7 @@ export default function VehiclesPage() {
             <div className="bg-primary/5 border-primary/20 mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4">
               <div className="flex items-center gap-3">
                 <div className="bg-primary/10 rounded-lg p-2">
-                  <Calendar className="text-primary h-5 w-5" />
+                  <Calendar className="text-primary-ink h-5 w-5" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Your selected dates</p>
@@ -303,7 +303,7 @@ export default function VehiclesPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigate('/')}
-                  className="text-primary text-sm font-medium transition-colors hover:text-orange-600"
+                  className="text-primary-ink text-sm font-medium transition-colors hover:underline"
                 >
                   Change dates
                 </button>
@@ -386,7 +386,7 @@ export default function VehiclesPage() {
                       className={cn(
                         'p-2 transition-colors',
                         viewMode === 'grid'
-                          ? 'bg-primary/10 text-primary'
+                          ? 'bg-primary/10 text-primary-ink'
                           : 'text-gray-400 hover:text-gray-600'
                       )}
                     >
@@ -397,7 +397,7 @@ export default function VehiclesPage() {
                       className={cn(
                         'p-2 transition-colors',
                         viewMode === 'list'
-                          ? 'bg-primary/10 text-primary'
+                          ? 'bg-primary/10 text-primary-ink'
                           : 'text-gray-400 hover:text-gray-600'
                       )}
                     >
@@ -414,7 +414,7 @@ export default function VehiclesPage() {
                 /* Error State — fetch failed or timed out */
                 <div className="rounded-2xl border border-gray-100 bg-white py-16 text-center">
                   <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                    <AlertTriangle className="text-primary h-8 w-8" />
+                    <AlertTriangle className="text-primary-ink h-8 w-8" />
                   </div>
                   <h3 className="mb-2 text-lg font-bold text-gray-900">
                     We couldn&apos;t load our fleet
@@ -425,7 +425,7 @@ export default function VehiclesPage() {
                   </p>
                   <button
                     onClick={handleRetry}
-                    className="bg-primary inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition-colors hover:bg-orange-600"
+                    className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold shadow-lg transition-colors"
                   >
                     <RefreshCw className="h-4 w-4" />
                     Try Again
@@ -454,7 +454,7 @@ export default function VehiclesPage() {
                   <p className="mb-4 text-gray-500">Try adjusting your filters or search terms</p>
                   <button
                     onClick={handleClearFilters}
-                    className="text-primary font-medium hover:text-orange-600"
+                    className="text-primary-ink font-medium hover:underline"
                   >
                     Clear all filters
                   </button>
@@ -479,7 +479,7 @@ export default function VehiclesPage() {
                       className={cn(
                         'h-10 w-10 rounded-lg text-sm font-medium transition-colors',
                         currentPage === page
-                          ? 'bg-primary text-white shadow-lg shadow-orange-200'
+                          ? 'bg-primary text-primary-foreground shadow-lg'
                           : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
                       )}
                     >

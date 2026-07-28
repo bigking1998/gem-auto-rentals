@@ -13,7 +13,8 @@ const extras = [
   {
     id: 'insurance',
     name: 'Full Coverage Insurance',
-    description: 'Comprehensive protection covering collision damage, theft, and third-party liability. Zero deductible.',
+    description:
+      'Comprehensive protection covering collision damage, theft, and third-party liability. Zero deductible.',
     pricePerDay: 25,
     icon: Shield,
     popular: true,
@@ -45,12 +46,7 @@ const extras = [
     pricePerDay: 8,
     icon: Baby,
     popular: false,
-    benefits: [
-      'Age 1-4 years',
-      'Safety certified',
-      'Easy installation',
-      'ISOFIX compatible',
-    ],
+    benefits: ['Age 1-4 years', 'Safety certified', 'Easy installation', 'ISOFIX compatible'],
   },
   {
     id: 'additionalDriver',
@@ -89,10 +85,8 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
 
   return (
     <div className="p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">
-        Add Extras to Your Rental
-      </h2>
-      <p className="text-gray-500 mb-6">
+      <h2 className="mb-2 text-xl font-semibold text-gray-900">Add Extras to Your Rental</h2>
+      <p className="mb-6 text-gray-500">
         Enhance your rental experience with these optional extras.
       </p>
 
@@ -106,14 +100,14 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
               key={extra.id}
               onClick={() => toggleExtra(extra.id)}
               className={cn(
-                'relative border rounded-xl p-5 cursor-pointer transition-all',
+                'relative cursor-pointer rounded-xl border p-5 transition-all',
                 isSelected
-                  ? 'border-orange-600 bg-orange-50 ring-1 ring-orange-600'
-                  : 'border-gray-200 hover:border-gray-300 bg-white'
+                  ? 'border-primary bg-accent ring-primary ring-1'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
               )}
             >
               {extra.popular && (
-                <span className="absolute -top-2.5 right-4 px-2.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-full">
+                <span className="from-primary to-primary-dark text-primary-foreground absolute -top-2.5 right-4 rounded-full bg-gradient-to-r px-2.5 py-0.5 text-xs font-semibold">
                   Recommended
                 </span>
               )}
@@ -122,39 +116,33 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
                 {/* Checkbox */}
                 <div
                   className={cn(
-                    'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5',
-                    isSelected
-                      ? 'bg-orange-600 border-orange-600'
-                      : 'border-gray-300'
+                    'mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2',
+                    isSelected ? 'bg-primary border-primary' : 'border-gray-300'
                   )}
                 >
-                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                  {isSelected && <Check className="text-primary-foreground h-3 w-3" />}
                 </div>
 
                 {/* Icon */}
                 <div
                   className={cn(
-                    'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
-                    isSelected ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-500'
+                    'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl',
+                    isSelected ? 'bg-primary text-primary-foreground' : 'bg-gray-100 text-gray-500'
                   )}
                 >
-                  <extra.icon className="w-6 h-6" />
+                  <extra.icon className="h-6 w-6" />
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h3 className="font-semibold text-gray-900">{extra.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{extra.description}</p>
+                      <p className="mt-1 text-sm text-gray-500">{extra.description}</p>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-gray-900">
-                        ${totalPrice}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        ${extra.pricePerDay}/day
-                      </p>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="font-bold text-gray-900">${totalPrice}</p>
+                      <p className="text-xs text-gray-500">${extra.pricePerDay}/day</p>
                     </div>
                   </div>
 
@@ -164,13 +152,11 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
                       <span
                         key={benefit}
                         className={cn(
-                          'inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full',
-                          isSelected
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-gray-100 text-gray-600'
+                          'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs',
+                          isSelected ? 'bg-accent text-primary-ink' : 'bg-gray-100 text-gray-600'
                         )}
                       >
-                        <Check className="w-3 h-3" />
+                        <Check className="h-3 w-3" />
                         {benefit}
                       </span>
                     ))}
@@ -184,25 +170,21 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
 
       {/* Extras Summary */}
       {calculateExtrasTotal() > 0 && (
-        <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div className="bg-accent border-primary mt-6 rounded-lg border p-4">
           <div className="flex items-center justify-between">
-            <span className="font-medium text-orange-900">Selected Extras Total</span>
-            <span className="text-xl font-bold text-orange-600">
-              ${calculateExtrasTotal()}
-            </span>
+            <span className="text-navy font-medium">Selected Extras Total</span>
+            <span className="text-primary-ink text-xl font-bold">${calculateExtrasTotal()}</span>
           </div>
-          <p className="text-sm text-orange-700 mt-1">
-            for {days} days
-          </p>
+          <p className="text-primary-ink mt-1 text-sm">for {days} days</p>
         </div>
       )}
 
       {/* Info Box */}
-      <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3">
-        <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+      <div className="bg-accent border-primary mt-6 flex gap-3 rounded-lg border p-4">
+        <Info className="text-primary-ink mt-0.5 h-5 w-5 flex-shrink-0" />
         <div>
-          <h4 className="font-medium text-amber-900">Insurance Coverage</h4>
-          <p className="text-sm text-amber-700 mt-1">
+          <h4 className="text-navy font-medium">Insurance Coverage</h4>
+          <p className="text-primary-ink mt-1 text-sm">
             All rentals include basic liability insurance. Full coverage insurance provides
             additional protection with zero deductible.
           </p>

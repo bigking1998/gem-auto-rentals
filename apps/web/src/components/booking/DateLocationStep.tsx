@@ -15,10 +15,30 @@ const locations = [
 ];
 
 const timeSlots = [
-  '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-  '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
-  '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
-  '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
+  '08:00',
+  '08:30',
+  '09:00',
+  '09:30',
+  '10:00',
+  '10:30',
+  '11:00',
+  '11:30',
+  '12:00',
+  '12:30',
+  '13:00',
+  '13:30',
+  '14:00',
+  '14:30',
+  '15:00',
+  '15:30',
+  '16:00',
+  '16:30',
+  '17:00',
+  '17:30',
+  '18:00',
+  '18:30',
+  '19:00',
+  '19:30',
   '20:00',
 ];
 
@@ -27,27 +47,25 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
 
   return (
     <div className="p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">
-        Select Dates & Location
-      </h2>
-      <p className="text-gray-500 mb-6">
+      <h2 className="mb-2 text-xl font-semibold text-gray-900">Select Dates & Location</h2>
+      <p className="mb-6 text-gray-500">
         Choose your pick-up and return dates along with your preferred locations.
       </p>
 
       <div className="space-y-6">
         {/* Pick-up Section */}
-        <div className="bg-gray-50 rounded-xl p-5">
-          <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <span className="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm">
+        <div className="rounded-xl bg-gray-50 p-5">
+          <h3 className="mb-4 flex items-center gap-2 font-medium text-gray-900">
+            <span className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-full text-sm">
               1
             </span>
             Pick-up Details
           </h3>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                <Calendar className="w-4 h-4 inline mr-1.5" />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <Calendar className="mr-1.5 inline h-4 w-4" />
                 Pick-up Date
               </label>
               <input
@@ -55,19 +73,19 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
                 value={data.startDate}
                 onChange={(e) => onChange({ startDate: e.target.value })}
                 min={today}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                <Clock className="w-4 h-4 inline mr-1.5" />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <Clock className="mr-1.5 inline h-4 w-4" />
                 Pick-up Time
               </label>
               <select
                 value={data.pickupTime}
                 onChange={(e) => onChange({ pickupTime: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2"
               >
                 {timeSlots.map((time) => (
                   <option key={time} value={time}>
@@ -78,14 +96,14 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                <MapPin className="w-4 h-4 inline mr-1.5" />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <MapPin className="mr-1.5 inline h-4 w-4" />
                 Pick-up Location
               </label>
               <select
                 value={data.pickupLocation}
                 onChange={(e) => onChange({ pickupLocation: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2"
               >
                 {locations.map((loc) => (
                   <option key={loc} value={loc}>
@@ -98,18 +116,18 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
         </div>
 
         {/* Return Section */}
-        <div className="bg-gray-50 rounded-xl p-5">
-          <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <span className="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm">
+        <div className="rounded-xl bg-gray-50 p-5">
+          <h3 className="mb-4 flex items-center gap-2 font-medium text-gray-900">
+            <span className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-full text-sm">
               2
             </span>
             Return Details
           </h3>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                <Calendar className="w-4 h-4 inline mr-1.5" />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <Calendar className="mr-1.5 inline h-4 w-4" />
                 Return Date
               </label>
               <input
@@ -117,19 +135,19 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
                 value={data.endDate}
                 onChange={(e) => onChange({ endDate: e.target.value })}
                 min={data.startDate || today}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                <Clock className="w-4 h-4 inline mr-1.5" />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <Clock className="mr-1.5 inline h-4 w-4" />
                 Return Time
               </label>
               <select
                 value={data.dropoffTime}
                 onChange={(e) => onChange({ dropoffTime: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2"
               >
                 {timeSlots.map((time) => (
                   <option key={time} value={time}>
@@ -140,14 +158,14 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                <MapPin className="w-4 h-4 inline mr-1.5" />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <MapPin className="mr-1.5 inline h-4 w-4" />
                 Return Location
               </label>
               <select
                 value={data.dropoffLocation}
                 onChange={(e) => onChange({ dropoffLocation: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2"
               >
                 {locations.map((loc) => (
                   <option key={loc} value={loc}>
@@ -159,7 +177,7 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
           </div>
 
           {/* Same location checkbox */}
-          <label className="flex items-center gap-2 mt-4 cursor-pointer">
+          <label className="mt-4 flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"
               checked={data.pickupLocation === data.dropoffLocation}
@@ -168,18 +186,16 @@ export default function DateLocationStep({ data, onChange }: DateLocationStepPro
                   dropoffLocation: e.target.checked ? data.pickupLocation : data.dropoffLocation,
                 })
               }
-              className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+              className="text-primary-ink focus:ring-primary h-4 w-4 rounded"
             />
-            <span className="text-sm text-gray-600">
-              Return to same location
-            </span>
+            <span className="text-sm text-gray-600">Return to same location</span>
           </label>
         </div>
 
         {/* Info Box */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-1">Good to know</h4>
-          <ul className="text-sm text-blue-700 space-y-1">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <h4 className="mb-1 font-medium text-blue-900">Good to know</h4>
+          <ul className="space-y-1 text-sm text-blue-700">
             <li>• Free cancellation up to 24 hours before pick-up</li>
             <li>• Valid driver&apos;s license required at pick-up</li>
             <li>• Minimum age: 21 years</li>

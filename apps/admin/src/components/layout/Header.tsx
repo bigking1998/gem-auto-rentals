@@ -86,15 +86,15 @@ const getNotificationIcon = (type: Notification['type']) => {
 const getNotificationColor = (type: Notification['type']) => {
   switch (type) {
     case 'booking':
-      return 'bg-orange-100 text-orange-600';
+      return 'bg-accent text-accent-foreground';
     case 'payment':
       return 'bg-green-100 text-green-600';
     case 'alert':
       return 'bg-red-100 text-red-600';
     case 'message':
-      return 'bg-blue-100 text-blue-600';
+      return 'bg-accent text-accent-foreground';
     case 'document':
-      return 'bg-blue-100 text-blue-600';
+      return 'bg-accent text-accent-foreground';
     case 'system':
       return 'bg-gray-100 text-gray-600';
     default:
@@ -186,17 +186,13 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
   const markAsRead = async (id: string) => {
     // Optimistic update
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     try {
       await api.notifications.markAsRead(id);
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
       // Revert on error
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: false } : n))
-      );
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)));
     }
   };
 
@@ -227,34 +223,34 @@ export default function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-20 bg-white border-b border-gray-200">
-      <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+    <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
+      <div className="flex h-16 items-center justify-between px-4 lg:px-6">
         {/* Left Section */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="rounded-lg p-2 transition-colors hover:bg-gray-100 lg:hidden"
             aria-label="Open menu"
           >
-            <Menu className="w-5 h-5 text-gray-600" />
+            <Menu className="h-5 w-5 text-gray-600" />
           </button>
 
           {/* Search */}
           <div
             className={cn(
-              'hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg transition-all',
-              searchFocused && 'ring-2 ring-primary bg-white'
+              'hidden items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 transition-all sm:flex',
+              searchFocused && 'ring-primary bg-white ring-2'
             )}
           >
-            <Search className="w-4 h-4 text-gray-400" />
+            <Search className="h-4 w-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search..."
-              className="bg-transparent border-none outline-none text-sm w-48 lg:w-64"
+              className="w-48 border-none bg-transparent text-sm outline-none lg:w-64"
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
             />
-            <kbd className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 text-xs text-gray-400 bg-white rounded border border-gray-200">
+            <kbd className="hidden items-center gap-1 rounded border border-gray-200 bg-white px-2 py-0.5 text-xs text-gray-400 lg:inline-flex">
               <span>⌘</span>K
             </kbd>
           </div>
@@ -267,9 +263,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
             href={SITE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-primary hover:bg-orange-50 rounded-lg transition-colors"
+            className="hover:text-primary-ink hover:bg-accent flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors"
           >
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink className="h-4 w-4" />
             <span className="hidden sm:inline">Back to Site</span>
           </a>
 
@@ -281,13 +277,15 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 setSettingsOpen(false);
               }}
               className={cn(
-                'relative p-2 rounded-lg transition-colors',
-                notificationsOpen ? 'bg-orange-100 text-primary' : 'hover:bg-gray-100 text-gray-600'
+                'relative rounded-lg p-2 transition-colors',
+                notificationsOpen
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-gray-600 hover:bg-gray-100'
               )}
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                   {unreadCount}
                 </span>
               )}
@@ -300,14 +298,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+                  className="absolute right-0 mt-2 w-80 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl sm:w-96"
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                  <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-gray-900">Notifications</h3>
                       {unreadCount > 0 && (
-                        <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600">
                           {unreadCount} new
                         </span>
                       )}
@@ -315,7 +313,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className="text-xs text-primary hover:text-orange-600 font-medium"
+                        className="text-primary-ink hover:text-primary-dark text-xs font-medium"
                       >
                         Mark all read
                       </button>
@@ -326,13 +324,13 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   <div className="max-h-96 overflow-y-auto">
                     {isLoadingNotifications ? (
                       <div className="p-8 text-center">
-                        <Loader2 className="w-8 h-8 text-gray-400 mx-auto mb-2 animate-spin" />
-                        <p className="text-gray-500 text-sm">Loading notifications...</p>
+                        <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-400" />
+                        <p className="text-sm text-gray-500">Loading notifications...</p>
                       </div>
                     ) : notifications.length === 0 ? (
                       <div className="p-8 text-center">
-                        <Bell className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500 text-sm">No notifications</p>
+                        <Bell className="mx-auto mb-2 h-10 w-10 text-gray-300" />
+                        <p className="text-sm text-gray-500">No notifications</p>
                       </div>
                     ) : (
                       notifications.map((notification) => {
@@ -341,25 +339,29 @@ export default function Header({ onMenuClick }: HeaderProps) {
                           <div
                             key={notification.id}
                             className={cn(
-                              'flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer group',
-                              !notification.read && 'bg-orange-50/50'
+                              'group flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-gray-50',
+                              !notification.read && 'bg-accent'
                             )}
                             onClick={() => markAsRead(notification.id)}
                           >
                             <div
                               className={cn(
-                                'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0',
+                                'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl',
                                 getNotificationColor(notification.type)
                               )}
                             >
-                              <Icon className="w-4 h-4" />
+                              <Icon className="h-4 w-4" />
                             </div>
-                            <div className="flex-1 min-w-0">
+                            <div className="min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-2">
-                                <p className={cn(
-                                  'text-sm',
-                                  notification.read ? 'text-gray-700' : 'text-gray-900 font-medium'
-                                )}>
+                                <p
+                                  className={cn(
+                                    'text-sm',
+                                    notification.read
+                                      ? 'text-gray-700'
+                                      : 'font-medium text-gray-900'
+                                  )}
+                                >
                                   {notification.title}
                                 </p>
                                 <button
@@ -367,20 +369,20 @@ export default function Header({ onMenuClick }: HeaderProps) {
                                     e.stopPropagation();
                                     removeNotification(notification.id);
                                   }}
-                                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
+                                  className="rounded p-1 opacity-0 transition-all hover:bg-gray-200 group-hover:opacity-100"
                                 >
-                                  <X className="w-3 h-3 text-gray-400" />
+                                  <X className="h-3 w-3 text-gray-400" />
                                 </button>
                               </div>
-                              <p className="text-xs text-gray-500 mt-0.5 truncate">
+                              <p className="mt-0.5 truncate text-xs text-gray-500">
                                 {notification.message}
                               </p>
-                              <p className="text-xs text-gray-400 mt-1">
+                              <p className="mt-1 text-xs text-gray-400">
                                 {formatTimeAgo(notification.time)}
                               </p>
                             </div>
                             {!notification.read && (
-                              <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2" />
+                              <div className="bg-primary mt-2 h-2 w-2 flex-shrink-0 rounded-full" />
                             )}
                           </div>
                         );
@@ -389,13 +391,13 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   </div>
 
                   {/* Footer */}
-                  <div className="p-3 border-t border-gray-100 bg-gray-50">
+                  <div className="border-t border-gray-100 bg-gray-50 p-3">
                     <button
                       onClick={() => {
                         setNotificationsOpen(false);
                         navigate('/settings?tab=notifications');
                       }}
-                      className="w-full py-2 text-sm text-primary hover:text-orange-600 font-medium"
+                      className="text-primary-ink hover:text-primary-dark w-full py-2 text-sm font-medium"
                     >
                       View notification settings
                     </button>
@@ -413,11 +415,13 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 setNotificationsOpen(false);
               }}
               className={cn(
-                'p-2 rounded-lg transition-colors',
-                settingsOpen ? 'bg-orange-100 text-primary' : 'hover:bg-gray-100 text-gray-600'
+                'rounded-lg p-2 transition-colors',
+                settingsOpen
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-gray-600 hover:bg-gray-100'
               )}
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="h-5 w-5" />
             </button>
 
             <AnimatePresence>
@@ -427,10 +431,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+                  className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl"
                 >
                   {/* Header */}
-                  <div className="px-4 py-3 border-b border-gray-100">
+                  <div className="border-b border-gray-100 px-4 py-3">
                     <p className="text-sm font-semibold text-gray-900">Quick Settings</p>
                   </div>
 
@@ -441,10 +445,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
                         setSettingsOpen(false);
                         navigate('/settings');
                       }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-left"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-100"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                        <User className="w-4 h-4 text-primary" />
+                      <div className="bg-accent flex h-8 w-8 items-center justify-center rounded-lg">
+                        <User className="text-accent-foreground h-4 w-4" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">Profile Settings</p>
@@ -457,10 +461,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
                         setSettingsOpen(false);
                         navigate('/security');
                       }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-left"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-100"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                        <Shield className="w-4 h-4 text-green-600" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
+                        <Shield className="h-4 w-4 text-green-600" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">Security</p>
@@ -473,10 +477,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
                         setSettingsOpen(false);
                         navigate('/help');
                       }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-left"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-100"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <HelpCircle className="w-4 h-4 text-blue-600" />
+                      <div className="bg-accent flex h-8 w-8 items-center justify-center rounded-lg">
+                        <HelpCircle className="text-accent-foreground h-4 w-4" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">Help Center</p>
@@ -488,11 +492,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
                       href={SITE_URL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-left"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-100"
                       onClick={() => setSettingsOpen(false)}
                     >
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <ExternalLink className="w-4 h-4 text-blue-600" />
+                      <div className="bg-accent flex h-8 w-8 items-center justify-center rounded-lg">
+                        <ExternalLink className="text-accent-foreground h-4 w-4" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">Back to Site</p>
@@ -501,13 +505,13 @@ export default function Header({ onMenuClick }: HeaderProps) {
                     </a>
 
                     {/* Theme Toggle */}
-                    <div className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-gray-100">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
                           {darkMode ? (
-                            <Moon className="w-4 h-4 text-gray-600" />
+                            <Moon className="h-4 w-4 text-gray-600" />
                           ) : (
-                            <Sun className="w-4 h-4 text-amber-500" />
+                            <Sun className="text-primary-ink h-4 w-4" />
                           )}
                         </div>
                         <p className="text-sm font-medium text-gray-900">Dark Mode</p>
@@ -515,13 +519,13 @@ export default function Header({ onMenuClick }: HeaderProps) {
                       <button
                         onClick={() => setDarkMode(!darkMode)}
                         className={cn(
-                          'relative w-10 h-5 rounded-full transition-colors',
+                          'relative h-5 w-10 rounded-full transition-colors',
                           darkMode ? 'bg-primary' : 'bg-gray-300'
                         )}
                       >
                         <div
                           className={cn(
-                            'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform',
+                            'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
                             darkMode ? 'translate-x-5' : 'translate-x-0.5'
                           )}
                         />
@@ -530,17 +534,17 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   </div>
 
                   {/* Logout */}
-                  <div className="p-2 border-t border-gray-100">
+                  <div className="border-t border-gray-100 p-2">
                     <button
                       onClick={async () => {
                         setSettingsOpen(false);
                         await logout();
                         navigate('/login');
                       }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left group"
+                      className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-red-50"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
-                        <LogOut className="w-4 h-4 text-red-600" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100">
+                        <LogOut className="h-4 w-4 text-red-600" />
                       </div>
                       <p className="text-sm font-medium text-red-600">Sign Out</p>
                     </button>
@@ -551,11 +555,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           {/* User Avatar */}
-          <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-sm font-semibold">
+          <button className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-gray-100">
+            <div className="from-primary-light to-primary-dark text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold">
               {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '??'}
             </div>
-            <span className="hidden lg:block text-sm font-medium text-gray-700">
+            <span className="hidden text-sm font-medium text-gray-700 lg:block">
               {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
             </span>
           </button>

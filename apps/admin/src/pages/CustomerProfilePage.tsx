@@ -60,8 +60,8 @@ interface Customer {
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-green-100 text-green-800',
-  ACTIVE: 'bg-blue-100 text-blue-800',
+  CONFIRMED: 'bg-blue-100 text-blue-800',
+  ACTIVE: 'bg-green-100 text-green-800',
   COMPLETED: 'bg-gray-100 text-gray-800',
   CANCELLED: 'bg-red-100 text-red-800',
 };
@@ -207,7 +207,7 @@ export default function CustomerProfilePage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-orange-500" />
+          <Loader2 className="text-primary-ink mx-auto mb-4 h-10 w-10 animate-spin" />
           <p className="text-gray-500">Loading customer profile...</p>
         </div>
       </div>
@@ -230,7 +230,7 @@ export default function CustomerProfilePage() {
         </p>
         <Link
           to="/customers"
-          className="bg-primary inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium text-white transition-colors hover:bg-orange-600"
+          className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Customers
@@ -264,12 +264,12 @@ export default function CustomerProfilePage() {
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
       >
         {/* Background gradient */}
-        <div className="h-32 bg-gradient-to-r from-orange-400 to-orange-600" />
+        <div className="from-primary-light to-primary-dark h-32 bg-gradient-to-r" />
 
         {/* Customer info overlay */}
         <div className="relative px-6 pb-6">
           <div className="-mt-12 flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-orange-400 to-orange-600 text-2xl font-bold text-white shadow-lg">
+            <div className="from-primary-light to-primary-dark text-primary-foreground flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br text-2xl font-bold shadow-lg">
               {customer.firstName[0]}
               {customer.lastName[0]}
             </div>
@@ -313,7 +313,7 @@ export default function CustomerProfilePage() {
             className={cn(
               '-mb-px border-b-2 px-4 py-3 text-sm font-medium transition-colors',
               activeTab === tab
-                ? 'text-primary border-primary'
+                ? 'text-primary-ink border-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             )}
           >
@@ -346,8 +346,8 @@ export default function CustomerProfilePage() {
                 className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
               >
                 <div className="mb-4 flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100">
-                    <Car className="text-primary h-6 w-6" />
+                  <div className="bg-accent flex h-12 w-12 items-center justify-center rounded-xl">
+                    <Car className="text-primary-ink h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{customer.totalBookings}</p>
@@ -382,8 +382,8 @@ export default function CustomerProfilePage() {
                 className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
               >
                 <div className="mb-4 flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100">
-                    <Star className="h-6 w-6 text-amber-600" />
+                  <div className="bg-accent flex h-12 w-12 items-center justify-center rounded-xl">
+                    <Star className="text-primary-ink h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">
@@ -401,8 +401,8 @@ export default function CustomerProfilePage() {
                 className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
               >
                 <div className="mb-4 flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100">
-                    <Calendar className="h-6 w-6 text-orange-600" />
+                  <div className="bg-accent flex h-12 w-12 items-center justify-center rounded-xl">
+                    <Calendar className="text-primary-ink h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{daysAsCustomer}</p>
@@ -458,8 +458,8 @@ export default function CustomerProfilePage() {
                         className="flex items-center justify-between rounded-xl bg-gray-50 p-3 transition-colors hover:bg-gray-100"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
-                            <Car className="text-primary h-5 w-5" />
+                          <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-lg">
+                            <Car className="text-primary-ink h-5 w-5" />
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900">{booking.vehicle}</p>
@@ -500,8 +500,8 @@ export default function CustomerProfilePage() {
                       className="flex items-center justify-between rounded-xl bg-gray-50 p-4 transition-all hover:bg-gray-100 hover:shadow-md"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100">
-                          <Car className="text-primary h-6 w-6" />
+                        <div className="bg-accent flex h-12 w-12 items-center justify-center rounded-xl">
+                          <Car className="text-primary-ink h-6 w-6" />
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">{booking.vehicle}</p>
@@ -552,8 +552,8 @@ export default function CustomerProfilePage() {
                       className="flex items-center justify-between rounded-xl bg-gray-50 p-4"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100">
-                          <FileText className="h-6 w-6 text-blue-600" />
+                        <div className="bg-accent flex h-12 w-12 items-center justify-center rounded-xl">
+                          <FileText className="text-primary-ink h-6 w-6" />
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">

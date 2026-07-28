@@ -26,7 +26,7 @@ import { api, Conversation, ConversationStatus, ApiError, Customer, Priority } f
 const statusColors: Record<ConversationStatus, string> = {
   OPEN: 'bg-blue-100 text-blue-800',
   PENDING: 'bg-yellow-100 text-yellow-800',
-  IN_PROGRESS: 'bg-orange-100 text-orange-800',
+  IN_PROGRESS: 'bg-amber-100 text-amber-800',
   RESOLVED: 'bg-green-100 text-green-800',
   CLOSED: 'bg-gray-100 text-gray-800',
 };
@@ -34,7 +34,7 @@ const statusColors: Record<ConversationStatus, string> = {
 const priorityColors: Record<string, string> = {
   LOW: 'text-gray-500',
   NORMAL: 'text-blue-500',
-  HIGH: 'text-orange-500',
+  HIGH: 'text-amber-500',
   URGENT: 'text-red-500',
 };
 
@@ -267,7 +267,7 @@ export default function MessagesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowNewConversation(true)}
-            className="bg-primary flex items-center gap-2 rounded-xl px-4 py-2 text-white shadow-lg shadow-orange-200 transition-colors hover:bg-orange-600"
+            className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark flex items-center gap-2 rounded-xl px-4 py-2 shadow-lg transition-colors"
           >
             <Plus className="h-5 w-5" />
             <span className="hidden sm:inline">New Conversation</span>
@@ -320,14 +320,14 @@ export default function MessagesPage() {
                   className={cn(
                     'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                     activeTab === tab.id
-                      ? 'text-primary bg-orange-100'
+                      ? 'text-primary-ink bg-accent'
                       : 'text-gray-600 hover:bg-gray-100'
                   )}
                 >
                   <tab.icon className="h-4 w-4" />
                   {tab.label}
                   {tab.id === 'open' && openCount > 0 && (
-                    <span className="bg-primary ml-1 rounded-full px-1.5 py-0.5 text-xs text-white">
+                    <span className="bg-primary text-primary-foreground ml-1 rounded-full px-1.5 py-0.5 text-xs">
                       {openCount}
                     </span>
                   )}
@@ -340,7 +340,7 @@ export default function MessagesPage() {
           <div className="flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="flex h-full items-center justify-center">
-                <Loader2 className="text-primary h-8 w-8 animate-spin" />
+                <Loader2 className="text-primary-ink h-8 w-8 animate-spin" />
               </div>
             ) : conversations.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-gray-500">
@@ -359,12 +359,12 @@ export default function MessagesPage() {
                     onClick={() => handleSelectConversation(conversation)}
                     className={cn(
                       'cursor-pointer p-4 transition-colors hover:bg-gray-50',
-                      conversation.status === 'OPEN' && 'bg-orange-50/50',
-                      selectedConversation?.id === conversation.id && 'bg-orange-50'
+                      conversation.status === 'OPEN' && 'bg-accent/50',
+                      selectedConversation?.id === conversation.id && 'bg-accent'
                     )}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-sm font-medium text-white">
+                      <div className="from-primary-light to-primary-dark text-primary-foreground flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-medium">
                         {getCustomerName(conversation)
                           .split(' ')
                           .map((n) => n[0])
@@ -458,7 +458,7 @@ export default function MessagesPage() {
                 {selectedConversation.status === 'RESOLVED' && (
                   <button
                     onClick={() => handleUpdateStatus(selectedConversation.id, 'OPEN')}
-                    className="rounded-lg bg-blue-50 px-3 py-1.5 text-sm text-blue-600 transition-colors hover:bg-blue-100"
+                    className="bg-accent text-primary-ink hover:bg-primary-light rounded-lg px-3 py-1.5 text-sm transition-colors"
                   >
                     Reopen
                   </button>
@@ -482,13 +482,13 @@ export default function MessagesPage() {
             <div className="flex-1 overflow-y-auto p-6">
               {isLoadingDetail ? (
                 <div className="flex h-full items-center justify-center">
-                  <Loader2 className="text-primary h-8 w-8 animate-spin" />
+                  <Loader2 className="text-primary-ink h-8 w-8 animate-spin" />
                 </div>
               ) : (
                 <>
                   {/* Customer Header */}
                   <div className="mb-6 flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 font-medium text-white">
+                    <div className="from-primary-light to-primary-dark text-primary-foreground flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br font-medium">
                       {getCustomerName(selectedConversation)
                         .split(' ')
                         .map((n) => n[0])
@@ -538,7 +538,7 @@ export default function MessagesPage() {
                         key={message.id}
                         className={cn(
                           'rounded-xl p-4',
-                          message.senderType === 'ADMIN' ? 'ml-8 bg-orange-50' : 'mr-8 bg-gray-50'
+                          message.senderType === 'ADMIN' ? 'bg-accent ml-8' : 'mr-8 bg-gray-50'
                         )}
                       >
                         <div className="mb-2 flex items-center justify-between">
@@ -600,7 +600,7 @@ export default function MessagesPage() {
                   <button
                     onClick={handleSendReply}
                     disabled={!replyContent.trim() || isSending}
-                    className="bg-primary flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white shadow-lg shadow-orange-200 transition-all hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                    className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
                     {isSending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -673,9 +673,9 @@ export default function MessagesPage() {
                       Select Customer *
                     </label>
                     {selectedCustomer ? (
-                      <div className="flex items-center justify-between rounded-xl border border-orange-200 bg-orange-50 p-3">
+                      <div className="border-primary bg-accent flex items-center justify-between rounded-xl border p-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-sm font-medium text-white">
+                          <div className="from-primary-light to-primary-dark text-primary-foreground flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-medium">
                             {selectedCustomer.firstName?.[0]}
                             {selectedCustomer.lastName?.[0]}
                           </div>
@@ -688,9 +688,9 @@ export default function MessagesPage() {
                         </div>
                         <button
                           onClick={() => setSelectedCustomer(null)}
-                          className="rounded-lg p-1 hover:bg-orange-100"
+                          className="hover:bg-accent rounded-lg p-1"
                         >
-                          <X className="h-4 w-4 text-orange-600" />
+                          <X className="text-primary-ink h-4 w-4" />
                         </button>
                       </div>
                     ) : (
@@ -708,7 +708,7 @@ export default function MessagesPage() {
                         <div className="max-h-48 divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200">
                           {isLoadingCustomers ? (
                             <div className="p-4 text-center">
-                              <Loader2 className="text-primary mx-auto h-5 w-5 animate-spin" />
+                              <Loader2 className="text-primary-ink mx-auto h-5 w-5 animate-spin" />
                             </div>
                           ) : customers.length === 0 ? (
                             <div className="p-4 text-center text-sm text-gray-500">
@@ -721,7 +721,7 @@ export default function MessagesPage() {
                                 onClick={() => setSelectedCustomer(customer)}
                                 className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-gray-50"
                               >
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-xs font-medium text-white">
+                                <div className="from-primary-light to-primary-dark text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br text-xs font-medium">
                                   {customer.firstName?.[0]}
                                   {customer.lastName?.[0]}
                                 </div>
@@ -769,7 +769,7 @@ export default function MessagesPage() {
                                 : priority === 'NORMAL'
                                   ? 'bg-blue-100 text-blue-800'
                                   : priority === 'HIGH'
-                                    ? 'bg-orange-100 text-orange-800'
+                                    ? 'bg-amber-100 text-amber-800'
                                     : 'bg-red-100 text-red-800'
                               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           )}
@@ -806,7 +806,7 @@ export default function MessagesPage() {
                   <button
                     onClick={handleCreateConversation}
                     disabled={!selectedCustomer || !newMessage.trim() || isCreating}
-                    className="bg-primary flex items-center gap-2 rounded-xl px-4 py-2 text-white shadow-lg shadow-orange-200 transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                    className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark flex items-center gap-2 rounded-xl px-4 py-2 shadow-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
                     {isCreating ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

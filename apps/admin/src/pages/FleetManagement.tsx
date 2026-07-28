@@ -58,17 +58,17 @@ interface MaintenanceSchedule {
 const statusColors: Record<string, string> = {
   AVAILABLE: 'bg-green-100 text-green-800',
   RENTED: 'bg-blue-100 text-blue-800',
-  MAINTENANCE: 'bg-orange-100 text-orange-800',
+  MAINTENANCE: 'bg-amber-100 text-amber-800',
   RETIRED: 'bg-gray-100 text-gray-800',
 };
 
 const categoryColors: Record<string, string> = {
-  ECONOMY: 'bg-green-100 text-green-800',
-  STANDARD: 'bg-blue-100 text-blue-800',
-  PREMIUM: 'bg-rose-100 text-rose-800',
-  LUXURY: 'bg-amber-100 text-amber-800',
-  SUV: 'bg-orange-100 text-orange-800',
-  VAN: 'bg-teal-100 text-teal-800',
+  ECONOMY: 'bg-gray-100 text-gray-700',
+  STANDARD: 'bg-gray-100 text-gray-700',
+  PREMIUM: 'bg-accent text-accent-foreground',
+  LUXURY: 'bg-accent text-accent-foreground',
+  SUV: 'bg-gray-100 text-gray-700',
+  VAN: 'bg-gray-100 text-gray-700',
 };
 
 const maintenanceTypes = [
@@ -427,7 +427,7 @@ export default function FleetManagement() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-orange-500" />
+          <Loader2 className="text-primary-ink mx-auto mb-4 h-10 w-10 animate-spin" />
           <p className="text-gray-500">Loading fleet...</p>
         </div>
       </div>
@@ -444,7 +444,7 @@ export default function FleetManagement() {
         </div>
         <button
           onClick={handleAddVehicle}
-          className="bg-primary inline-flex items-center justify-center rounded-xl px-4 py-2 font-bold text-white shadow-lg shadow-orange-200 transition-all hover:bg-orange-600 hover:shadow-orange-300"
+          className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 inline-flex items-center justify-center rounded-xl px-4 py-2 font-bold shadow-lg transition-all"
         >
           <Plus className="mr-2 h-5 w-5" />
           Add Vehicle
@@ -480,7 +480,7 @@ export default function FleetManagement() {
               <Car className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-gray-900">
                 {vehicles.filter((v) => v.status === 'AVAILABLE').length}
               </p>
               <p className="text-sm text-gray-500">Available</p>
@@ -494,11 +494,11 @@ export default function FleetManagement() {
           className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
-              <CalendarCheck className="h-5 w-5 text-blue-600" />
+            <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-xl">
+              <CalendarCheck className="text-primary-ink h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold text-gray-900">
                 {vehicles.filter((v) => v.bookingCount && v.bookingCount > 0).length}
               </p>
               <p className="text-sm text-gray-500">Booked</p>
@@ -516,7 +516,7 @@ export default function FleetManagement() {
               <Car className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold text-gray-900">
                 {vehicles.filter((v) => v.status === 'RENTED').length}
               </p>
               <p className="text-sm text-gray-500">Rented</p>
@@ -530,11 +530,11 @@ export default function FleetManagement() {
           className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
-              <Wrench className="h-5 w-5 text-orange-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
+              <Wrench className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-orange-600">
+              <p className="text-2xl font-bold text-gray-900">
                 {vehicles.filter((v) => v.status === 'MAINTENANCE').length}
               </p>
               <p className="text-sm text-gray-500">Maintenance</p>
@@ -545,10 +545,10 @@ export default function FleetManagement() {
 
       {/* Bulk Actions Bar */}
       {hasSelection && (
-        <div className="flex items-center justify-between rounded-xl border border-orange-200 bg-orange-50 p-4">
+        <div className="border-primary bg-accent flex items-center justify-between rounded-xl border p-4">
           <div className="flex items-center gap-3">
-            <CheckSquare className="text-primary h-5 w-5" />
-            <span className="font-medium text-orange-900">
+            <CheckSquare className="text-primary-ink h-5 w-5" />
+            <span className="text-primary-ink font-medium">
               {selectedVehicles.size} vehicle{selectedVehicles.size > 1 ? 's' : ''} selected
             </span>
           </div>
@@ -556,7 +556,7 @@ export default function FleetManagement() {
             <div className="relative">
               <button
                 onClick={() => setShowBulkActions(!showBulkActions)}
-                className="bg-primary rounded-lg px-4 py-2 text-white transition-colors hover:bg-orange-600"
+                className="bg-primary text-primary-foreground hover:bg-primary-dark rounded-lg px-4 py-2 transition-colors"
               >
                 Bulk Actions
               </button>
@@ -575,7 +575,7 @@ export default function FleetManagement() {
                           className={cn(
                             'h-2 w-2 rounded-full',
                             status === 'AVAILABLE' && 'bg-green-500',
-                            status === 'MAINTENANCE' && 'bg-orange-500',
+                            status === 'MAINTENANCE' && 'bg-amber-500',
                             status === 'RETIRED' && 'bg-gray-500'
                           )}
                         />
@@ -596,7 +596,7 @@ export default function FleetManagement() {
             </div>
             <button
               onClick={() => setSelectedVehicles(new Set())}
-              className="rounded-lg border border-orange-300 px-4 py-2 text-orange-700 transition-colors hover:bg-orange-100"
+              className="border-primary text-primary-ink hover:bg-accent rounded-lg border px-4 py-2 transition-colors"
             >
               Clear Selection
             </button>
@@ -654,7 +654,7 @@ export default function FleetManagement() {
                     className="rounded p-1 transition-colors hover:bg-gray-200"
                   >
                     {isAllSelected ? (
-                      <CheckSquare className="text-primary h-5 w-5" />
+                      <CheckSquare className="text-primary-ink h-5 w-5" />
                     ) : (
                       <Square className="h-5 w-5 text-gray-400" />
                     )}
@@ -692,7 +692,7 @@ export default function FleetManagement() {
                     key={vehicle.id}
                     className={cn(
                       'transition-colors hover:bg-gray-50',
-                      selectedVehicles.has(vehicle.id) && 'bg-orange-50'
+                      selectedVehicles.has(vehicle.id) && 'bg-accent'
                     )}
                   >
                     <td className="px-6 py-4">
@@ -701,7 +701,7 @@ export default function FleetManagement() {
                         className="rounded p-1 transition-colors hover:bg-gray-200"
                       >
                         {selectedVehicles.has(vehicle.id) ? (
-                          <CheckSquare className="text-primary h-5 w-5" />
+                          <CheckSquare className="text-primary-ink h-5 w-5" />
                         ) : (
                           <Square className="h-5 w-5 text-gray-400" />
                         )}
@@ -724,7 +724,7 @@ export default function FleetManagement() {
                           )}
                         </div>
                         <div>
-                          <p className="group-hover:text-primary font-medium text-gray-900 transition-colors">
+                          <p className="group-hover:text-primary-ink font-medium text-gray-900 transition-colors">
                             {vehicle.year} {vehicle.make} {vehicle.model}
                           </p>
                           <p className="text-sm text-gray-500">
@@ -746,7 +746,7 @@ export default function FleetManagement() {
                     <td className="px-6 py-4">
                       {vehicle.bookingCount && vehicle.bookingCount > 0 ? (
                         <span
-                          className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800"
+                          className="bg-accent text-accent-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                           title={`This vehicle has ${vehicle.bookingCount} booking${vehicle.bookingCount > 1 ? 's' : ''} and cannot be deleted`}
                         >
                           {vehicle.bookingCount} booking{vehicle.bookingCount > 1 ? 's' : ''}
@@ -805,21 +805,21 @@ export default function FleetManagement() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEditVehicle(vehicle)}
-                          className="hover:text-primary rounded-lg p-2 text-gray-400 transition-colors hover:bg-orange-50"
+                          className="hover:text-primary-ink hover:bg-accent rounded-lg p-2 text-gray-400 transition-colors"
                           title="Edit Vehicle"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleOpenMaintenance(vehicle)}
-                          className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-orange-50 hover:text-orange-600"
+                          className="hover:bg-accent hover:text-primary-ink rounded-lg p-2 text-gray-400 transition-colors"
                           title="Schedule Maintenance"
                         >
                           <Wrench className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleOpenBookings(vehicle)}
-                          className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                          className="hover:bg-accent hover:text-primary-ink rounded-lg p-2 text-gray-400 transition-colors"
                           title="View Bookings"
                         >
                           <Calendar className="h-4 w-4" />
@@ -919,7 +919,7 @@ export default function FleetManagement() {
                 </button>
                 <button
                   onClick={handleScheduleMaintenance}
-                  className="bg-primary rounded-lg px-4 py-2 text-white hover:bg-orange-600"
+                  className="bg-primary text-primary-foreground hover:bg-primary-dark rounded-lg px-4 py-2"
                 >
                   Schedule
                 </button>
@@ -1018,7 +1018,7 @@ export default function FleetManagement() {
             <div className="flex-1 overflow-y-auto p-6">
               {isLoadingBookings ? (
                 <div className="py-12 text-center">
-                  <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-orange-500" />
+                  <Loader2 className="text-primary-ink mx-auto mb-2 h-8 w-8 animate-spin" />
                   <p className="text-gray-500">Loading bookings...</p>
                 </div>
               ) : vehicleBookings.length === 0 ? (

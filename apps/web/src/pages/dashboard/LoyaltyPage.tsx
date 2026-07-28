@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Loader2, Gift, TrendingUp, ArrowUp, ArrowDown,
-  Star, Crown, Award, Gem, Info, ChevronRight
+  Loader2,
+  Gift,
+  TrendingUp,
+  ArrowUp,
+  ArrowDown,
+  Star,
+  Crown,
+  Award,
+  Gem,
+  Info,
+  ChevronRight,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -47,10 +56,10 @@ interface TierInfo {
 }
 
 const tierIcons: Record<string, React.ReactNode> = {
-  BRONZE: <Award className="w-5 h-5" />,
-  SILVER: <Star className="w-5 h-5" />,
-  GOLD: <Crown className="w-5 h-5" />,
-  PLATINUM: <Gem className="w-5 h-5" />,
+  BRONZE: <Award className="h-5 w-5" />,
+  SILVER: <Star className="h-5 w-5" />,
+  GOLD: <Crown className="h-5 w-5" />,
+  PLATINUM: <Gem className="h-5 w-5" />,
 };
 
 const tierColors: Record<string, string> = {
@@ -61,11 +70,11 @@ const tierColors: Record<string, string> = {
 };
 
 const transactionTypeColors: Record<string, { icon: React.ReactNode; color: string }> = {
-  EARNED: { icon: <ArrowUp className="w-4 h-4" />, color: 'text-green-600 bg-green-100' },
-  REDEEMED: { icon: <ArrowDown className="w-4 h-4" />, color: 'text-orange-600 bg-orange-100' },
-  BONUS: { icon: <Gift className="w-4 h-4" />, color: 'text-purple-600 bg-purple-100' },
-  EXPIRED: { icon: <ArrowDown className="w-4 h-4" />, color: 'text-gray-600 bg-gray-100' },
-  ADJUSTMENT: { icon: <TrendingUp className="w-4 h-4" />, color: 'text-blue-600 bg-blue-100' },
+  EARNED: { icon: <ArrowUp className="h-4 w-4" />, color: 'text-green-600 bg-green-100' },
+  REDEEMED: { icon: <ArrowDown className="h-4 w-4" />, color: 'text-primary-ink bg-accent' },
+  BONUS: { icon: <Gift className="h-4 w-4" />, color: 'text-purple-600 bg-purple-100' },
+  EXPIRED: { icon: <ArrowDown className="h-4 w-4" />, color: 'text-gray-600 bg-gray-100' },
+  ADJUSTMENT: { icon: <TrendingUp className="h-4 w-4" />, color: 'text-blue-600 bg-blue-100' },
 };
 
 export default function LoyaltyPage() {
@@ -105,19 +114,19 @@ export default function LoyaltyPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Loader2 className="text-primary-ink h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-red-600">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors"
+          className="bg-primary text-primary-foreground hover:bg-primary-dark mt-4 rounded-lg px-4 py-2 transition-colors"
         >
           Try Again
         </button>
@@ -132,13 +141,11 @@ export default function LoyaltyPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Loyalty Rewards</h1>
-        <p className="text-gray-500">
-          Earn points on every rental and redeem them for discounts.
-        </p>
+        <p className="text-gray-500">Earn points on every rental and redeem them for discounts.</p>
       </div>
 
       {/* Points Card & Tier Progress */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid gap-6 md:grid-cols-2">
         <PointsCard
           points={account.points}
           pointsValue={account.pointsValue}
@@ -159,19 +166,19 @@ export default function LoyaltyPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+        className="overflow-hidden rounded-xl border border-gray-200 bg-white"
       >
         <button
           onClick={() => setShowTierInfo(!showTierInfo)}
-          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+          className="flex w-full items-center justify-between p-4 transition-colors hover:bg-gray-50"
         >
           <div className="flex items-center gap-3">
-            <Info className="w-5 h-5 text-primary" />
+            <Info className="text-primary-ink h-5 w-5" />
             <span className="font-medium text-gray-900">How the Loyalty Program Works</span>
           </div>
           <ChevronRight
             className={cn(
-              'w-5 h-5 text-gray-400 transition-transform',
+              'h-5 w-5 text-gray-400 transition-transform',
               showTierInfo && 'rotate-90'
             )}
           />
@@ -179,35 +186,33 @@ export default function LoyaltyPage() {
 
         {showTierInfo && tierInfo && (
           <div className="border-t border-gray-200 p-4">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {tierInfo.tiers.map((tier) => (
                 <div
                   key={tier.name}
                   className={cn(
-                    'p-4 rounded-lg border',
-                    account.tier === tier.name
-                      ? 'border-primary bg-orange-50'
-                      : 'border-gray-200'
+                    'rounded-lg border p-4',
+                    account.tier === tier.name ? 'border-primary bg-accent' : 'border-gray-200'
                   )}
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={cn('p-2 rounded-full', tierColors[tier.name])}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className={cn('rounded-full p-2', tierColors[tier.name])}>
                       {tierIcons[tier.name]}
                     </span>
                     <span className="font-semibold text-gray-900">{tier.name}</span>
                   </div>
-                  <p className="text-sm text-gray-500 mb-2">
+                  <p className="mb-2 text-sm text-gray-500">
                     {tier.threshold === 0
                       ? 'Starting tier'
                       : `${tier.threshold.toLocaleString()}+ points`}
                   </p>
-                  <p className="text-sm font-medium text-primary mb-2">
+                  <p className="text-primary-ink mb-2 text-sm font-medium">
                     {tier.multiplier}x points earning
                   </p>
-                  <ul className="text-xs text-gray-600 space-y-1">
+                  <ul className="space-y-1 text-xs text-gray-600">
                     {tier.benefits.map((benefit, i) => (
                       <li key={i} className="flex items-start gap-1">
-                        <span className="text-green-500 mt-0.5">•</span>
+                        <span className="mt-0.5 text-green-500">•</span>
                         {benefit}
                       </li>
                     ))}
@@ -216,8 +221,8 @@ export default function LoyaltyPage() {
               ))}
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-1">Redeeming Points</h4>
+            <div className="rounded-lg bg-gray-50 p-4">
+              <h4 className="mb-1 font-medium text-gray-900">Redeeming Points</h4>
               <p className="text-sm text-gray-600">{tierInfo.redemption.description}</p>
             </div>
           </div>
@@ -229,29 +234,30 @@ export default function LoyaltyPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white rounded-xl border border-gray-200 p-6"
+        className="rounded-xl border border-gray-200 bg-white p-6"
       >
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Recent Activity</h2>
 
         {account.transactions.length === 0 ? (
-          <div className="text-center py-8">
-            <Gift className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <div className="py-8 text-center">
+            <Gift className="mx-auto mb-3 h-12 w-12 text-gray-300" />
             <p className="text-gray-500">No activity yet</p>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="mt-1 text-sm text-gray-400">
               Start earning points by completing a rental!
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {account.transactions.map((transaction) => {
-              const typeStyle = transactionTypeColors[transaction.type] || transactionTypeColors.EARNED;
+              const typeStyle =
+                transactionTypeColors[transaction.type] || transactionTypeColors.EARNED;
               return (
                 <div
                   key={transaction.id}
-                  className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                  className="flex items-center justify-between border-b border-gray-100 py-3 last:border-0"
                 >
                   <div className="flex items-center gap-3">
-                    <span className={cn('p-2 rounded-full', typeStyle.color)}>
+                    <span className={cn('rounded-full p-2', typeStyle.color)}>
                       {typeStyle.icon}
                     </span>
                     <div>
@@ -262,7 +268,7 @@ export default function LoyaltyPage() {
                   <span
                     className={cn(
                       'font-semibold',
-                      transaction.points > 0 ? 'text-green-600' : 'text-orange-600'
+                      transaction.points > 0 ? 'text-green-600' : 'text-primary-ink'
                     )}
                   >
                     {transaction.points > 0 ? '+' : ''}

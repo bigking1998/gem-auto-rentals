@@ -43,8 +43,8 @@ interface RecentBooking {
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-green-100 text-green-800',
-  ACTIVE: 'bg-blue-100 text-blue-800',
+  CONFIRMED: 'bg-blue-100 text-blue-800',
+  ACTIVE: 'bg-green-100 text-green-800',
   COMPLETED: 'bg-gray-100 text-gray-800',
   CANCELLED: 'bg-red-100 text-red-800',
 };
@@ -56,9 +56,9 @@ const quickActions = [
     label: 'Add Vehicle',
     description: 'Add a new vehicle to fleet',
     icon: Car,
-    color: 'bg-blue-500',
-    hoverBorder: 'hover:border-blue-500',
-    hoverBg: 'hover:bg-blue-50',
+    color: 'bg-navy',
+    hoverBorder: 'hover:border-navy',
+    hoverBg: 'hover:bg-accent',
     route: '/fleet',
     action: 'modal',
   },
@@ -67,9 +67,9 @@ const quickActions = [
     label: 'New Booking',
     description: 'Create a new reservation',
     icon: CalendarCheck,
-    color: 'bg-green-500',
-    hoverBorder: 'hover:border-green-500',
-    hoverBg: 'hover:bg-green-50',
+    color: 'bg-navy',
+    hoverBorder: 'hover:border-navy',
+    hoverBg: 'hover:bg-accent',
     route: '/bookings',
     action: 'navigate',
   },
@@ -78,9 +78,9 @@ const quickActions = [
     label: 'Add Customer',
     description: 'Register a new customer',
     icon: Users,
-    color: 'bg-primary',
-    hoverBorder: 'hover:border-primary',
-    hoverBg: 'hover:bg-orange-50',
+    color: 'bg-navy',
+    hoverBorder: 'hover:border-navy',
+    hoverBg: 'hover:bg-accent',
     route: '/customers',
     action: 'navigate',
   },
@@ -89,9 +89,9 @@ const quickActions = [
     label: 'Record Payment',
     description: 'Log a payment transaction',
     icon: DollarSign,
-    color: 'bg-emerald-500',
-    hoverBorder: 'hover:border-emerald-500',
-    hoverBg: 'hover:bg-emerald-50',
+    color: 'bg-navy',
+    hoverBorder: 'hover:border-navy',
+    hoverBg: 'hover:bg-accent',
     route: '/bookings',
     action: 'navigate',
   },
@@ -100,9 +100,9 @@ const quickActions = [
     label: 'Maintenance',
     description: 'Schedule vehicle service',
     icon: Wrench,
-    color: 'bg-orange-500',
-    hoverBorder: 'hover:border-orange-500',
-    hoverBg: 'hover:bg-orange-50',
+    color: 'bg-navy',
+    hoverBorder: 'hover:border-navy',
+    hoverBg: 'hover:bg-accent',
     route: '/fleet',
     action: 'navigate',
   },
@@ -111,9 +111,9 @@ const quickActions = [
     label: 'View Reports',
     description: 'Analytics & insights',
     icon: TrendingUp,
-    color: 'bg-amber-500',
-    hoverBorder: 'hover:border-amber-500',
-    hoverBg: 'hover:bg-amber-50',
+    color: 'bg-navy',
+    hoverBorder: 'hover:border-navy',
+    hoverBg: 'hover:bg-accent',
     route: '/analytics',
     action: 'navigate',
   },
@@ -225,7 +225,7 @@ export default function DashboardHome() {
       change: 12,
       trend: 'up' as const,
       icon: Car,
-      color: 'bg-red-500',
+      color: 'bg-primary',
     },
     {
       label: "Today's Revenue",
@@ -233,7 +233,7 @@ export default function DashboardHome() {
       change: 8.2,
       trend: 'up' as const,
       icon: DollarSign,
-      color: 'bg-green-500',
+      color: 'bg-primary',
       isCurrency: true,
       isDemo: true,
     },
@@ -243,7 +243,7 @@ export default function DashboardHome() {
       change: -3,
       trend: 'down' as const,
       icon: Clock,
-      color: 'bg-orange-500',
+      color: 'bg-primary',
     },
     {
       label: 'Available Vehicles',
@@ -251,7 +251,7 @@ export default function DashboardHome() {
       change: 5,
       trend: 'up' as const,
       icon: CalendarCheck,
-      color: 'bg-orange-500',
+      color: 'bg-primary',
     },
   ];
 
@@ -266,7 +266,7 @@ export default function DashboardHome() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/fleet', { state: { action: 'add-vehicle' } })}
-            className="bg-primary hidden items-center gap-2 rounded-xl px-4 py-2 text-white shadow-lg shadow-orange-200 transition-all hover:bg-orange-600 hover:shadow-orange-300 sm:flex"
+            className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 hidden items-center gap-2 rounded-xl px-4 py-2 shadow-lg transition-all sm:flex"
           >
             <Plus className="h-4 w-4" />
             Quick Add
@@ -304,13 +304,13 @@ export default function DashboardHome() {
               className={cn(
                 'flex items-center justify-between rounded-2xl border p-4',
                 alert.type === 'warning' && 'border-amber-200 bg-amber-50',
-                alert.type === 'info' && 'border-blue-200 bg-blue-50',
+                alert.type === 'info' && 'border-primary bg-accent',
                 alert.type === 'success' && 'border-green-200 bg-green-50'
               )}
             >
               <div className="flex items-center gap-3">
                 {alert.type === 'warning' && <AlertCircle className="h-5 w-5 text-amber-500" />}
-                {alert.type === 'info' && <AlertCircle className="h-5 w-5 text-blue-500" />}
+                {alert.type === 'info' && <AlertCircle className="text-primary-ink h-5 w-5" />}
                 {alert.type === 'success' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                 <span className="text-sm font-medium text-gray-700">{alert.message}</span>
               </div>
@@ -319,7 +319,7 @@ export default function DashboardHome() {
                 className={cn(
                   'flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
                   alert.type === 'warning' && 'text-amber-600 hover:bg-amber-100',
-                  alert.type === 'info' && 'text-blue-600 hover:bg-blue-100',
+                  alert.type === 'info' && 'text-primary-ink hover:bg-accent',
                   alert.type === 'success' && 'text-green-600 hover:bg-green-100'
                 )}
               >
@@ -358,7 +358,7 @@ export default function DashboardHome() {
                 </div>
                 {isLoading ? (
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
+                    <Loader2 className="text-primary-ink h-5 w-5 animate-spin" />
                     <span className="text-xl font-bold text-gray-300">Loading...</span>
                   </div>
                 ) : (
@@ -373,7 +373,7 @@ export default function DashboardHome() {
                   stat.color
                 )}
               >
-                <stat.icon className="h-6 w-6 text-white" />
+                <stat.icon className="text-primary-foreground h-6 w-6" />
               </div>
             </div>
             <div className="mt-3 flex items-center gap-1">
@@ -486,7 +486,7 @@ export default function DashboardHome() {
                   }}
                   formatter={(value: number) => [formatCurrency(value), 'Revenue']}
                 />
-                <Bar dataKey="revenue" fill="#FF871E" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="revenue" fill="#D4AF37" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -506,7 +506,7 @@ export default function DashboardHome() {
             </div>
             <button
               onClick={() => navigate('/bookings')}
-              className="text-primary flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-bold transition-colors hover:bg-orange-50 hover:text-orange-600"
+              className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-bold transition-colors"
             >
               View All
               <ChevronRight className="h-4 w-4" />
@@ -515,7 +515,7 @@ export default function DashboardHome() {
           <div className="space-y-3">
             {isLoading ? (
               <div className="py-8 text-center text-gray-500">
-                <Loader2 className="mx-auto mb-2 h-10 w-10 animate-spin text-orange-500" />
+                <Loader2 className="text-primary-ink mx-auto mb-2 h-10 w-10 animate-spin" />
                 <p>Loading bookings...</p>
               </div>
             ) : recentBookings.length === 0 ? (
@@ -531,7 +531,7 @@ export default function DashboardHome() {
                   onClick={() => navigate('/bookings')}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 text-sm font-bold text-white shadow-lg shadow-orange-200">
+                    <div className="from-primary-light to-primary-dark text-primary-foreground shadow-primary/20 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-bold shadow-lg">
                       {booking.customer
                         .split(' ')
                         .map((n) => n[0])
@@ -571,7 +571,7 @@ export default function DashboardHome() {
       >
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
-          <button className="text-primary flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-bold transition-colors hover:bg-orange-50 hover:text-orange-600">
+          <button className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-bold transition-colors">
             View All
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -615,10 +615,10 @@ export default function DashboardHome() {
                 <div
                   className={cn(
                     'absolute left-2 h-4 w-4 rounded-full border-2 border-white shadow-lg',
-                    activity.type === 'booking' && 'bg-orange-500',
+                    activity.type === 'booking' && 'bg-primary',
                     activity.type === 'payment' && 'bg-green-500',
-                    activity.type === 'return' && 'bg-amber-500',
-                    activity.type === 'customer' && 'bg-orange-500',
+                    activity.type === 'return' && 'bg-secondary',
+                    activity.type === 'customer' && 'bg-navy',
                     activity.type === 'maintenance' && 'bg-gray-500'
                   )}
                 />

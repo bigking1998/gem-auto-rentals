@@ -2,11 +2,7 @@ import type { Config } from 'tailwindcss';
 
 const config: Config = {
   darkMode: ['class'],
-  content: [
-    './index.html',
-    './src/**/*.{ts,tsx}',
-    '../../packages/ui/src/**/*.{ts,tsx}',
-  ],
+  content: ['./index.html', './src/**/*.{ts,tsx}', '../../packages/ui/src/**/*.{ts,tsx}'],
   theme: {
     container: {
       center: true,
@@ -25,6 +21,15 @@ const config: Config = {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+          // gold is light — use `ink` for gold-coloured TEXT on white
+          ink: 'hsl(var(--primary-ink))',
+          light: 'hsl(var(--primary-light))',
+          dark: 'hsl(var(--primary-dark))',
+        },
+        navy: {
+          DEFAULT: 'hsl(var(--navy))',
+          card: 'hsl(var(--navy-card))',
+          light: 'hsl(var(--navy-light))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',

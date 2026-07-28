@@ -7,39 +7,39 @@ const benefits = [
     title: 'Quality Fleet',
     description:
       'All vehicles are regularly maintained and inspected to ensure your safety and comfort.',
-    color: 'bg-orange-50 text-primary',
+    color: 'bg-accent text-primary-ink',
   },
   {
     icon: Calendar,
     title: 'Flexible Rentals',
     description:
       'Daily, weekly, or monthly rentals available. Extend or modify your booking anytime.',
-    color: 'bg-orange-50 text-primary',
+    color: 'bg-accent text-primary-ink',
   },
   {
     icon: DollarSign,
     title: 'Transparent Pricing',
     description:
       'No hidden fees or surprises. What you see is what you pay, with all taxes included.',
-    color: 'bg-orange-50 text-primary',
+    color: 'bg-accent text-primary-ink',
   },
   {
     icon: Headphones,
     title: '24/7 Support',
     description: 'Our dedicated support team is available around the clock to assist you.',
-    color: 'bg-orange-50 text-primary',
+    color: 'bg-accent text-primary-ink',
   },
   {
     icon: ShieldCheck,
     title: 'Fully Insured',
     description: 'Comprehensive insurance coverage included with every rental for peace of mind.',
-    color: 'bg-orange-50 text-primary',
+    color: 'bg-accent text-primary-ink',
   },
   {
     icon: Zap,
     title: 'Easy Booking',
     description: 'Book in minutes with our streamlined online process. No paperwork hassle.',
-    color: 'bg-orange-50 text-primary',
+    color: 'bg-accent text-primary-ink',
   },
 ];
 

@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@gem/ui'; // We need to check if these are exported from index.ts. Yes they are.
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@gem/ui'; // We need to check if these are exported from index.ts. Yes they are.
 import { RadioGroup, RadioGroupItem } from '@gem/ui';
 import { Checkbox } from '@gem/ui';
 import { Slider } from '@gem/ui';
@@ -98,26 +93,23 @@ export default function FilterSidebar({
     <>
       {/* Mobile Overlay */}
       {isOpen && onClose && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />
       )}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 overflow-y-auto transition-transform duration-300 lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto border-r border-gray-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white p-4">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-5 h-5 text-gray-900" />
+            <SlidersHorizontal className="h-5 w-5 text-gray-900" />
             <h2 className="font-semibold text-gray-900">Filters</h2>
             {activeFilterCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full">
+              <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
                 {activeFilterCount}
               </span>
             )}
@@ -126,43 +118,52 @@ export default function FilterSidebar({
             {activeFilterCount > 0 && (
               <button
                 onClick={onClearFilters}
-                className="text-sm text-primary hover:text-orange-600 font-medium"
+                className="text-primary-ink hover:text-primary-dark text-sm font-medium"
               >
                 Clear all
               </button>
             )}
             {onClose && (
-              <button
-                onClick={onClose}
-                className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-5 h-5" />
+              <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-gray-100 lg:hidden">
+                <X className="h-5 w-5" />
               </button>
             )}
           </div>
         </div>
 
         <div className="p-4">
-          <Accordion type="multiple" defaultValue={['category', 'price', 'transmission', 'fuel', 'seats']} className="space-y-4">
-
+          <Accordion
+            type="multiple"
+            defaultValue={['category', 'price', 'transmission', 'fuel', 'seats']}
+            className="space-y-4"
+          >
             {/* Category */}
             <AccordionItem value="category" className="border-none">
-              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+              <AccordionTrigger className="py-2 text-base font-semibold text-gray-900 hover:no-underline">
                 Category
               </AccordionTrigger>
               <AccordionContent className="pt-2">
                 <RadioGroup
-                  value={filters.category || ""}
-                  onValueChange={(val) => onFilterChange({ ...filters, category: val === "" ? undefined : val })}
+                  value={filters.category || ''}
+                  onValueChange={(val) =>
+                    onFilterChange({ ...filters, category: val === '' ? undefined : val })
+                  }
                 >
-                  <div className="flex items-center space-x-2 mb-2">
+                  <div className="mb-2 flex items-center space-x-2">
                     <RadioGroupItem value="" id="cat-all" />
-                    <Label htmlFor="cat-all" className="text-sm text-gray-600 cursor-pointer">All Categories</Label>
+                    <Label htmlFor="cat-all" className="cursor-pointer text-sm text-gray-600">
+                      All Categories
+                    </Label>
                   </div>
                   {categories.map((cat) => (
-                    <div key={cat.value} className="flex items-center space-x-2 mb-2">
+                    <div key={cat.value} className="mb-2 flex items-center space-x-2">
                       <RadioGroupItem value={cat.value} id={`cat-${cat.value}`} />
-                      <Label htmlFor={`cat-${cat.value}`} className="text-sm text-gray-600 cursor-pointer">{cat.label}</Label>
+                      <Label
+                        htmlFor={`cat-${cat.value}`}
+                        className="cursor-pointer text-sm text-gray-600"
+                      >
+                        {cat.label}
+                      </Label>
                     </div>
                   ))}
                 </RadioGroup>
@@ -171,10 +172,10 @@ export default function FilterSidebar({
 
             {/* Price Range */}
             <AccordionItem value="price" className="border-none">
-              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+              <AccordionTrigger className="py-2 text-base font-semibold text-gray-900 hover:no-underline">
                 Price Range
               </AccordionTrigger>
-              <AccordionContent className="pt-6 px-1">
+              <AccordionContent className="px-1 pt-6">
                 <Slider
                   defaultValue={[0, 300]}
                   value={priceRange}
@@ -187,14 +188,17 @@ export default function FilterSidebar({
                 />
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span className="font-medium text-gray-900">${priceRange[0]}</span>
-                  <span className="font-medium text-gray-900">${priceRange[1]}{priceRange[1] === 300 && '+'}</span>
+                  <span className="font-medium text-gray-900">
+                    ${priceRange[1]}
+                    {priceRange[1] === 300 && '+'}
+                  </span>
                 </div>
               </AccordionContent>
             </AccordionItem>
 
             {/* Transmission */}
             <AccordionItem value="transmission" className="border-none">
-              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+              <AccordionTrigger className="py-2 text-base font-semibold text-gray-900 hover:no-underline">
                 Transmission
               </AccordionTrigger>
               <AccordionContent className="pt-2">
@@ -207,11 +211,14 @@ export default function FilterSidebar({
                         onCheckedChange={(checked) => {
                           onFilterChange({
                             ...filters,
-                            transmission: checked ? trans.value : undefined
-                          })
+                            transmission: checked ? trans.value : undefined,
+                          });
                         }}
                       />
-                      <Label htmlFor={`trans-${trans.value}`} className="text-sm text-gray-600 cursor-pointer">
+                      <Label
+                        htmlFor={`trans-${trans.value}`}
+                        className="cursor-pointer text-sm text-gray-600"
+                      >
                         {trans.label}
                       </Label>
                     </div>
@@ -222,7 +229,7 @@ export default function FilterSidebar({
 
             {/* Fuel Type */}
             <AccordionItem value="fuel" className="border-none">
-              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+              <AccordionTrigger className="py-2 text-base font-semibold text-gray-900 hover:no-underline">
                 Fuel Type
               </AccordionTrigger>
               <AccordionContent className="pt-2">
@@ -235,11 +242,14 @@ export default function FilterSidebar({
                         onCheckedChange={(checked) => {
                           onFilterChange({
                             ...filters,
-                            fuelType: checked ? fuel.value : undefined
-                          })
+                            fuelType: checked ? fuel.value : undefined,
+                          });
                         }}
                       />
-                      <Label htmlFor={`fuel-${fuel.value}`} className="text-sm text-gray-600 cursor-pointer">
+                      <Label
+                        htmlFor={`fuel-${fuel.value}`}
+                        className="cursor-pointer text-sm text-gray-600"
+                      >
                         {fuel.label}
                       </Label>
                     </div>
@@ -250,28 +260,36 @@ export default function FilterSidebar({
 
             {/* Seats */}
             <AccordionItem value="seats" className="border-none">
-              <AccordionTrigger className="py-2 hover:no-underline text-base font-semibold text-gray-900">
+              <AccordionTrigger className="py-2 text-base font-semibold text-gray-900 hover:no-underline">
                 Seats
               </AccordionTrigger>
               <AccordionContent className="pt-2">
                 <RadioGroup
-                  value={filters.seats?.toString() || "0"}
-                  onValueChange={(val) => onFilterChange({ ...filters, seats: val === "0" ? undefined : parseInt(val) })}
+                  value={filters.seats?.toString() || '0'}
+                  onValueChange={(val) =>
+                    onFilterChange({ ...filters, seats: val === '0' ? undefined : parseInt(val) })
+                  }
                 >
-                  <div className="flex items-center space-x-2 mb-2">
+                  <div className="mb-2 flex items-center space-x-2">
                     <RadioGroupItem value="0" id="seats-any" />
-                    <Label htmlFor="seats-any" className="text-sm text-gray-600 cursor-pointer">Any Seats</Label>
+                    <Label htmlFor="seats-any" className="cursor-pointer text-sm text-gray-600">
+                      Any Seats
+                    </Label>
                   </div>
                   {seatOptions.map((opt) => (
-                    <div key={opt.value} className="flex items-center space-x-2 mb-2">
+                    <div key={opt.value} className="mb-2 flex items-center space-x-2">
                       <RadioGroupItem value={opt.value.toString()} id={`seats-${opt.value}`} />
-                      <Label htmlFor={`seats-${opt.value}`} className="text-sm text-gray-600 cursor-pointer">{opt.label}</Label>
+                      <Label
+                        htmlFor={`seats-${opt.value}`}
+                        className="cursor-pointer text-sm text-gray-600"
+                      >
+                        {opt.label}
+                      </Label>
                     </div>
                   ))}
                 </RadioGroup>
               </AccordionContent>
             </AccordionItem>
-
           </Accordion>
         </div>
       </aside>

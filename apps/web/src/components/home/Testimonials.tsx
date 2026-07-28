@@ -88,7 +88,7 @@ export default function Testimonials() {
                 className="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg lg:p-12"
               >
                 {/* Quote Icon */}
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-orange-50">
+                <div className="bg-accent mb-6 flex h-12 w-12 items-center justify-center rounded-full">
                   <Quote className="text-primary h-6 w-6" />
                 </div>
 

@@ -45,7 +45,7 @@ export default function AboutPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                <span className="text-primary mb-4 inline-block rounded-full bg-orange-100 px-4 py-1.5 text-sm font-semibold">
+                <span className="text-primary-ink bg-accent mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
                   Our Story
                 </span>
                 <h2 className="mb-6 text-3xl font-bold text-gray-900 lg:text-4xl">
@@ -94,7 +94,7 @@ export default function AboutPage() {
                 {/* Operating Hours */}
                 <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
                   <h3 className="mb-6 flex items-center text-xl font-bold text-gray-900">
-                    <Clock className="text-primary mr-3 h-6 w-6" />
+                    <Clock className="text-primary-ink mr-3 h-6 w-6" />
                     Operating Hours
                   </h3>
                   <div className="space-y-4">
@@ -134,8 +134,8 @@ export default function AboutPage() {
                   <h3 className="mb-6 text-xl font-bold text-gray-900">Get in Touch</h3>
                   <div className="space-y-4">
                     <div className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-orange-50">
-                        <MapPin className="text-primary h-5 w-5" />
+                      <div className="bg-accent flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+                        <MapPin className="text-primary-ink h-5 w-5" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Visit Us</p>
@@ -143,8 +143,8 @@ export default function AboutPage() {
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-orange-50">
-                        <Phone className="text-primary h-5 w-5" />
+                      <div className="bg-accent flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+                        <Phone className="text-primary-ink h-5 w-5" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Call Us</p>
@@ -152,8 +152,8 @@ export default function AboutPage() {
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-orange-50">
-                        <Mail className="text-primary h-5 w-5" />
+                      <div className="bg-accent flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+                        <Mail className="text-primary-ink h-5 w-5" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Email Us</p>
