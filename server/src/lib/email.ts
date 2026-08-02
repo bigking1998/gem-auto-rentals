@@ -588,3 +588,94 @@ export async function sendWaitlistWelcomeEmail(
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
+
+/**
+ * Waiting-list campaign email — a one-off message written by staff.
+ *
+ * Sent to ONE recipient at a time by design. Putting many addresses in a single
+ * To/CC exposes every subscriber's email to every other subscriber, which is a
+ * privacy breach and the fastest way to get a sending domain blocklisted.
+ *
+ * CAN-SPAM: unsubscribe link and postal address are mandatory on marketing mail
+ * and must not be removed.
+ */
+export async function sendWaitlistCampaignEmail(
+  to: string,
+  name: string,
+  subject: string,
+  bodyText: string,
+  unsubscribeToken: string
+): Promise<EmailResult> {
+  if (!isEmailConfigured()) {
+    console.warn('Email not configured. Campaign email not sent to:', to);
+    return { success: true, messageId: 'dev-mode-no-email' };
+  }
+
+  const unsubscribeUrl = `${WEB_URL}/unsubscribe?token=${unsubscribeToken}`;
+  const firstName = (name || '').split(' ')[0] || 'there';
+
+  // Staff write plain text; escape it so a stray < cannot break the layout or
+  // inject markup, then honour paragraph breaks.
+  const escaped = bodyText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const paragraphs = escaped
+    .split(/\n\s*\n/)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 16px; font-size:15px; line-height:1.65; color:#42506b;">${p.replace(/\n/g, '<br>')}</p>`
+    )
+    .join('');
+
+  try {
+    const { data, error } = await resend!.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject,
+      headers: {
+        // lets Gmail/Outlook show a native unsubscribe control, which measurably
+        // reduces spam complaints versus people hunting for the footer link
+        'List-Unsubscribe': `<${unsubscribeUrl}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+      html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${subject}</title></head>
+<body style="margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background-color:#f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f4f4f5; padding:40px 20px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 2px 8px rgba(10,22,40,0.08);">
+        <tr>
+          <td style="background:#0A1628; padding:32px; text-align:center;">
+            <div style="font-family:Georgia,'Times New Roman',serif; font-size:24px; letter-spacing:1px; color:#D4AF37; font-weight:bold;">GEM</div>
+            <div style="font-family:Georgia,'Times New Roman',serif; font-size:14px; letter-spacing:4px; color:#7B9CC4; margin-top:3px;">CAR RENTALS</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:34px 32px;">
+            <p style="margin:0 0 16px; font-size:15px; line-height:1.65; color:#42506b;">Hi ${firstName},</p>
+            ${paragraphs}
+            <div style="text-align:center; margin:28px 0 4px;">
+              <a href="${WEB_URL}/vehicles" style="display:inline-block; padding:13px 30px; font-size:15px; font-weight:700; color:#0A1628; background:#D4AF37; text-decoration:none; border-radius:8px;">View Our Fleet</a>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f7f8fa; padding:22px 32px; text-align:center; font-size:12px; line-height:1.6; color:#8d95a5;">
+            <div style="margin-bottom:8px;">You are receiving this because you joined the waiting list at gemrentalcars.com.</div>
+            <div style="margin-bottom:10px;"><a href="${unsubscribeUrl}" style="color:#6b7689; text-decoration:underline;">Unsubscribe</a></div>
+            <div style="color:#a3aab8;">Gem Car Rentals &middot; 1311 E Canal St, Mulberry, FL 33860</div>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+    });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, messageId: data?.id };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}

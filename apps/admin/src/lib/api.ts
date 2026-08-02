@@ -733,6 +733,62 @@ export interface Notification {
 
 // ============ API Methods ============
 export const api = {
+  // Waiting list
+  waitlist: {
+    list: (params?: {
+      search?: string;
+      status?: string;
+      interest?: string;
+      page?: number;
+      limit?: number;
+    }) => {
+      const q = new URLSearchParams();
+      if (params?.search) q.set('search', params.search);
+      if (params?.status) q.set('status', params.status);
+      if (params?.interest) q.set('interest', params.interest);
+      if (params?.page) q.set('page', String(params.page));
+      if (params?.limit) q.set('limit', String(params.limit));
+      const qs = q.toString();
+      return request<{
+        items: Array<{
+          id: string;
+          name: string;
+          email: string;
+          phone: string | null;
+          status: string;
+          interestCategory: string | null;
+          timeframe: string | null;
+          source: string | null;
+          createdAt: string;
+          lastEmailedAt: string | null;
+          emailsReceived: number;
+          profileCompletedAt: string | null;
+        }>;
+        pagination: { page: number; limit: number; total: number; pages: number };
+        stats: Record<string, number>;
+      }>(`/waitlist${qs ? `?${qs}` : ''}`);
+    },
+    campaigns: () =>
+      request<
+        Array<{
+          id: string;
+          subject: string;
+          sentByEmail: string | null;
+          recipientCount: number;
+          successCount: number;
+          failureCount: number;
+          status: string;
+          createdAt: string;
+          completedAt: string | null;
+        }>
+      >('/waitlist/campaigns'),
+    sendCampaign: (subject: string, body: string, subscriberIds?: string[]) =>
+      request<{ campaignId: string; sent: number; failed: number; total: number }>(
+        '/waitlist/campaign',
+        { method: 'POST', body: JSON.stringify({ subject, body, subscriberIds }) }
+      ),
+  },
+
   // Auth
   auth: {
     login: (email: string, password: string): Promise<AuthResponse> =>

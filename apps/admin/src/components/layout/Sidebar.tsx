@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
+  MailPlus,
   Car,
   CalendarDays,
   Users,
@@ -38,6 +39,7 @@ const getMainNavItems = (badges?: BadgeCounts) => [
     badge: badges?.pendingBookings || undefined,
   },
   { label: 'Customers', icon: Users, href: '/customers' },
+  { label: 'Waiting List', icon: MailPlus, href: '/waiting-list' },
   {
     label: 'Messages',
     icon: MessageSquare,

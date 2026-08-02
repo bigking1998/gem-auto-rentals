@@ -68,6 +68,7 @@ const MessagesPage = lazy(() => import('./pages/MessagesPage'));
 const SecurityPage = lazy(() => import('./pages/SecurityPage'));
 const HelpPage = lazy(() => import('./pages/HelpPage'));
 const TrashPage = lazy(() => import('./pages/TrashPage'));
+const AdminWaitingListPage = lazy(() => import('./pages/WaitingListPage'));
 
 // Page loader component for Suspense fallback
 function PageLoader() {
@@ -269,6 +270,16 @@ function App() {
               <LazyLoadErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
                   <SecurityPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="waiting-list"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <AdminWaitingListPage />
                 </Suspense>
               </LazyLoadErrorBoundary>
             }

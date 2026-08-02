@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma.js';
 import { authenticate, staffOnly } from '../middleware/auth.js';
 import { BadRequestError, NotFoundError } from '../middleware/errorHandler.js';
-import { sendWaitlistWelcomeEmail } from '../lib/email.js';
+import { sendWaitlistWelcomeEmail, sendWaitlistCampaignEmail } from '../lib/email.js';
 
 const router = Router();
 
@@ -248,6 +248,192 @@ router.get('/', authenticate, staffOnly, async (req, res, next) => {
         pagination: { page, limit, total, pages: Math.ceil(total / limit) },
         stats: Object.fromEntries(stats.map((s) => [s.status, s._count])),
       },
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * GET /api/waitlist/export.csv
+ * Staff only. The list is the asset — it must never be trapped in this admin.
+ */
+router.get('/export.csv', authenticate, staffOnly, async (_req, res, next) => {
+  try {
+    const subs = await prisma.waitlistSubscriber.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const esc = (v: unknown) => {
+      const str = v === null || v === undefined ? '' : String(v);
+      return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+
+    const header = [
+      'Name',
+      'Email',
+      'Phone',
+      'Status',
+      'Interest',
+      'Timeframe',
+      'Source',
+      'Signed Up',
+      'Emails Received',
+      'Last Emailed',
+    ];
+    const rows = subs.map((s) =>
+      [
+        s.name,
+        s.email,
+        s.phone,
+        s.status,
+        s.interestCategory,
+        s.timeframe,
+        s.source,
+        s.createdAt.toISOString(),
+        s.emailsReceived,
+        s.lastEmailedAt ? s.lastEmailedAt.toISOString() : '',
+      ]
+        .map(esc)
+        .join(',')
+    );
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="gem-waiting-list-${new Date().toISOString().slice(0, 10)}.csv"`
+    );
+    return res.send([header.join(','), ...rows].join('\n'));
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * GET /api/waitlist/campaigns
+ * Staff only. Send history — without it you re-send the same message or lose
+ * track of who has heard what.
+ */
+router.get('/campaigns', authenticate, staffOnly, async (_req, res, next) => {
+  try {
+    const campaigns = await prisma.waitlistCampaign.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        subject: true,
+        sentByEmail: true,
+        recipientCount: true,
+        successCount: true,
+        failureCount: true,
+        status: true,
+        createdAt: true,
+        completedAt: true,
+      },
+    });
+    return res.json({ success: true, data: campaigns });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+const campaignSchema = z.object({
+  subject: z.string().trim().min(3, 'Subject is required').max(200),
+  body: z.string().trim().min(10, 'Message is too short').max(10000),
+  // omit to email every eligible subscriber
+  subscriberIds: z.array(z.string().cuid()).max(5000).optional(),
+});
+
+/**
+ * POST /api/waitlist/campaign
+ * Staff only. Sends INDIVIDUALLY — never one message with many recipients,
+ * which would expose every subscriber's address to every other subscriber.
+ */
+router.post('/campaign', authenticate, staffOnly, async (req, res, next) => {
+  try {
+    const parsed = campaignSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw BadRequestError(parsed.error.errors[0]?.message ?? 'Invalid campaign');
+    }
+    const { subject, body, subscriberIds } = parsed.data;
+
+    // Never email anyone who unsubscribed, hard-bounced or complained.
+    const recipients = await prisma.waitlistSubscriber.findMany({
+      where: {
+        status: 'SUBSCRIBED',
+        suppressedAt: null,
+        ...(subscriberIds && subscriberIds.length ? { id: { in: subscriberIds } } : {}),
+      },
+      select: { id: true, name: true, email: true, unsubscribeToken: true },
+    });
+
+    if (recipients.length === 0) {
+      throw BadRequestError('No eligible subscribers selected');
+    }
+
+    const campaign = await prisma.waitlistCampaign.create({
+      data: {
+        subject,
+        body,
+        sentById: req.user!.id,
+        sentByEmail: req.user!.email,
+        recipientCount: recipients.length,
+        status: 'SENDING',
+        startedAt: new Date(),
+      },
+    });
+
+    let success = 0;
+    let failure = 0;
+
+    // Sequential with a small gap — Resend rate limits, and a burst of parallel
+    // sends is also a good way to look like a spammer.
+    for (const r of recipients) {
+      const result = await sendWaitlistCampaignEmail(
+        r.email,
+        r.name,
+        subject,
+        body,
+        r.unsubscribeToken
+      );
+
+      if (result.success) success++;
+      else failure++;
+
+      await prisma.waitlistCampaignRecipient.create({
+        data: {
+          campaignId: campaign.id,
+          subscriberId: r.id,
+          delivered: result.success,
+          error: result.success ? null : (result.error ?? 'Unknown error'),
+          providerId: result.messageId ?? null,
+          sentAt: new Date(),
+        },
+      });
+
+      if (result.success) {
+        await prisma.waitlistSubscriber.update({
+          where: { id: r.id },
+          data: { lastEmailedAt: new Date(), emailsReceived: { increment: 1 } },
+        });
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+
+    await prisma.waitlistCampaign.update({
+      where: { id: campaign.id },
+      data: {
+        successCount: success,
+        failureCount: failure,
+        status: failure === recipients.length ? 'FAILED' : 'SENT',
+        completedAt: new Date(),
+      },
+    });
+
+    return res.json({
+      success: true,
+      data: { campaignId: campaign.id, sent: success, failed: failure, total: recipients.length },
     });
   } catch (err) {
     return next(err);
