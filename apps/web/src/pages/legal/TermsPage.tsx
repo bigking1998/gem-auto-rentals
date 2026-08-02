@@ -5,7 +5,7 @@ export default function TermsPage() {
   return (
     <LegalLayout
       title="Terms of Service"
-      description="The plain-language terms that apply when you rent a vehicle from Gem Auto Rentals."
+      description="The plain-language terms that apply when you rent a vehicle from Gem Car Rentals."
       path="/terms"
       lastUpdated="2 August 2026"
     >

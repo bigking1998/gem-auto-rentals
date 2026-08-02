@@ -448,7 +448,7 @@ export default function RegisterPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 backdrop-blur-md transition-all group-hover:bg-white/20">
                 <Car className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">Gem Auto Rentals</span>
+              <span className="text-xl font-bold text-white">Gem Car Rentals</span>
             </Link>
           </div>
 

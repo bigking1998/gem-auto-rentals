@@ -5,7 +5,7 @@ export default function PrivacyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      description="What personal information Gem Auto Rentals collects, why we collect it, and what we do with it."
+      description="What personal information Gem Car Rentals collects, why we collect it, and what we do with it."
       path="/privacy"
       lastUpdated="2 August 2026"
     >

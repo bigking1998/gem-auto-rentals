@@ -59,7 +59,7 @@ export default function WhyChooseUs() {
             Why Us
           </span>
           <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">
-            Why Choose Gem Auto Rentals
+            Why Choose Gem Car Rentals
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-gray-600">
             We go above and beyond to provide you with the best car rental experience. Here&apos;s

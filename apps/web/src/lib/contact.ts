@@ -1,5 +1,5 @@
 /**
- * Single source of truth for Gem Auto Rentals' public contact details.
+ * Single source of truth for Gem Car Rentals' public contact details.
  *
  * These used to be duplicated (and drift) across ContactPage, Footer,
  * CTASection and VehicleDetailPage — VehicleDetailPage was still showing the
@@ -20,4 +20,4 @@ export const SECONDARY_PHONE_HREF = 'tel:+18632792907';
 
 export const ADDRESS = '1311 E CANAL ST, MULBERRY, FL 33860';
 
-export const BUSINESS_NAME = 'Gem Auto Rentals';
+export const BUSINESS_NAME = 'Gem Car Rentals';

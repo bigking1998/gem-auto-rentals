@@ -141,7 +141,7 @@ export default function DashboardLayout() {
               <Car className="text-primary-foreground h-6 w-6" />
             </div>
             <span className="hidden text-xl font-bold tracking-tight text-gray-900 sm:block">
-              Gem Auto Rentals
+              Gem Car Rentals
             </span>
           </Link>
 

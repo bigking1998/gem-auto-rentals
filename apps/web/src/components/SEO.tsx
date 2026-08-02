@@ -10,9 +10,11 @@ interface SEOProps {
   noIndex?: boolean;
 }
 
-const DEFAULT_TITLE = 'Gem Auto Rentals';
-const DEFAULT_DESCRIPTION = 'Premium car rental service offering a wide range of vehicles from economy to luxury. Affordable rates, flexible booking, and exceptional service.';
-const DEFAULT_KEYWORDS = 'car rental, vehicle rental, rent a car, luxury car rental, economy car rental, SUV rental, van rental';
+const DEFAULT_TITLE = 'Gem Car Rentals';
+const DEFAULT_DESCRIPTION =
+  'Premium car rental service offering a wide range of vehicles from economy to luxury. Affordable rates, flexible booking, and exceptional service.';
+const DEFAULT_KEYWORDS =
+  'car rental, vehicle rental, rent a car, luxury car rental, economy car rental, SUV rental, van rental';
 const SITE_URL = 'https://gemrentalcars.com';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
@@ -25,7 +27,13 @@ export default function SEO({
   ogType = 'website',
   noIndex = false,
 }: SEOProps) {
-  const fullTitle = title ? `${title} | ${DEFAULT_TITLE}` : DEFAULT_TITLE;
+  // Some pages pass a title that already ends with the brand. Appending
+  // unconditionally produced "Page | Gem Car Rentals | Gem Car Rentals".
+  const fullTitle = !title
+    ? DEFAULT_TITLE
+    : title.trim().endsWith(DEFAULT_TITLE)
+      ? title.trim()
+      : `${title} | ${DEFAULT_TITLE}`;
   // Use deterministic fallback to avoid SSR/client mismatch
   // Pages that need dynamic canonical URLs should pass canonicalUrl prop
   const canonical = canonicalUrl ?? SITE_URL;
@@ -56,7 +64,7 @@ export default function SEO({
       <meta name="twitter:image" content={ogImage} />
 
       {/* Additional SEO */}
-      <meta name="author" content="Gem Auto Rentals" />
+      <meta name="author" content="Gem Car Rentals" />
       {/* Note: viewport meta should be in index.html, not here */}
       <meta httpEquiv="Content-Language" content="en" />
     </Helmet>

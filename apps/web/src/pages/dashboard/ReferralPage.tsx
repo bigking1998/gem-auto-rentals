@@ -95,7 +95,7 @@ export default function ReferralPage() {
   const shareVia = (platform: string) => {
     if (!referralData) return;
 
-    const text = `Join me on Gem Auto Rentals! Use my referral code ${referralData.code} to get ${referralData.refereeReward} bonus points on your first rental.`;
+    const text = `Join me on Gem Car Rentals! Use my referral code ${referralData.code} to get ${referralData.refereeReward} bonus points on your first rental.`;
     const url = referralData.shareUrl;
 
     let shareUrl = '';
@@ -110,7 +110,7 @@ export default function ReferralPage() {
         shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
         break;
       case 'email':
-        shareUrl = `mailto:?subject=${encodeURIComponent('Join me on Gem Auto Rentals!')}&body=${encodeURIComponent(text + '\n\n' + url)}`;
+        shareUrl = `mailto:?subject=${encodeURIComponent('Join me on Gem Car Rentals!')}&body=${encodeURIComponent(text + '\n\n' + url)}`;
         break;
     }
 

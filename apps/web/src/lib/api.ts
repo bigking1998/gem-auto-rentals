@@ -1,5 +1,5 @@
 /**
- * API client for the Gem Auto Rentals backend
+ * API client for the Gem Car Rentals backend
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';

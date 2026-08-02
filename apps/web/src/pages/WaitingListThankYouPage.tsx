@@ -75,7 +75,7 @@ export default function WaitingListThankYouPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEO
-        title="You're on the list | Gem Car Rentals"
+        title="You're on the list"
         description="Thanks for joining the Gem Car Rentals waiting list."
       />
       <Header />

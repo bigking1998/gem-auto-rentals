@@ -22,7 +22,7 @@ export default function CTASection() {
           <h2 className="mb-6 text-3xl font-bold text-white lg:text-5xl">Ready to Hit the Road?</h2>
           <p className="mb-10 text-xl leading-relaxed text-gray-300">
             Browse our fleet and book your perfect ride today. Experience the freedom of the open
-            road with Gem Auto Rentals.
+            road with Gem Car Rentals.
           </p>
 
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">

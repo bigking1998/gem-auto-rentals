@@ -1,4 +1,4 @@
-# Gem Auto Rentals - Custom React Hooks
+# Gem Car Rentals - Custom React Hooks
 
 This directory contains custom React hooks for data fetching, caching, and state management.
 
@@ -12,16 +12,13 @@ A custom hook for data fetching with caching support, similar to React Query but
 import { useQuery } from '@/hooks';
 
 function VehiclesPage() {
-  const { data, isLoading, error, refetch, invalidate } = useQuery(
-    () => api.vehicles.list(),
-    {
-      cacheKey: 'vehicles',
-      ttl: 300000, // 5 minutes
-      staleWhileRevalidate: true,
-      onSuccess: (data) => console.log('Loaded:', data),
-      onError: (error) => console.error('Failed:', error),
-    }
-  );
+  const { data, isLoading, error, refetch, invalidate } = useQuery(() => api.vehicles.list(), {
+    cacheKey: 'vehicles',
+    ttl: 300000, // 5 minutes
+    staleWhileRevalidate: true,
+    onSuccess: (data) => console.log('Loaded:', data),
+    onError: (error) => console.error('Failed:', error),
+  });
 
   if (isLoading) return <Skeleton />;
   if (error) return <Error message={error.message} />;
@@ -32,26 +29,26 @@ function VehiclesPage() {
 
 #### Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `cacheKey` | `string` | required | Unique cache key for this query |
-| `ttl` | `number` | `300000` | Cache time-to-live in milliseconds |
-| `enabled` | `boolean` | `true` | Whether to enable the query |
-| `fetchOnMount` | `boolean` | `true` | Fetch data when component mounts |
-| `staleWhileRevalidate` | `boolean` | `true` | Return stale data while fetching |
-| `onSuccess` | `(data: T) => void` | - | Callback on successful fetch |
-| `onError` | `(error: Error) => void` | - | Callback on fetch error |
+| Option                 | Type                     | Default  | Description                        |
+| ---------------------- | ------------------------ | -------- | ---------------------------------- |
+| `cacheKey`             | `string`                 | required | Unique cache key for this query    |
+| `ttl`                  | `number`                 | `300000` | Cache time-to-live in milliseconds |
+| `enabled`              | `boolean`                | `true`   | Whether to enable the query        |
+| `fetchOnMount`         | `boolean`                | `true`   | Fetch data when component mounts   |
+| `staleWhileRevalidate` | `boolean`                | `true`   | Return stale data while fetching   |
+| `onSuccess`            | `(data: T) => void`      | -        | Callback on successful fetch       |
+| `onError`              | `(error: Error) => void` | -        | Callback on fetch error            |
 
 #### Return Value
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `data` | `T \| undefined` | The fetched data |
-| `isLoading` | `boolean` | True during initial load |
-| `isRevalidating` | `boolean` | True during background revalidation |
-| `error` | `Error \| null` | Any error that occurred |
-| `refetch` | `() => Promise<void>` | Manually refetch data |
-| `invalidate` | `() => void` | Invalidate the cache |
+| Property         | Type                  | Description                         |
+| ---------------- | --------------------- | ----------------------------------- |
+| `data`           | `T \| undefined`      | The fetched data                    |
+| `isLoading`      | `boolean`             | True during initial load            |
+| `isRevalidating` | `boolean`             | True during background revalidation |
+| `error`          | `Error \| null`       | Any error that occurred             |
+| `refetch`        | `() => Promise<void>` | Manually refetch data               |
+| `invalidate`     | `() => void`          | Invalidate the cache                |
 
 ---
 
@@ -78,10 +75,7 @@ function CreateBookingButton() {
   );
 
   return (
-    <Button
-      onClick={() => mutate({ vehicleId: '123', startDate, endDate })}
-      loading={isLoading}
-    >
+    <Button onClick={() => mutate({ vehicleId: '123', startDate, endDate })} loading={isLoading}>
       Book Now
     </Button>
   );
@@ -90,21 +84,21 @@ function CreateBookingButton() {
 
 #### Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `invalidateKeys` | `string[]` | Cache keys to invalidate on success |
-| `onSuccess` | `(data: T, variables: V) => void` | Callback on success |
-| `onError` | `(error: Error, variables: V) => void` | Callback on error |
+| Option           | Type                                   | Description                         |
+| ---------------- | -------------------------------------- | ----------------------------------- |
+| `invalidateKeys` | `string[]`                             | Cache keys to invalidate on success |
+| `onSuccess`      | `(data: T, variables: V) => void`      | Callback on success                 |
+| `onError`        | `(error: Error, variables: V) => void` | Callback on error                   |
 
 #### Return Value
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `mutate` | `(variables: V) => Promise<T \| undefined>` | Execute the mutation |
-| `data` | `T \| undefined` | The mutation result |
-| `isLoading` | `boolean` | True during mutation |
-| `error` | `Error \| null` | Any error that occurred |
-| `reset` | `() => void` | Reset mutation state |
+| Property    | Type                                        | Description             |
+| ----------- | ------------------------------------------- | ----------------------- |
+| `mutate`    | `(variables: V) => Promise<T \| undefined>` | Execute the mutation    |
+| `data`      | `T \| undefined`                            | The mutation result     |
+| `isLoading` | `boolean`                                   | True during mutation    |
+| `error`     | `Error \| null`                             | Any error that occurred |
+| `reset`     | `() => void`                                | Reset mutation state    |
 
 ---
 
@@ -116,26 +110,15 @@ A hook for paginated data fetching with navigation helpers.
 import { usePaginatedQuery } from '@/hooks';
 
 function CustomerList() {
-  const {
-    data,
-    isLoading,
-    page,
-    setPage,
-    nextPage,
-    prevPage,
-    hasNextPage,
-    hasPrevPage,
-  } = usePaginatedQuery(
-    (page, pageSize) => api.customers.list({ page, pageSize }),
-    {
+  const { data, isLoading, page, setPage, nextPage, prevPage, hasNextPage, hasPrevPage } =
+    usePaginatedQuery((page, pageSize) => api.customers.list({ page, pageSize }), {
       baseCacheKey: 'customers',
       pageSize: 20,
-    }
-  );
+    });
 
   return (
     <div>
-      {data?.items.map(customer => (
+      {data?.items.map((customer) => (
         <CustomerCard key={customer.id} customer={customer} />
       ))}
 
@@ -175,7 +158,7 @@ function VehicleGrid() {
 
   return (
     <div className="grid grid-cols-3 gap-4">
-      {data?.items.map(vehicle => (
+      {data?.items.map((vehicle) => (
         <VehicleCard key={vehicle.id} vehicle={vehicle} />
       ))}
     </div>
@@ -211,11 +194,7 @@ function AvailabilityChecker({ vehicleId }: { vehicleId: string }) {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
 
-  const { data, isLoading } = useVehicleAvailability(
-    vehicleId,
-    startDate,
-    endDate
-  );
+  const { data, isLoading } = useVehicleAvailability(vehicleId, startDate, endDate);
 
   return (
     <div>
@@ -269,7 +248,7 @@ function MyBookings() {
 
   return (
     <div>
-      {data?.items.map(booking => (
+      {data?.items.map((booking) => (
         <BookingCard key={booking.id} booking={booking} />
       ))}
     </div>
@@ -332,11 +311,7 @@ function CancelButton({ bookingId }: { bookingId: string }) {
   const { mutate: cancel, isLoading } = useCancelBooking();
 
   return (
-    <Button
-      variant="destructive"
-      onClick={() => cancel(bookingId)}
-      loading={isLoading}
-    >
+    <Button variant="destructive" onClick={() => cancel(bookingId)} loading={isLoading}>
       Cancel Booking
     </Button>
   );
@@ -354,11 +329,11 @@ Use consistent cache keys defined in `@/lib/cache`:
 ```tsx
 import { cacheKeys } from '@/lib/cache';
 
-cacheKeys.vehicles()           // 'vehicles'
-cacheKeys.vehicle('123')       // 'vehicle:123'
-cacheKeys.bookings()           // 'bookings'
-cacheKeys.booking('456')       // 'booking:456'
-cacheKeys.availability('123', start, end)  // 'availability:123:...'
+cacheKeys.vehicles(); // 'vehicles'
+cacheKeys.vehicle('123'); // 'vehicle:123'
+cacheKeys.bookings(); // 'bookings'
+cacheKeys.booking('456'); // 'booking:456'
+cacheKeys.availability('123', start, end); // 'availability:123:...'
 ```
 
 ### Cache TTL
@@ -368,10 +343,10 @@ Predefined TTL values:
 ```tsx
 import { cacheTTL } from '@/lib/cache';
 
-cacheTTL.short      // 60000 (1 minute)
-cacheTTL.medium     // 300000 (5 minutes)
-cacheTTL.long       // 900000 (15 minutes)
-cacheTTL.veryLong   // 3600000 (1 hour)
+cacheTTL.short; // 60000 (1 minute)
+cacheTTL.medium; // 300000 (5 minutes)
+cacheTTL.long; // 900000 (15 minutes)
+cacheTTL.veryLong; // 3600000 (1 hour)
 ```
 
 ### Manual Cache Operations
@@ -387,8 +362,8 @@ console.log(stats.size, stats.keys);
 apiCache.invalidate('vehicles');
 
 // Invalidate by pattern
-apiCache.invalidatePattern('vehicle:');  // All vehicle:* keys
-apiCache.invalidatePattern(/booking:/);  // Regex pattern
+apiCache.invalidatePattern('vehicle:'); // All vehicle:* keys
+apiCache.invalidatePattern(/booking:/); // Regex pattern
 
 // Clear entire cache
 apiCache.clear();
@@ -422,7 +397,7 @@ export default function VehiclesPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-red-500">{error.message}</p>
         <Button onClick={refetch} className="mt-4">
           Try Again
@@ -433,7 +408,7 @@ export default function VehiclesPage() {
 
   return (
     <div>
-      <div className="flex justify-between mb-6">
+      <div className="mb-6 flex justify-between">
         <h1 className="text-2xl font-bold">Available Vehicles</h1>
         <Button onClick={invalidate} variant="outline">
           Refresh
@@ -443,8 +418,8 @@ export default function VehiclesPage() {
       {isLoading ? (
         <VehicleGridSkeleton count={8} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {data?.items.map(vehicle => (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {data?.items.map((vehicle) => (
             <VehicleCard
               key={vehicle.id}
               vehicle={vehicle}

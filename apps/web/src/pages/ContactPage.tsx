@@ -63,7 +63,7 @@ export default function ContactPage() {
     <div className="flex min-h-screen flex-col">
       <SEO
         title="Contact Us"
-        description="Get in touch with Gem Auto Rentals in Mulberry, Florida. Call, email, or visit us for rental enquiries, reservations, and support."
+        description="Get in touch with Gem Car Rentals in Mulberry, Florida. Call, email, or visit us for rental enquiries, reservations, and support."
         keywords="contact gem auto rentals, car rental Mulberry Florida, rental car phone number, gem auto rentals address"
         canonicalUrl="https://gemrentalcars.com/contact"
       />

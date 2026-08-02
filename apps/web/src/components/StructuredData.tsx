@@ -94,9 +94,8 @@ export function OrganizationSchema({ data }: { data: OrganizationData }) {
 export function VehicleSchema({ data }: { data: VehicleData }) {
   // Use passed priceValidUntil or a stable default (computed at build/page-load time)
   const priceValidUntil = data.offers.priceValidUntil;
-  const availability = data.available !== false
-    ? 'https://schema.org/InStock'
-    : 'https://schema.org/OutOfStock';
+  const availability =
+    data.available !== false ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
 
   const schema = {
     '@context': 'https://schema.org',
@@ -186,12 +185,13 @@ export function FAQSchema({ faqs }: { faqs: Array<{ question: string; answer: st
   );
 }
 
-// Default organization data for Gem Auto Rentals
+// Default organization data for Gem Car Rentals
 export const GEM_AUTO_RENTALS_ORG: OrganizationData = {
-  name: 'Gem Auto Rentals',
+  name: 'Gem Car Rentals',
   url: 'https://gemrentalcars.com',
   logo: 'https://gemrentalcars.com/logo.png',
-  description: 'Premium car rental service offering a wide range of vehicles from economy to luxury. Affordable rates, flexible booking, and exceptional service in Mulberry, Florida.',
+  description:
+    'Premium car rental service offering a wide range of vehicles from economy to luxury. Affordable rates, flexible booking, and exceptional service in Mulberry, Florida.',
   telephone: '863-277-7879',
   email: 'gemautosalesinc@gmail.com',
   address: {
@@ -201,8 +201,5 @@ export const GEM_AUTO_RENTALS_ORG: OrganizationData = {
     postalCode: '33860',
     addressCountry: 'US',
   },
-  sameAs: [
-    'https://facebook.com/gemautorentals',
-    'https://instagram.com/gemautorentals',
-  ],
+  sameAs: ['https://facebook.com/gemautorentals', 'https://instagram.com/gemautorentals'],
 };

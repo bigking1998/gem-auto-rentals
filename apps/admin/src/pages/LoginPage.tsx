@@ -220,7 +220,7 @@ export default function LoginPage() {
         </div>
 
         {/* Branding */}
-        <p className="mt-8 text-center text-sm text-gray-400">Gem Auto Rentals - Admin Portal</p>
+        <p className="mt-8 text-center text-sm text-gray-400">Gem Car Rentals - Admin Portal</p>
       </motion.div>
     </div>
   );

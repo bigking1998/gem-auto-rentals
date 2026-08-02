@@ -10,7 +10,7 @@ export default function NotFoundPage() {
     <div className="flex min-h-screen flex-col">
       <SEO
         title="Page Not Found"
-        description="The page you were looking for does not exist. Head back to the Gem Auto Rentals home page or browse our available vehicles."
+        description="The page you were looking for does not exist. Head back to the Gem Car Rentals home page or browse our available vehicles."
         noIndex
       />
       <Header />

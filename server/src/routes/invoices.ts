@@ -696,7 +696,7 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
 </head>
 <body>
   <div class="header">
-    <div class="logo">${companySettings?.companyName || 'Gem Auto Rentals'}</div>
+    <div class="logo">${companySettings?.companyName || 'Gem Car Rentals'}</div>
     <div class="invoice-title">
       <h1>INVOICE</h1>
       <p class="invoice-number">${invoice.invoiceNumber}</p>
@@ -800,7 +800,7 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
   }
 
   <div class="footer">
-    <p><strong>${companySettings?.companyName || 'Gem Auto Rentals'}</strong></p>
+    <p><strong>${companySettings?.companyName || 'Gem Car Rentals'}</strong></p>
     ${companySettings?.companyAddress ? `<p>${companySettings.companyAddress}</p>` : '<p>Mulberry, FL</p>'}
     ${companySettings?.companyPhone ? `<p>Phone: ${companySettings.companyPhone}</p>` : ''}
     ${companySettings?.companyEmail ? `<p>Email: ${companySettings.companyEmail}</p>` : ''}

@@ -34,11 +34,11 @@ export default function Footer() {
               <div className="from-primary to-primary-dark flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br">
                 <Car className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">Gem Auto Rentals</span>
+              <span className="text-xl font-bold text-white">Gem Car Rentals</span>
             </Link>
             <p className="mb-6 max-w-sm text-gray-400">
               Premium car rental services with a wide selection of vehicles. Experience the freedom
-              of the open road with Gem Auto Rentals.
+              of the open road with Gem Car Rentals.
             </p>
             <div className="space-y-3">
               <a
@@ -136,7 +136,7 @@ export default function Footer() {
             back once the real profile URLs exist. */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-gray-800 pt-8 md:flex-row">
           <p className="text-sm text-gray-400">
-            &copy; {new Date().getFullYear()} Gem Auto Rentals. All rights reserved.
+            &copy; {new Date().getFullYear()} Gem Car Rentals. All rights reserved.
           </p>
           <div className="flex items-center gap-4 text-sm text-gray-400">
             <Link to="/terms" className="hover:text-primary transition-colors">

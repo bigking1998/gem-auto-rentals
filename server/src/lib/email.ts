@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 // Initialize Resend only if API key is provided
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const FROM_EMAIL = process.env.FROM_EMAIL || 'Gem Auto Rentals <noreply@gemautorentals.com>';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'Gem Car Rentals <noreply@gemautorentals.com>';
 const APP_NAME = 'Gem Car Rentals';
 const WEB_URL = process.env.WEB_URL || 'http://localhost:5173';
 

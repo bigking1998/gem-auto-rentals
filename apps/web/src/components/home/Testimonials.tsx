@@ -10,7 +10,7 @@ const testimonials = [
     image: null,
     rating: 5,
     quote:
-      'Exceptional service from start to finish! The car was spotless and the pickup process was incredibly smooth. Will definitely use Gem Auto Rentals again.',
+      'Exceptional service from start to finish! The car was spotless and the pickup process was incredibly smooth. Will definitely use Gem Car Rentals again.',
   },
   {
     id: 2,
@@ -37,7 +37,7 @@ const testimonials = [
     image: null,
     rating: 5,
     quote:
-      'Our company has been using Gem Auto Rentals for all our employee travel needs. Consistent quality, competitive rates, and reliable service.',
+      'Our company has been using Gem Car Rentals for all our employee travel needs. Consistent quality, competitive rates, and reliable service.',
   },
 ];
 

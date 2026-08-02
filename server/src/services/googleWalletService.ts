@@ -262,7 +262,7 @@ export async function createPass(booking: BookingPassData): Promise<string> {
     cardTitle: {
       defaultValue: {
         language: 'en',
-        value: 'Gem Auto Rentals',
+        value: 'Gem Car Rentals',
       },
     },
     subheader: {

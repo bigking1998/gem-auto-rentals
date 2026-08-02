@@ -117,7 +117,7 @@ export default function Statistics() {
         >
           <h2 className="mb-4 text-3xl font-bold text-white lg:text-4xl">By the Numbers</h2>
           <p className="mx-auto max-w-2xl text-lg text-gray-300">
-            A straight look at where Gem Auto Rentals stands today.
+            A straight look at where Gem Car Rentals stands today.
           </p>
         </motion.div>
 

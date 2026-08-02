@@ -9,7 +9,7 @@ export default function AboutPage() {
     <div className="flex min-h-screen flex-col">
       <SEO
         title="About Us"
-        description="Learn about Gem Auto Rentals - your trusted car rental partner in Mulberry, Florida. Quality vehicles, exceptional service, and competitive rates since day one."
+        description="Learn about Gem Car Rentals - your trusted car rental partner in Mulberry, Florida. Quality vehicles, exceptional service, and competitive rates since day one."
         keywords="about gem auto rentals, car rental company, Mulberry Florida, vehicle rental service"
         canonicalUrl="https://gemrentalcars.com/about"
       />
@@ -25,7 +25,7 @@ export default function AboutPage() {
               transition={{ duration: 0.6 }}
               className="max-w-3xl"
             >
-              <h1 className="mb-6 text-4xl font-bold lg:text-6xl">About Gem Auto Rentals</h1>
+              <h1 className="mb-6 text-4xl font-bold lg:text-6xl">About Gem Car Rentals</h1>
               <p className="text-xl leading-relaxed text-gray-300">
                 &ldquo;We will make a positive difference in the lives of our customers from the
                 United States, Caribbean, West Indies, and beyond.&rdquo;
