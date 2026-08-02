@@ -67,6 +67,15 @@ export default function WaitingListPage() {
         className="bg-primary pointer-events-none absolute -top-32 left-1/2 h-[30rem] w-[30rem] -translate-x-1/2 rounded-full opacity-[0.13] blur-[130px]"
       />
 
+      {/* car line drawing, sat low and faint so it reads as a watermark
+          rather than competing with the form */}
+      <img
+        src="/car-silhouette.svg"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-6 left-1/2 w-[min(1000px,150%)] -translate-x-1/2 select-none opacity-[0.18] sm:bottom-10 sm:opacity-[0.22]"
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
