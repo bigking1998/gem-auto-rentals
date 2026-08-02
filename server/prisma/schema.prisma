@@ -1069,3 +1069,139 @@ enum PassPlatform {
   APPLE
   GOOGLE
 }
+
+// =============================================
+// WAITING LIST
+// Email capture for prospects while fleet is limited.
+// Signup is deliberately minimal (name/email/phone); segmentation is
+// collected afterwards on the thank-you page so a dropped questionnaire
+// never costs us the subscriber.
+// =============================================
+
+model WaitlistSubscriber {
+  id        String  @id @default(cuid())
+  name      String
+  email     String  @unique
+  phone     String?
+
+  status    WaitlistStatus @default(SUBSCRIBED)
+
+  // --- segmentation (all optional, captured post-signup) ---
+  interestCategory  VehicleCategory?   // what they're looking for
+  timeframe         WaitlistTimeframe? // how soon they need it
+  budgetMax         Decimal?           @db.Decimal(10, 2)
+  notes             String?            // free text from the subscriber
+  adminNotes        String?            // internal only, never shown to them
+  profileCompletedAt DateTime?
+
+  // --- attribution: which marketing actually works ---
+  source    String?  // e.g. "website", "qr-card", "instagram"
+  referrer  String?  // HTTP referrer at signup
+
+  // --- consent record (CAN-SPAM / GDPR evidence) ---
+  consentedAt DateTime @default(now())
+  consentIp   String?
+  consentUserAgent String?
+
+  // --- tokens ---
+  // profileToken lets the thank-you page attach answers WITHOUT exposing the
+  // subscriber id. Short-lived, and only ever updates preference fields.
+  profileToken       String?   @unique
+  profileTokenExpires DateTime?
+  // Permanent. Every marketing email must carry an unsubscribe link.
+  unsubscribeToken   String    @unique @default(cuid())
+
+  // --- deliverability ---
+  // Without processing bounces the list silently rots and takes the sending
+  // domain's reputation with it.
+  bounceCount     Int       @default(0)
+  lastBounceAt    DateTime?
+  suppressedAt    DateTime?
+  suppressedReason String?
+
+  unsubscribedAt DateTime?
+  lastEmailedAt  DateTime?
+  emailsReceived Int       @default(0)
+
+  // set once a subscriber becomes an actual customer, so they can be
+  // excluded from "we'll let you know when cars are available" messaging
+  convertedUserId String?
+  convertedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipients WaitlistCampaignRecipient[]
+
+  @@index([status])
+  @@index([email])
+  @@index([interestCategory])
+  @@index([createdAt])
+  @@index([suppressedAt])
+}
+
+enum WaitlistStatus {
+  SUBSCRIBED
+  UNSUBSCRIBED
+  SUPPRESSED   // hard bounce or spam complaint — never email again
+  CONVERTED    // became a paying customer
+}
+
+enum WaitlistTimeframe {
+  THIS_WEEK
+  THIS_MONTH
+  NEXT_FEW_MONTHS
+  JUST_BROWSING
+}
+
+// Audit trail: what was sent, to whom, when. Without this you re-send the
+// same message or lose track of who has heard what.
+model WaitlistCampaign {
+  id        String   @id @default(cuid())
+  subject   String
+  body      String
+  sentById  String
+  sentByEmail String?
+
+  recipientCount Int      @default(0)
+  successCount   Int      @default(0)
+  failureCount   Int      @default(0)
+
+  status    CampaignStatus @default(DRAFT)
+  startedAt DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipients WaitlistCampaignRecipient[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum CampaignStatus {
+  DRAFT
+  SENDING
+  SENT
+  FAILED
+}
+
+model WaitlistCampaignRecipient {
+  id           String @id @default(cuid())
+  campaignId   String
+  subscriberId String
+
+  delivered  Boolean   @default(false)
+  error      String?
+  providerId String?   // Resend message id, for tracing bounces back
+  sentAt     DateTime?
+
+  campaign   WaitlistCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subscriber WaitlistSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, subscriberId])
+  @@index([campaignId])
+  @@index([subscriberId])
+  @@index([providerId])
+}

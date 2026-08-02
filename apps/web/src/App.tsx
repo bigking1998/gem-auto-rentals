@@ -13,6 +13,8 @@ const VehicleDetailPage = lazy(() => import('./pages/VehicleDetailPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
+const WaitingListPage = lazy(() => import('./pages/WaitingListPage'));
+const WaitingListThankYouPage = lazy(() => import('./pages/WaitingListThankYouPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
@@ -51,6 +53,8 @@ function App() {
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/waitinglist" element={<WaitingListPage />} />
+          <Route path="/waitinglist/thank-you" element={<WaitingListThankYouPage />} />
           <Route path="/contact" element={<ContactPage />} />
 
           {/* Auth Routes */}

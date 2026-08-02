@@ -38,6 +38,7 @@ import referralRoutes from './routes/referrals.js';
 import promoRoutes from './routes/promos.js';
 import extensionRoutes from './routes/extensions.js';
 import walletRoutes from './routes/wallet.js';
+import waitlistRoutes from './routes/waitlist.js';
 
 // Load environment variables
 dotenv.config();
@@ -216,6 +217,7 @@ app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/promos', promoRoutes);
 app.use('/api/bookings', extensionRoutes); // Extension routes under /api/bookings/:id/extend/*
+app.use('/api/waitlist', waitlistRoutes);
 app.use('/api', walletRoutes); // Wallet pass routes: /api/bookings/:id/pass/*, /api/wallet/*
 
 // Sitemap for SEO (served at /sitemap.xml)

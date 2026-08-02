@@ -1,12 +1,10 @@
 import { Resend } from 'resend';
 
 // Initialize Resend only if API key is provided
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'Gem Auto Rentals <noreply@gemautorentals.com>';
-const APP_NAME = 'Gem Auto Rentals';
+const APP_NAME = 'Gem Car Rentals';
 const WEB_URL = process.env.WEB_URL || 'http://localhost:5173';
 
 // Check if email is configured
@@ -123,10 +121,7 @@ export async function sendPasswordResetEmail(
 /**
  * Send a welcome email after registration
  */
-export async function sendWelcomeEmail(
-  to: string,
-  firstName: string
-): Promise<EmailResult> {
+export async function sendWelcomeEmail(to: string, firstName: string): Promise<EmailResult> {
   if (!isEmailConfigured()) {
     console.warn('Email not configured. Welcome email not sent to:', to);
     return { success: true, messageId: 'dev-mode-no-email' };
@@ -370,7 +365,10 @@ export async function sendAbandonmentRecoveryEmail(
 
   // Validate dates are valid and end is after start
   if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
-    console.error('Invalid dates for abandonment email:', { startDate: details.startDate, endDate: details.endDate });
+    console.error('Invalid dates for abandonment email:', {
+      startDate: details.startDate,
+      endDate: details.endDate,
+    });
     return { success: false, error: 'Invalid date range' };
   }
 
@@ -478,5 +476,115 @@ export async function sendAbandonmentRecoveryEmail(
       success: false,
       error: err instanceof Error ? err.message : 'Unknown error',
     };
+  }
+}
+
+/**
+ * Waiting-list welcome email.
+ *
+ * CAN-SPAM: every marketing email must carry a working unsubscribe link and a
+ * physical postal address. Both are included below and must stay there.
+ */
+export async function sendWaitlistWelcomeEmail(
+  to: string,
+  name: string,
+  unsubscribeToken: string
+): Promise<EmailResult> {
+  if (!isEmailConfigured()) {
+    console.warn('Email not configured. Waitlist welcome not sent to:', to);
+    return { success: true, messageId: 'dev-mode-no-email' };
+  }
+
+  const unsubscribeUrl = `${WEB_URL}/unsubscribe?token=${unsubscribeToken}`;
+  const firstName = (name || '').split(' ')[0] || 'there';
+
+  try {
+    const { data, error } = await resend!.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `You're on the list — ${APP_NAME}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're on the list</title>
+</head>
+<body style="margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background-color:#f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f4f4f5; padding:40px 20px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 2px 8px rgba(10,22,40,0.08);">
+
+        <!-- header -->
+        <tr>
+          <td style="background:#0A1628; padding:36px 32px; text-align:center;">
+            <div style="font-family:Georgia,'Times New Roman',serif; font-size:26px; letter-spacing:1px; color:#D4AF37; font-weight:bold;">GEM</div>
+            <div style="font-family:Georgia,'Times New Roman',serif; font-size:15px; letter-spacing:4px; color:#7B9CC4; margin-top:4px;">CAR RENTALS</div>
+          </td>
+        </tr>
+
+        <!-- body -->
+        <tr>
+          <td style="padding:36px 32px;">
+            <h1 style="margin:0 0 16px; font-size:22px; color:#0A1628;">You're on the list, ${firstName}.</h1>
+            <p style="margin:0 0 16px; font-size:15px; line-height:1.65; color:#42506b;">
+              Thanks for your interest in Gem Car Rentals. We've saved your spot.
+            </p>
+            <p style="margin:0 0 16px; font-size:15px; line-height:1.65; color:#42506b;">
+              As soon as vehicles become available, you'll be among the first to hear from us —
+              with the details, the rates, and how to reserve one.
+            </p>
+            <p style="margin:0 0 28px; font-size:15px; line-height:1.65; color:#42506b;">
+              We'll only email you when there's something worth telling you about. No noise.
+            </p>
+
+            <div style="text-align:center; margin:0 0 8px;">
+              <a href="${WEB_URL}" style="display:inline-block; padding:14px 34px; font-size:15px; font-weight:700; color:#0A1628; background:#D4AF37; text-decoration:none; border-radius:8px;">Visit Our Site</a>
+            </div>
+          </td>
+        </tr>
+
+        <!-- questions -->
+        <tr>
+          <td style="padding:0 32px 32px;">
+            <div style="border-top:1px solid #e8eaef; padding-top:20px; font-size:14px; line-height:1.6; color:#6b7689;">
+              Questions in the meantime? Call <a href="tel:+18134224539" style="color:#8A6715; text-decoration:none; font-weight:600;">813-422-4539</a>
+              or just reply to this email.
+            </div>
+          </td>
+        </tr>
+
+        <!-- footer: unsubscribe + postal address are legally required -->
+        <tr>
+          <td style="background:#f7f8fa; padding:22px 32px; text-align:center; font-size:12px; line-height:1.6; color:#8d95a5;">
+            <div style="margin-bottom:8px;">
+              You're receiving this because you joined the waiting list at gemrentalcars.com.
+            </div>
+            <div style="margin-bottom:10px;">
+              <a href="${unsubscribeUrl}" style="color:#6b7689; text-decoration:underline;">Unsubscribe</a>
+            </div>
+            <div style="color:#a3aab8;">
+              Gem Car Rentals &middot; 1311 E Canal St, Mulberry, FL 33860
+            </div>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error('Waitlist welcome email error:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, messageId: data?.id };
+  } catch (err) {
+    console.error('Waitlist welcome email exception:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
