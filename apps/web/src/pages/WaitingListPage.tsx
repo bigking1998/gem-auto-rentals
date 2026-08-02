@@ -158,10 +158,10 @@ export default function WaitingListPage() {
             {submitting ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Joining…
+                Signing up…
               </>
             ) : (
-              'Notify me'
+              'Sign Up'
             )}
           </button>
         </form>
