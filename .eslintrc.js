@@ -5,37 +5,33 @@ module.exports = {
     es2022: true,
     node: true,
   },
-  extends: [
-    'eslint:recommended',
-  ],
+  extends: ['eslint:recommended'],
   ignorePatterns: ['dist', 'node_modules', '.turbo', 'coverage'],
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
   rules: {
-    'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
   overrides: [
     {
       files: ['*.ts', '*.tsx'],
       parser: '@typescript-eslint/parser',
-      extends: [
-        'plugin:@typescript-eslint/recommended',
-      ],
+      extends: ['plugin:@typescript-eslint/recommended'],
       plugins: ['@typescript-eslint'],
       rules: {
-        '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+        '@typescript-eslint/no-unused-vars': [
+          'error',
+          { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+        ],
         '@typescript-eslint/no-explicit-any': 'warn',
       },
     },
     {
       files: ['*.tsx'],
-      extends: [
-        'plugin:react/recommended',
-        'plugin:react-hooks/recommended',
-      ],
+      extends: ['plugin:react/recommended', 'plugin:react-hooks/recommended'],
       plugins: ['react', 'react-hooks'],
       settings: {
         react: {

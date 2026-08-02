@@ -5,7 +5,13 @@ import multer from 'multer';
 import prisma from '../lib/prisma.js';
 import { authenticate, staffOnly, adminOnly } from '../middleware/auth.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../middleware/errorHandler.js';
-import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getPublicUrl } from '../lib/storage.js';
+import {
+  BUCKETS,
+  isStorageConfigured,
+  uploadFile,
+  deleteFile,
+  getPublicUrl,
+} from '../lib/storage.js';
 
 const router = Router();
 
@@ -139,6 +145,103 @@ router.get('/', authenticate, staffOnly, async (req, res, next) => {
 });
 
 // GET /api/customers/:id - Staff only or own profile
+// GET /api/customers/profile - Get own profile
+router.get('/profile', authenticate, async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        emailVerified: true,
+        avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw NotFoundError('User not found');
+    }
+
+    res.json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /api/customers/profile - Update own profile
+router.put('/profile', authenticate, async (req, res, next) => {
+  try {
+    const data = updateProfileSchema.parse(req.body);
+
+    // Handle password change
+    if (data.newPassword) {
+      if (!data.currentPassword) {
+        throw BadRequestError('Current password is required to change password');
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: req.user!.id },
+        select: { password: true },
+      });
+
+      if (!user) {
+        throw NotFoundError('User not found');
+      }
+
+      const isValidPassword = await bcrypt.compare(data.currentPassword, user.password);
+
+      if (!isValidPassword) {
+        throw BadRequestError('Current password is incorrect');
+      }
+
+      const hashedPassword = await bcrypt.hash(data.newPassword, 12);
+
+      await prisma.user.update({
+        where: { id: req.user!.id },
+        data: { password: hashedPassword },
+      });
+    }
+
+    // Update other fields
+    // destructured purely to EXCLUDE them from updateData
+    const { currentPassword: _currentPassword, newPassword: _newPassword, ...updateData } = data;
+
+    const customer = await prisma.user.update({
+      where: { id: req.user!.id },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        emailVerified: true,
+        avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: customer,
+      message: data.newPassword ? 'Profile and password updated' : 'Profile updated',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get('/:id', authenticate, async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -314,7 +417,8 @@ router.put('/:id/profile', authenticate, async (req, res, next) => {
     }
 
     // Update other fields
-    const { currentPassword, newPassword, ...updateData } = data;
+    // destructured purely to EXCLUDE them from updateData
+    const { currentPassword: _currentPassword, newPassword: _newPassword, ...updateData } = data;
 
     const customer = await prisma.user.update({
       where: { id },
@@ -347,9 +451,11 @@ router.put('/:id/profile', authenticate, async (req, res, next) => {
 router.patch('/:id/role', authenticate, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { role } = z.object({
-      role: z.enum(['CUSTOMER', 'SUPPORT', 'MANAGER', 'ADMIN']),
-    }).parse(req.body);
+    const { role } = z
+      .object({
+        role: z.enum(['CUSTOMER', 'SUPPORT', 'MANAGER', 'ADMIN']),
+      })
+      .parse(req.body);
 
     // Prevent changing own role
     if (id === req.user!.id) {
@@ -478,12 +584,7 @@ router.post('/:id/avatar', authenticate, upload.single('avatar'), async (req, re
     const filePath = `${id}/${timestamp}.${extension}`;
 
     // Upload to Supabase
-    const result = await uploadFile(
-      BUCKETS.AVATARS,
-      filePath,
-      req.file.buffer,
-      req.file.mimetype
-    );
+    const result = await uploadFile(BUCKETS.AVATARS, filePath, req.file.buffer, req.file.mimetype);
 
     if ('error' in result) {
       throw BadRequestError(result.error);
@@ -582,102 +683,6 @@ router.delete('/:id/avatar', authenticate, async (req, res, next) => {
     res.json({
       success: true,
       data: updatedUser,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// GET /api/customers/profile - Get own profile
-router.get('/profile', authenticate, async (req, res, next) => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user!.id },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        role: true,
-        emailVerified: true,
-        avatarUrl: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    if (!user) {
-      throw NotFoundError('User not found');
-    }
-
-    res.json({
-      success: true,
-      data: user,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// PUT /api/customers/profile - Update own profile
-router.put('/profile', authenticate, async (req, res, next) => {
-  try {
-    const data = updateProfileSchema.parse(req.body);
-
-    // Handle password change
-    if (data.newPassword) {
-      if (!data.currentPassword) {
-        throw BadRequestError('Current password is required to change password');
-      }
-
-      const user = await prisma.user.findUnique({
-        where: { id: req.user!.id },
-        select: { password: true },
-      });
-
-      if (!user) {
-        throw NotFoundError('User not found');
-      }
-
-      const isValidPassword = await bcrypt.compare(data.currentPassword, user.password);
-
-      if (!isValidPassword) {
-        throw BadRequestError('Current password is incorrect');
-      }
-
-      const hashedPassword = await bcrypt.hash(data.newPassword, 12);
-
-      await prisma.user.update({
-        where: { id: req.user!.id },
-        data: { password: hashedPassword },
-      });
-    }
-
-    // Update other fields
-    const { currentPassword, newPassword, ...updateData } = data;
-
-    const customer = await prisma.user.update({
-      where: { id: req.user!.id },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        role: true,
-        emailVerified: true,
-        avatarUrl: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    res.json({
-      success: true,
-      data: customer,
-      message: data.newPassword ? 'Profile and password updated' : 'Profile updated',
     });
   } catch (error) {
     next(error);

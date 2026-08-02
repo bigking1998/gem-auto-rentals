@@ -238,36 +238,6 @@ router.get('/all', authenticate, authorize('ADMIN', 'MANAGER'), async (req, res,
 });
 
 // DELETE /api/sessions/:id - Revoke specific session
-router.delete('/:id', authenticate, async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { reason } = z.object({ reason: z.string().optional() }).parse(req.body || {});
-
-    const session = await prisma.session.findUnique({
-      where: { id },
-    });
-
-    if (!session) {
-      throw NotFoundError('Session not found');
-    }
-
-    // Users can only revoke their own sessions unless they're admin
-    const isAdmin = ['ADMIN', 'MANAGER'].includes(req.user!.role);
-    if (session.userId !== req.user!.id && !isAdmin) {
-      throw ForbiddenError('You can only revoke your own sessions');
-    }
-
-    await revokeSession(id, reason || 'Manually revoked by user');
-
-    res.json({
-      success: true,
-      message: 'Session revoked successfully',
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
 // DELETE /api/sessions/all - Revoke all sessions except current
 router.delete('/revoke-all', authenticate, async (req, res, next) => {
   try {
@@ -305,6 +275,36 @@ router.delete('/revoke-all', authenticate, async (req, res, next) => {
   }
 });
 
+router.delete('/:id', authenticate, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason } = z.object({ reason: z.string().optional() }).parse(req.body || {});
+
+    const session = await prisma.session.findUnique({
+      where: { id },
+    });
+
+    if (!session) {
+      throw NotFoundError('Session not found');
+    }
+
+    // Users can only revoke their own sessions unless they're admin
+    const isAdmin = ['ADMIN', 'MANAGER'].includes(req.user!.role);
+    if (session.userId !== req.user!.id && !isAdmin) {
+      throw ForbiddenError('You can only revoke your own sessions');
+    }
+
+    await revokeSession(id, reason || 'Manually revoked by user');
+
+    res.json({
+      success: true,
+      message: 'Session revoked successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Cleanup expired sessions (called by cron job)
 export async function cleanupExpiredSessions() {
   try {
@@ -320,6 +320,7 @@ export async function cleanupExpiredSessions() {
       },
     });
 
+    // eslint-disable-next-line no-console -- operational log for a scheduled cleanup job
     console.log(`Cleaned up ${result.count} expired/revoked sessions`);
     return result.count;
   } catch (error) {

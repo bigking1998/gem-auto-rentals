@@ -17,6 +17,8 @@ const signupLimiter = rateLimit({
   message: { success: false, error: 'Too many signups from this address. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  // rate limit state is process-wide, so it bleeds between tests
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 const signupSchema = z.object({
@@ -24,8 +26,10 @@ const signupSchema = z.object({
   email: z.string().trim().toLowerCase().email('Please enter a valid email address').max(200),
   phone: z.string().trim().max(30).optional().or(z.literal('')),
   source: z.string().trim().max(50).optional(),
-  // Honeypot: a field hidden from real users. If it is filled in, it was a bot.
-  website: z.string().max(0).optional(),
+  // Honeypot: a field hidden from real users. Accept ANY value here — if we
+  // reject it in validation the bot learns it was detected. It is handled
+  // silently in the handler instead.
+  website: z.string().max(200).optional(),
 });
 
 const profileSchema = z.object({

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -9,6 +10,33 @@ import { BadRequestError, ConflictError, UnauthorizedError } from '../middleware
 import { sendPasswordResetEmail, sendWelcomeEmail } from '../lib/email.js';
 
 const router = Router();
+
+// The global 200/15min limit allows roughly 19,000 password guesses per IP per
+// day, which is not meaningful protection. These endpoints get their own much
+// tighter budget.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, error: 'Too many attempts. Please try again in a few minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // rate limit state is process-wide, so it bleeds between tests
+  skip: () => process.env.NODE_ENV === 'test',
+  // only failed attempts count, so a legitimate user is never locked out
+  skipSuccessfulRequests: true,
+});
+
+// Password reset triggers an outbound email, so it is abusable as a spam
+// amplifier as well as for enumeration. Tighter still, and counts every request.
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { success: false, error: 'Too many password reset requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // rate limit state is process-wide, so it bleeds between tests
+  skip: () => process.env.NODE_ENV === 'test',
+});
 
 // SSO code storage (in-memory, codes expire after 30 seconds)
 // In production with multiple server instances, use Redis instead
@@ -58,7 +86,7 @@ function generateToken(userId: string, role: string): string {
 }
 
 // POST /api/auth/register
-router.post('/register', async (req, res, next) => {
+router.post('/register', authLimiter, async (req, res, next) => {
   try {
     const data = registerSchema.parse(req.body);
 
@@ -115,7 +143,7 @@ router.post('/register', async (req, res, next) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res, next) => {
+router.post('/login', authLimiter, async (req, res, next) => {
   try {
     const data = loginSchema.parse(req.body);
 
@@ -349,7 +377,7 @@ router.post('/sso-exchange', async (req, res, next) => {
 });
 
 // POST /api/auth/forgot-password
-router.post('/forgot-password', async (req, res, next) => {
+router.post('/forgot-password', passwordResetLimiter, async (req, res, next) => {
   try {
     const { email } = z.object({ email: z.string().email() }).parse(req.body);
 
@@ -373,11 +401,7 @@ router.post('/forgot-password', async (req, res, next) => {
       });
 
       // Send password reset email
-      const emailResult = await sendPasswordResetEmail(
-        user.email,
-        user.firstName,
-        resetToken
-      );
+      const emailResult = await sendPasswordResetEmail(user.email, user.firstName, resetToken);
 
       if (!emailResult.success) {
         console.error('Failed to send password reset email:', emailResult.error);
@@ -395,7 +419,7 @@ router.post('/forgot-password', async (req, res, next) => {
 });
 
 // POST /api/auth/reset-password
-router.post('/reset-password', async (req, res, next) => {
+router.post('/reset-password', authLimiter, async (req, res, next) => {
   try {
     const { token, password } = z
       .object({
