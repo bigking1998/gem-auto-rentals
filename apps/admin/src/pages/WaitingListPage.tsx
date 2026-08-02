@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Mail, Download, Loader2, AlertCircle, CheckCircle2, X, Users } from 'lucide-react';
+import {
+  Search,
+  Mail,
+  Download,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  X,
+  Users,
+  UserPlus,
+  Trash2,
+  BellOff,
+  BellRing,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { api, tokenManager } from '@/lib/api';
 
@@ -45,6 +58,18 @@ export default function WaitingListPage() {
   const [search, setSearch] = useState('');
   const [interest, setInterest] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    interestCategory: '',
+    timeframe: '',
+    adminNotes: '',
+    sendWelcome: true,
+  });
 
   const [composerOpen, setComposerOpen] = useState(false);
   const [subject, setSubject] = useState('');
@@ -127,6 +152,78 @@ export default function WaitingListPage() {
     }
   };
 
+  const addPerson = async () => {
+    if (!form.name.trim() || !form.email.trim()) {
+      toast.error('Name and email are both required');
+      return;
+    }
+    setAdding(true);
+    try {
+      await api.waitlist.addManual({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || undefined,
+        interestCategory: form.interestCategory || undefined,
+        timeframe: form.timeframe || undefined,
+        adminNotes: form.adminNotes.trim() || undefined,
+        sendWelcome: form.sendWelcome,
+      });
+      toast.success(`${form.name.trim()} added to the waiting list`);
+      setAddOpen(false);
+      setForm({
+        name: '',
+        email: '',
+        phone: '',
+        interestCategory: '',
+        timeframe: '',
+        adminNotes: '',
+        sendWelcome: true,
+      });
+      load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not add that person');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const toggleSubscribed = async (s: Subscriber) => {
+    const next = s.status === 'SUBSCRIBED' ? 'UNSUBSCRIBED' : 'SUBSCRIBED';
+    try {
+      await api.waitlist.setStatus(s.id, next);
+      toast.success(
+        next === 'UNSUBSCRIBED' ? `${s.name} will no longer be emailed` : `${s.name} re-subscribed`
+      );
+      load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not update that person');
+    }
+  };
+
+  const removePerson = async (s: Subscriber) => {
+    // Deletion is permanent and loses the consent record, so make the softer
+    // option explicit rather than letting someone reach for delete by default.
+    if (
+      !window.confirm(
+        `Permanently delete ${s.name} (${s.email})?\n\nThis cannot be undone. If you only want to stop emailing them, use Unsubscribe instead.`
+      )
+    ) {
+      return;
+    }
+    try {
+      await api.waitlist.remove(s.id);
+      toast.success(`${s.name} removed`);
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(s.id);
+        return next;
+      });
+      load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not delete that person');
+    }
+  };
+
   const exportCsv = async () => {
     try {
       // fetch directly so the auth header is attached; a bare <a> would 401
@@ -161,6 +258,13 @@ export default function WaitingListPage() {
         </div>
 
         <div className="flex flex-wrap gap-2.5">
+          <button
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <UserPlus className="h-4 w-4" />
+            Add person
+          </button>
           <button
             onClick={exportCsv}
             className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
@@ -252,6 +356,7 @@ export default function WaitingListPage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-600">Looking for</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-600">Joined</th>
+                  <th className="px-4 py-3 text-right font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -311,6 +416,34 @@ export default function WaitingListPage() {
                       <td className="px-4 py-3 text-gray-500">
                         {new Date(s.createdAt).toLocaleDateString()}
                       </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {s.status !== 'SUPPRESSED' && (
+                            <button
+                              onClick={() => toggleSubscribed(s)}
+                              title={canEmail ? 'Stop emailing this person' : 'Re-subscribe'}
+                              aria-label={
+                                canEmail ? `Unsubscribe ${s.name}` : `Re-subscribe ${s.name}`
+                              }
+                              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                            >
+                              {canEmail ? (
+                                <BellOff className="h-4 w-4" />
+                              ) : (
+                                <BellRing className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => removePerson(s)}
+                            title="Delete permanently"
+                            aria-label={`Delete ${s.name}`}
+                            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -319,6 +452,183 @@ export default function WaitingListPage() {
           </div>
         )}
       </div>
+
+      {/* add person */}
+      {addOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl"
+          >
+            <div className="flex items-start justify-between border-b border-gray-100 p-6">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Add to the waiting list</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  For someone who signed up by phone, in person or on paper.
+                </p>
+              </div>
+              <button
+                onClick={() => setAddOpen(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 p-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="a-name"
+                    className="mb-1.5 block text-sm font-medium text-gray-700"
+                  >
+                    Full name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="a-name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2"
+                    placeholder="Jane Doe"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="a-phone"
+                    className="mb-1.5 block text-sm font-medium text-gray-700"
+                  >
+                    Phone
+                  </label>
+                  <input
+                    id="a-phone"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2"
+                    placeholder="813-555-0142"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="a-email" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="a-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2"
+                  placeholder="jane@example.com"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="a-interest"
+                    className="mb-1.5 block text-sm font-medium text-gray-700"
+                  >
+                    Looking for
+                  </label>
+                  <select
+                    id="a-interest"
+                    value={form.interestCategory}
+                    onChange={(e) => setForm({ ...form, interestCategory: e.target.value })}
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2"
+                  >
+                    <option value="">Not specified</option>
+                    {INTERESTS.map((i) => (
+                      <option key={i} value={i}>
+                        {i.charAt(0) + i.slice(1).toLowerCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label
+                    htmlFor="a-time"
+                    className="mb-1.5 block text-sm font-medium text-gray-700"
+                  >
+                    Needs it
+                  </label>
+                  <select
+                    id="a-time"
+                    value={form.timeframe}
+                    onChange={(e) => setForm({ ...form, timeframe: e.target.value })}
+                    className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2"
+                  >
+                    <option value="">Not specified</option>
+                    {Object.entries(TIMEFRAME_LABEL).map(([v, l]) => (
+                      <option key={v} value={v}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="a-notes" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Private note{' '}
+                  <span className="font-normal text-gray-400">(only you see this)</span>
+                </label>
+                <textarea
+                  id="a-notes"
+                  rows={2}
+                  value={form.adminNotes}
+                  onChange={(e) => setForm({ ...form, adminNotes: e.target.value })}
+                  className="focus:ring-primary w-full resize-y rounded-xl border border-gray-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2"
+                  placeholder="Called the shop on Tuesday, wants something for a work trip"
+                />
+              </div>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-gray-50 p-3.5">
+                <input
+                  type="checkbox"
+                  checked={form.sendWelcome}
+                  onChange={(e) => setForm({ ...form, sendWelcome: e.target.checked })}
+                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                />
+                <span className="text-sm text-gray-700">
+                  Send them the welcome email
+                  <span className="mt-0.5 block text-xs text-gray-500">
+                    Turn this off if they would not expect an email from a phone conversation.
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-gray-100 p-6">
+              <button
+                onClick={() => setAddOpen(false)}
+                className="rounded-xl px-5 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addPerson}
+                disabled={adding || !form.name.trim() || !form.email.trim()}
+                className="bg-primary text-primary-foreground hover:bg-primary-dark inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {adding ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Adding…
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4" />
+                    Add to list
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* composer */}
       {composerOpen && (

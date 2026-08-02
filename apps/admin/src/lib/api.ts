@@ -787,6 +787,23 @@ export const api = {
         '/waitlist/campaign',
         { method: 'POST', body: JSON.stringify({ subject, body, subscriberIds }) }
       ),
+    addManual: (data: {
+      name: string;
+      email: string;
+      phone?: string;
+      interestCategory?: string;
+      timeframe?: string;
+      adminNotes?: string;
+      sendWelcome?: boolean;
+    }) =>
+      request<{ id: string }>('/waitlist/admin', { method: 'POST', body: JSON.stringify(data) }),
+    setStatus: (id: string, status: 'SUBSCRIBED' | 'UNSUBSCRIBED') =>
+      request<{ status: string }>(`/waitlist/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }),
+    remove: (id: string) =>
+      request<{ deleted: boolean; email: string }>(`/waitlist/${id}`, { method: 'DELETE' }),
   },
 
   // Auth

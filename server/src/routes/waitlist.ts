@@ -4,7 +4,7 @@ import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma.js';
 import { authenticate, staffOnly } from '../middleware/auth.js';
-import { BadRequestError, NotFoundError } from '../middleware/errorHandler.js';
+import { BadRequestError, NotFoundError, ConflictError } from '../middleware/errorHandler.js';
 import { sendWaitlistWelcomeEmail, sendWaitlistCampaignEmail } from '../lib/email.js';
 
 const router = Router();
@@ -435,6 +435,119 @@ router.post('/campaign', authenticate, staffOnly, async (req, res, next) => {
       success: true,
       data: { campaignId: campaign.id, sent: success, failed: failure, total: recipients.length },
     });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+const adminAddSchema = z.object({
+  name: z.string().trim().min(2, 'Name is required').max(100),
+  email: z.string().trim().toLowerCase().email('Enter a valid email address').max(200),
+  phone: z.string().trim().max(30).optional().or(z.literal('')),
+  interestCategory: z.enum(['ECONOMY', 'STANDARD', 'PREMIUM', 'LUXURY', 'SUV', 'VAN']).optional(),
+  timeframe: z.enum(['THIS_WEEK', 'THIS_MONTH', 'NEXT_FEW_MONTHS', 'JUST_BROWSING']).optional(),
+  adminNotes: z.string().trim().max(1000).optional(),
+  // staff decide — someone who phoned in may not expect a welcome email
+  sendWelcome: z.boolean().optional(),
+});
+
+/**
+ * POST /api/waitlist/admin
+ * Staff adding someone who signed up by phone, in person or on paper.
+ * Separate from the public route: no rate limit, no honeypot, and consent is
+ * recorded as staff-entered rather than fabricating a web consent trail.
+ */
+router.post('/admin', authenticate, staffOnly, async (req, res, next) => {
+  try {
+    const parsed = adminAddSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw BadRequestError(parsed.error.errors[0]?.message ?? 'Invalid details');
+    }
+    const { name, email, phone, interestCategory, timeframe, adminNotes, sendWelcome } =
+      parsed.data;
+
+    const existing = await prisma.waitlistSubscriber.findUnique({ where: { email } });
+    if (existing) {
+      throw ConflictError('That email is already on the waiting list');
+    }
+
+    const subscriber = await prisma.waitlistSubscriber.create({
+      data: {
+        name,
+        email,
+        phone: phone || null,
+        interestCategory: interestCategory ?? null,
+        timeframe: timeframe ?? null,
+        adminNotes: adminNotes || null,
+        source: 'admin',
+        // Honest consent record: this person did not tick a box on the website,
+        // so do not pretend they did. Staff identity is the audit trail.
+        consentIp: null,
+        consentUserAgent: `staff-entry:${req.user!.email}`,
+        profileCompletedAt: interestCategory || timeframe ? new Date() : null,
+      },
+    });
+
+    if (sendWelcome) {
+      sendWaitlistWelcomeEmail(
+        subscriber.email,
+        subscriber.name,
+        subscriber.unsubscribeToken
+      ).catch((err) => console.error('Waitlist welcome email failed:', err?.message ?? err));
+    }
+
+    return res.status(201).json({ success: true, data: { id: subscriber.id } });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * PATCH /api/waitlist/:id/status
+ * Staff only. Unsubscribe or re-subscribe someone who asked verbally.
+ * Preferred over deletion — it keeps the consent history intact.
+ */
+router.patch('/:id/status', authenticate, staffOnly, async (req, res, next) => {
+  try {
+    const { status } = z.object({ status: z.enum(['SUBSCRIBED', 'UNSUBSCRIBED']) }).parse(req.body);
+
+    const subscriber = await prisma.waitlistSubscriber.findUnique({ where: { id: req.params.id } });
+    if (!subscriber) throw NotFoundError('Subscriber not found');
+
+    // A suppressed address bounced or filed a spam complaint. Re-subscribing it
+    // would damage sending reputation, so that has to be resolved deliberately.
+    if (subscriber.status === 'SUPPRESSED' && status === 'SUBSCRIBED') {
+      throw BadRequestError('This address bounced or reported spam and cannot be re-subscribed');
+    }
+
+    await prisma.waitlistSubscriber.update({
+      where: { id: req.params.id },
+      data: {
+        status,
+        unsubscribedAt: status === 'UNSUBSCRIBED' ? new Date() : null,
+      },
+    });
+
+    return res.json({ success: true, data: { status } });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/**
+ * DELETE /api/waitlist/:id
+ * Staff only. Permanent — for duplicates, typos, and erasure requests.
+ * Unsubscribing is usually the better choice; this exists for when a record
+ * genuinely should not exist.
+ */
+router.delete('/:id', authenticate, staffOnly, async (req, res, next) => {
+  try {
+    const subscriber = await prisma.waitlistSubscriber.findUnique({ where: { id: req.params.id } });
+    if (!subscriber) throw NotFoundError('Subscriber not found');
+
+    await prisma.waitlistSubscriber.delete({ where: { id: req.params.id } });
+
+    return res.json({ success: true, data: { deleted: true, email: subscriber.email } });
   } catch (err) {
     return next(err);
   }
