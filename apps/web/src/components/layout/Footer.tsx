@@ -13,6 +13,7 @@ const footerLinks = {
     { label: 'Book a Car', href: '/booking' },
   ],
   company: [
+    { label: 'Join the Waiting List', href: '/waitinglist' },
     { label: 'About Us', href: '/about' },
     { label: 'Contact Us', href: '/contact' },
   ],

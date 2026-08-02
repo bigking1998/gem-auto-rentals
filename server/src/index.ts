@@ -39,6 +39,7 @@ import promoRoutes from './routes/promos.js';
 import extensionRoutes from './routes/extensions.js';
 import walletRoutes from './routes/wallet.js';
 import waitlistRoutes from './routes/waitlist.js';
+import webhookRoutes from './routes/webhooks.js';
 
 // Load environment variables
 dotenv.config();
@@ -124,6 +125,10 @@ const limiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
 });
 app.use('/api', limiter);
+
+// Webhooks mount BEFORE the JSON body parser: Svix signatures are computed
+// over the raw bytes, and re-serialising parsed JSON will not match.
+app.use('/api/webhooks', webhookRoutes);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

@@ -15,6 +15,7 @@ const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPa
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const WaitingListPage = lazy(() => import('./pages/WaitingListPage'));
 const WaitingListThankYouPage = lazy(() => import('./pages/WaitingListThankYouPage'));
+const UnsubscribePage = lazy(() => import('./pages/UnsubscribePage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
@@ -59,6 +60,7 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/waitinglist" element={<WaitingListPage />} />
           <Route path="/waitinglist/thank-you" element={<WaitingListThankYouPage />} />
+          <Route path="/unsubscribe" element={<UnsubscribePage />} />
           <Route path="/contact" element={<ContactPage />} />
 
           {/* Legal — linked from the signup and checkout consent checkboxes,
