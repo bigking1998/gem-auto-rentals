@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   Clock,
   Star,
-  Edit,
   Trash2,
   Download,
   Eye,
@@ -23,6 +22,7 @@ import {
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { bookingStatusColors } from '@/lib/statusColors';
 
 interface CustomerBooking {
   id: string;
@@ -58,13 +58,7 @@ interface Customer {
   documents: CustomerDocument[];
 }
 
-const statusColors: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-blue-100 text-blue-800',
-  ACTIVE: 'bg-green-100 text-green-800',
-  COMPLETED: 'bg-gray-100 text-gray-800',
-  CANCELLED: 'bg-red-100 text-red-800',
-};
+const statusColors = bookingStatusColors;
 
 const documentTypeLabels: Record<string, string> = {
   DRIVERS_LICENSE_FRONT: "Driver's License (Front)",
@@ -83,6 +77,7 @@ const documentStatusColors: Record<string, string> = {
 
 export default function CustomerProfilePage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'documents'>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -199,8 +194,14 @@ export default function CustomerProfilePage() {
       return;
     }
 
-    // TODO: Implement customer deletion API endpoint
-    toast.error('Customer deletion is not yet implemented');
+    try {
+      await api.customers.delete(customer.id);
+      toast.success('Customer deleted');
+      navigate('/customers');
+    } catch (err) {
+      console.error('Failed to delete customer:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to delete customer');
+    }
   };
 
   if (isLoading) {
@@ -291,14 +292,14 @@ export default function CustomerProfilePage() {
               <p className="text-gray-500">Customer since {formatDate(customer.createdAt)}</p>
             </div>
             <div className="flex items-center gap-2 pt-14 sm:pt-14">
-              <button className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50">
-                <Edit className="h-4 w-4" />
-                Edit
-              </button>
-              <button className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50">
+              {/* "Edit" removed — there is no customer edit form in the admin. */}
+              <a
+                href={`mailto:${customer.email}`}
+                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+              >
                 <Mail className="h-4 w-4" />
                 Email
-              </button>
+              </a>
             </div>
           </div>
         </div>

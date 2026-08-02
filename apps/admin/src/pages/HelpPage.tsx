@@ -1,23 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Search,
-  HelpCircle,
-  BookOpen,
-  MessageCircle,
-  Mail,
-  Phone,
-  Video,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
-  Zap,
-  Car,
-  CreditCard,
-  Users,
-  FileText,
-  ArrowRight,
-} from 'lucide-react';
+import { Search, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FAQ {
@@ -39,7 +22,7 @@ const faqs: FAQ[] = [
     id: '2',
     question: 'How do I process a refund for a customer?',
     answer:
-      'Go to the Bookings page and find the relevant booking. Click on the booking to open details, then click "View Payments". In the payment tracking modal, find the payment you want to refund and click the "Refund" button. Enter the refund amount and confirm.',
+      'Refunds cannot be issued from this dashboard yet — there is no payment tracking or refund screen in the admin. Process the refund directly in your payment provider, then add a note to the booking so the record matches.',
     category: 'payments',
   },
   {
@@ -53,7 +36,7 @@ const faqs: FAQ[] = [
     id: '4',
     question: 'How do I schedule vehicle maintenance?',
     answer:
-      'In Fleet Management, find the vehicle you want to schedule maintenance for. Click the three-dot menu on the right and select "Schedule Maintenance". Choose the maintenance type, date, and add any notes. The vehicle status will automatically change to "Maintenance".',
+      'In Fleet Management, find the vehicle and use the three-dot menu on the right. This marks the vehicle\'s status as "Maintenance" so it stops appearing as available. Note: no maintenance record is stored yet, so keep the type, date and notes in your own records for now.',
     category: 'fleet',
   },
   {
@@ -74,33 +57,16 @@ const faqs: FAQ[] = [
     id: '7',
     question: 'What should I do if a customer wants to extend their rental?',
     answer:
-      'Find the active booking in the Bookings page and click to open details. Click "Extend Booking" and select the new end date. The system will calculate any additional charges. Process the additional payment and confirm the extension.',
+      'There is no "Extend Booking" action in the admin dashboard yet. Customers can request an extension from the customer site; on the admin side, adjust the booking\'s end date from the Bookings page and collect any additional payment separately.',
     category: 'bookings',
   },
   {
     id: '8',
     question: 'How do I set up two-factor authentication?',
     answer:
-      'Go to Security from the sidebar. Under the "Two-Factor Auth" tab, click "Enable Two-Factor Authentication". Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.) and enter the verification code to complete setup.',
+      'Two-factor authentication is not available yet — the Security page shows it as "Coming soon". Your account is protected by your password alone, so use a long unique password and check the "Active Sessions" and "Login History" tabs on the Security page for anything unexpected.',
     category: 'security',
   },
-];
-
-const quickLinks = [
-  { icon: Zap, label: 'Getting Started', description: 'New to Gem Auto? Start here', href: '#' },
-  {
-    icon: BookOpen,
-    label: 'Documentation',
-    description: 'Full admin guide & tutorials',
-    href: '#',
-  },
-  {
-    icon: MessageCircle,
-    label: 'Contact Support',
-    description: 'Get help from our team',
-    href: '#',
-  },
-  { icon: Video, label: 'Video Tutorials', description: 'Watch step-by-step guides', href: '#' },
 ];
 
 const categories = [
@@ -154,40 +120,6 @@ export default function HelpPage() {
               className="w-full rounded-xl bg-white py-3.5 pl-12 pr-4 text-gray-900 shadow-lg focus:outline-none focus:ring-4 focus:ring-white/30"
             />
           </div>
-        </div>
-      </motion.div>
-
-      {/* Quick Links */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Quick Links</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {quickLinks.map((link, index) => (
-            <motion.a
-              key={link.label}
-              href={link.href}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 + index * 0.05 }}
-              className="hover:border-primary group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg"
-            >
-              <div className="flex items-start gap-4">
-                <div className="bg-accent group-hover:bg-primary-light flex h-12 w-12 items-center justify-center rounded-xl transition-colors">
-                  <link.icon className="text-primary-ink h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="group-hover:text-primary-ink font-semibold text-gray-900 transition-colors">
-                    {link.label}
-                  </h3>
-                  <p className="text-sm text-gray-500">{link.description}</p>
-                </div>
-                <ArrowRight className="group-hover:text-primary-ink h-5 w-5 text-gray-400 transition-all group-hover:translate-x-1" />
-              </div>
-            </motion.a>
-          ))}
         </div>
       </motion.div>
 
@@ -261,83 +193,18 @@ export default function HelpPage() {
         </div>
       </motion.div>
 
-      {/* Contact Support Section */}
+      {/* Contact Support */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
+        className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
       >
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Contact Support</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-green-100">
-              <MessageCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <h3 className="mb-2 font-semibold text-gray-900">Live Chat</h3>
-            <p className="mb-4 text-sm text-gray-500">Get instant help from our support team</p>
-            <div className="mb-4 flex items-center gap-2 text-sm text-green-600">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
-              Available now
-            </div>
-            <button className="bg-primary text-primary-foreground shadow-primary/20 hover:shadow-primary/30 hover:bg-primary-dark w-full rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg transition-all duration-300">
-              Start Chat
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
-            <div className="bg-accent mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
-              <Mail className="text-primary-ink h-6 w-6" />
-            </div>
-            <h3 className="mb-2 font-semibold text-gray-900">Email Support</h3>
-            <p className="mb-4 text-sm text-gray-500">Send us a detailed message</p>
-            <p className="mb-4 text-sm text-gray-600">support@gemauto.com</p>
-            <button className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-              Send Email
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
-            <div className="bg-accent mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
-              <Phone className="text-primary-ink h-6 w-6" />
-            </div>
-            <h3 className="mb-2 font-semibold text-gray-900">Phone Support</h3>
-            <p className="mb-4 text-sm text-gray-500">Call us during business hours</p>
-            <p className="mb-4 text-sm text-gray-600">+1 (800) GEM-AUTO</p>
-            <button className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-              Call Now
-            </button>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Additional Resources */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="rounded-2xl bg-gray-50 p-6"
-      >
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Additional Resources</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { icon: Car, label: 'Fleet Setup Guide', href: '#' },
-            { icon: CreditCard, label: 'Payment Integration', href: '#' },
-            { icon: Users, label: 'Customer Management', href: '#' },
-            { icon: FileText, label: 'Terms of Service', href: '#' },
-          ].map((resource) => (
-            <a
-              key={resource.label}
-              href={resource.href}
-              className="hover:border-primary group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-all hover:shadow-md"
-            >
-              <resource.icon className="group-hover:text-primary-ink h-5 w-5 text-gray-400 transition-colors" />
-              <span className="text-sm font-medium text-gray-700 transition-colors group-hover:text-gray-900">
-                {resource.label}
-              </span>
-              <ExternalLink className="group-hover:text-primary-ink ml-auto h-4 w-4 text-gray-400 transition-colors" />
-            </a>
-          ))}
-        </div>
+        <h2 className="mb-2 text-lg font-semibold text-gray-900">Still stuck?</h2>
+        <p className="text-sm text-gray-600">
+          There is no in-app support desk. If something in this dashboard is broken or a documented
+          step does not match what you see, contact whoever maintains this installation directly.
+        </p>
       </motion.div>
     </div>
   );

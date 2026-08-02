@@ -61,9 +61,7 @@ router.post('/create-intent', authenticate, async (req, res, next) => {
 
     if (booking.payment?.stripePaymentIntentId) {
       // Retrieve existing payment intent
-      paymentIntent = await stripe.paymentIntents.retrieve(
-        booking.payment.stripePaymentIntentId
-      );
+      paymentIntent = await stripe.paymentIntents.retrieve(booking.payment.stripePaymentIntentId);
     } else {
       // Create new payment intent
       paymentIntent = await stripe.paymentIntents.create({
@@ -234,8 +232,17 @@ router.post('/confirm', authenticate, async (req, res, next) => {
 });
 
 // POST /api/payments/demo - Demo payment for testing (creates real records but no Stripe charge)
+// Demo payments create a PAID booking with no money changing hands. In
+// production this is a free-car exploit, so it is hard-gated here — the client
+// toggle alone is not a control, since anyone can call the API directly.
+const demoPaymentsEnabled =
+  process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEMO_PAYMENTS === 'true';
+
 router.post('/demo', authenticate, async (req, res, next) => {
   try {
+    if (!demoPaymentsEnabled) {
+      throw ForbiddenError('Demo payments are disabled');
+    }
     const { bookingId } = z
       .object({
         bookingId: z.string().cuid(),
@@ -312,18 +319,14 @@ router.post('/demo', authenticate, async (req, res, next) => {
         });
       };
 
-      sendBookingConfirmationEmail(
-        booking.user.email,
-        booking.user.firstName,
-        {
-          bookingId: booking.id,
-          vehicleName: `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`,
-          startDate: formatDate(booking.startDate),
-          endDate: formatDate(booking.endDate),
-          pickupLocation: booking.pickupLocation,
-          totalAmount: `$${Number(booking.totalAmount).toFixed(2)}`,
-        }
-      ).catch((err) => {
+      sendBookingConfirmationEmail(booking.user.email, booking.user.firstName, {
+        bookingId: booking.id,
+        vehicleName: `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`,
+        startDate: formatDate(booking.startDate),
+        endDate: formatDate(booking.endDate),
+        pickupLocation: booking.pickupLocation,
+        totalAmount: `$${Number(booking.totalAmount).toFixed(2)}`,
+      }).catch((err) => {
         console.error('Failed to send booking confirmation email:', err);
       });
     }
@@ -536,18 +539,14 @@ router.post(
                   });
                 };
 
-                sendBookingConfirmationEmail(
-                  booking.user.email,
-                  booking.user.firstName,
-                  {
-                    bookingId: booking.id,
-                    vehicleName: `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`,
-                    startDate: formatDate(booking.startDate),
-                    endDate: formatDate(booking.endDate),
-                    pickupLocation: booking.pickupLocation,
-                    totalAmount: `$${Number(booking.totalAmount).toFixed(2)}`,
-                  }
-                ).catch((err) => {
+                sendBookingConfirmationEmail(booking.user.email, booking.user.firstName, {
+                  bookingId: booking.id,
+                  vehicleName: `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}`,
+                  startDate: formatDate(booking.startDate),
+                  endDate: formatDate(booking.endDate),
+                  pickupLocation: booking.pickupLocation,
+                  totalAmount: `$${Number(booking.totalAmount).toFixed(2)}`,
+                }).catch((err) => {
                   console.error('Failed to send booking confirmation email:', err);
                 });
               }

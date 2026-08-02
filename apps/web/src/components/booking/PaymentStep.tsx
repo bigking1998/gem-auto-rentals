@@ -61,7 +61,10 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
   const [nameOnCard, setNameOnCard] = useState(
     `${data.customer.firstName} ${data.customer.lastName}`
   );
-  const [useDemoMode, setUseDemoMode] = useState(true); // Demo mode toggle
+  // Demo mode is a local development affordance only. It defaults to OFF and the
+  // toggle is never rendered outside `vite dev` (import.meta.env.DEV). The server
+  // rejects /api/payments/demo outside development as well — both halves matter.
+  const [useDemoMode, setUseDemoMode] = useState(false);
 
   const handleCardChange = (event: { complete: boolean; error?: { message: string } }) => {
     setCardComplete(event.complete);
@@ -75,8 +78,8 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Demo mode - create demo payment record without Stripe
-    if (useDemoMode) {
+    // Demo mode - create demo payment record without Stripe (dev builds only)
+    if (import.meta.env.DEV && useDemoMode) {
       setIsProcessing(true);
       setPaymentError(null);
       try {
@@ -264,21 +267,25 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
             Payment Details
           </h3>
 
-          {/* Demo Mode Toggle */}
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <label className="flex cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                checked={useDemoMode}
-                onChange={(e) => setUseDemoMode(e.target.checked)}
-                className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-              />
-              <div>
-                <span className="text-sm font-medium text-amber-800">Demo Mode</span>
-                <p className="text-xs text-amber-600">Skip actual payment processing for testing</p>
-              </div>
-            </label>
-          </div>
+          {/* Demo Mode Toggle — development builds only, stripped from production bundles */}
+          {import.meta.env.DEV && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <label className="flex cursor-pointer items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={useDemoMode}
+                  onChange={(e) => setUseDemoMode(e.target.checked)}
+                  className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-amber-800">Demo Mode (dev only)</span>
+                  <p className="text-xs text-amber-600">
+                    Skip actual payment processing for testing
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
 
           <div className="space-y-4">
             {/* Name on Card */}

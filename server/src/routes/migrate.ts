@@ -1,14 +1,35 @@
 import { Router, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
+import { authenticate, adminOnly } from '../middleware/auth.js';
 
 const router = Router();
+
+// These are one-off Supabase migration tools, and they are extraordinarily
+// destructive: /make-admin grants ADMIN by email, /clear-table TRUNCATEs, /user
+// deletes by email, /import-data and /from-source write arbitrary records.
+//
+// Each handler below checks a static MIGRATION_KEY header. That check currently
+// fails closed only because MIGRATION_KEY is unset — setting that one env var
+// would expose all of it to anyone who learns the key, with no session, no role
+// check, and a non-constant-time comparison.
+//
+// Requiring an authenticated ADMIN in front of the key check means the key alone
+// is never sufficient. Nothing in either frontend calls /api/migrate, so this
+// cannot break a caller.
+//
+// The stronger fix is to stop mounting this router altogether (the Supabase
+// migration is complete and the legacy tables are orphaned) — left as the
+// owner's call, see fix-reports/fixed-backend.md.
+router.use(authenticate, adminOnly);
 
 // Source database URL: Use environment variable (set only when migration is needed)
 const SOURCE_DATABASE_URL = process.env.SOURCE_DATABASE_URL || '';
 
 // Helper to handle JSON null values for Prisma
-function handleJsonNull(value: Prisma.JsonValue): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput {
+function handleJsonNull(
+  value: Prisma.JsonValue
+): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput {
   if (value === null) {
     return Prisma.JsonNull;
   }
@@ -40,7 +61,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 1. Migrate Users
     console.log('Migrating Users...');
     const users = await sourcePrisma.user.findMany();
-    let userMigrated = 0, userErrors = 0;
+    let userMigrated = 0,
+      userErrors = 0;
     for (const user of users) {
       try {
         await prisma.user.upsert({
@@ -59,7 +81,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 2. Migrate Vehicles
     console.log('Migrating Vehicles...');
     const vehicles = await sourcePrisma.vehicle.findMany();
-    let vehicleMigrated = 0, vehicleErrors = 0;
+    let vehicleMigrated = 0,
+      vehicleErrors = 0;
     for (const vehicle of vehicles) {
       try {
         await prisma.vehicle.upsert({
@@ -78,7 +101,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 3. Migrate Bookings (handle JSON extras field)
     console.log('Migrating Bookings...');
     const bookings = await sourcePrisma.booking.findMany();
-    let bookingMigrated = 0, bookingErrors = 0;
+    let bookingMigrated = 0,
+      bookingErrors = 0;
     for (const booking of bookings) {
       try {
         const data = {
@@ -101,7 +125,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 4. Migrate Payments
     console.log('Migrating Payments...');
     const payments = await sourcePrisma.payment.findMany();
-    let paymentMigrated = 0, paymentErrors = 0;
+    let paymentMigrated = 0,
+      paymentErrors = 0;
     for (const payment of payments) {
       try {
         await prisma.payment.upsert({
@@ -120,7 +145,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 5. Migrate Documents
     console.log('Migrating Documents...');
     const documents = await sourcePrisma.document.findMany();
-    let docMigrated = 0, docErrors = 0;
+    let docMigrated = 0,
+      docErrors = 0;
     for (const doc of documents) {
       try {
         await prisma.document.upsert({
@@ -139,7 +165,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 6. Migrate Reviews
     console.log('Migrating Reviews...');
     const reviews = await sourcePrisma.review.findMany();
-    let reviewMigrated = 0, reviewErrors = 0;
+    let reviewMigrated = 0,
+      reviewErrors = 0;
     for (const review of reviews) {
       try {
         await prisma.review.upsert({
@@ -158,7 +185,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 7. Migrate Maintenance Records
     console.log('Migrating MaintenanceRecords...');
     const maintenance = await sourcePrisma.maintenanceRecord.findMany();
-    let maintMigrated = 0, maintErrors = 0;
+    let maintMigrated = 0,
+      maintErrors = 0;
     for (const record of maintenance) {
       try {
         await prisma.maintenanceRecord.upsert({
@@ -177,7 +205,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 8. Migrate User Preferences
     console.log('Migrating UserPreferences...');
     const prefs = await sourcePrisma.userPreferences.findMany();
-    let prefMigrated = 0, prefErrors = 0;
+    let prefMigrated = 0,
+      prefErrors = 0;
     for (const pref of prefs) {
       try {
         await prisma.userPreferences.upsert({
@@ -196,7 +225,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 9. Migrate Company Settings (handle JSON operatingHours field)
     console.log('Migrating CompanySettings...');
     const settings = await sourcePrisma.companySettings.findMany();
-    let settMigrated = 0, settErrors = 0;
+    let settMigrated = 0,
+      settErrors = 0;
     for (const setting of settings) {
       try {
         const data = {
@@ -219,7 +249,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 10. Migrate Conversations
     console.log('Migrating Conversations...');
     const conversations = await sourcePrisma.conversation.findMany();
-    let convMigrated = 0, convErrors = 0;
+    let convMigrated = 0,
+      convErrors = 0;
     for (const conv of conversations) {
       try {
         await prisma.conversation.upsert({
@@ -238,7 +269,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 11. Migrate Messages
     console.log('Migrating Messages...');
     const messages = await sourcePrisma.message.findMany();
-    let msgMigrated = 0, msgErrors = 0;
+    let msgMigrated = 0,
+      msgErrors = 0;
     for (const msg of messages) {
       try {
         await prisma.message.upsert({
@@ -257,7 +289,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 12. Migrate Activity Logs (handle JSON metadata field)
     console.log('Migrating ActivityLogs...');
     const logs = await sourcePrisma.activityLog.findMany();
-    let logMigrated = 0, logErrors = 0;
+    let logMigrated = 0,
+      logErrors = 0;
     for (const log of logs) {
       try {
         const data = {
@@ -280,7 +313,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 13. Migrate Notifications
     console.log('Migrating Notifications...');
     const notifications = await sourcePrisma.notification.findMany();
-    let notifMigrated = 0, notifErrors = 0;
+    let notifMigrated = 0,
+      notifErrors = 0;
     for (const notif of notifications) {
       try {
         await prisma.notification.upsert({
@@ -299,7 +333,8 @@ router.post('/from-source', async (req, res: Response) => {
     // 14. Migrate Invoices (handle JSON lineItems field)
     console.log('Migrating Invoices...');
     const invoices = await sourcePrisma.invoice.findMany();
-    let invMigrated = 0, invErrors = 0;
+    let invMigrated = 0,
+      invErrors = 0;
     for (const invoice of invoices) {
       try {
         const data = {
@@ -387,7 +422,8 @@ router.post('/import-data', async (req, res: Response) => {
         // Handle JSON null values for known JSON fields
         if ('extras' in data && data.extras === null) data.extras = Prisma.JsonNull;
         if ('metadata' in data && data.metadata === null) data.metadata = Prisma.JsonNull;
-        if ('operatingHours' in data && data.operatingHours === null) data.operatingHours = Prisma.JsonNull;
+        if ('operatingHours' in data && data.operatingHours === null)
+          data.operatingHours = Prisma.JsonNull;
         if ('lineItems' in data && data.lineItems === null) data.lineItems = Prisma.JsonNull;
 
         // Use upsert to handle existing records

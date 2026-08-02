@@ -7,6 +7,17 @@ import { NotFoundError, BadRequestError } from '../middleware/errorHandler.js';
 
 const router = Router();
 
+// Integration config is provider-specific free-form settings, so the individual
+// keys are deliberately not enumerated here. What is enforced is the shape: a
+// plain JSON object, with a key count that keeps a hostile body from bloating
+// the row.
+const configSchema = z
+  .record(z.unknown())
+  .refine((value) => !Array.isArray(value), { message: 'Config must be an object' })
+  .refine((value) => Object.keys(value).length <= 100, {
+    message: 'Config cannot have more than 100 keys',
+  });
+
 // GET /api/integrations - List all integrations
 router.get('/', authenticate, authorize('ADMIN'), async (_req, res, next) => {
   try {
@@ -120,12 +131,14 @@ router.get('/:provider', authenticate, authorize('ADMIN'), async (req, res, next
 router.post('/:provider/connect', authenticate, authorize('ADMIN'), async (req, res, next) => {
   try {
     const { provider } = req.params;
-    const { apiKey, clientId, clientSecret, redirectUri } = z.object({
-      apiKey: z.string().optional(),
-      clientId: z.string().optional(),
-      clientSecret: z.string().optional(),
-      redirectUri: z.string().optional(),
-    }).parse(req.body);
+    const { apiKey, clientId, clientSecret, redirectUri } = z
+      .object({
+        apiKey: z.string().optional(),
+        clientId: z.string().optional(),
+        clientSecret: z.string().optional(),
+        redirectUri: z.string().optional(),
+      })
+      .parse(req.body);
 
     // Validate provider
     if (!Object.values(IntegrationProvider).includes(provider as IntegrationProvider)) {
@@ -134,7 +147,12 @@ router.post('/:provider/connect', authenticate, authorize('ADMIN'), async (req, 
 
     const providerEnum = provider as IntegrationProvider;
     const apiKeyProviders: IntegrationProvider[] = ['STRIPE', 'TWILIO'];
-    const oauthProviders: IntegrationProvider[] = ['MAILCHIMP', 'GOOGLE_CALENDAR', 'QUICKBOOKS', 'ZAPIER'];
+    const oauthProviders: IntegrationProvider[] = [
+      'MAILCHIMP',
+      'GOOGLE_CALENDAR',
+      'QUICKBOOKS',
+      'ZAPIER',
+    ];
 
     // Handle API key based integrations
     if (apiKeyProviders.includes(providerEnum)) {
@@ -335,12 +353,16 @@ router.post('/:provider/disconnect', authenticate, authorize('ADMIN'), async (re
 router.put('/:provider/config', authenticate, authorize('ADMIN'), async (req, res, next) => {
   try {
     const { provider } = req.params;
-    const config = req.body;
 
     // Validate provider
     if (!Object.values(IntegrationProvider).includes(provider as IntegrationProvider)) {
       throw BadRequestError('Invalid integration provider');
     }
+
+    // The body is persisted verbatim into a JSON column, so it has to be a plain
+    // object. Without this an array, string or number is accepted and stored,
+    // which later reads then have to defend against.
+    const config = configSchema.parse(req.body);
 
     const integration = await prisma.integration.update({
       where: { provider: provider as IntegrationProvider },

@@ -36,7 +36,7 @@ interface Vehicle {
   transmission: string;
   fuelType: string;
   images: string[];
-  averageRating?: number;
+  averageRating?: number | null;
   reviewCount?: number;
 }
 
@@ -54,8 +54,10 @@ function transformVehicle(v: ApiVehicle): Vehicle {
     transmission: v.transmission,
     fuelType: v.fuelType,
     images: v.images || [],
-    averageRating: v.averageRating || 4.5,
-    reviewCount: v.reviewCount || 0,
+    // Never invent a rating. VehicleCard renders "New" when this is null,
+    // which matches what the detail page says ("0 reviews").
+    averageRating: v.averageRating ?? null,
+    reviewCount: v.reviewCount ?? 0,
   };
 }
 

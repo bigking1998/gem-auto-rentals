@@ -7,7 +7,6 @@ import {
   Send,
   Archive,
   Trash2,
-  MoreHorizontal,
   Clock,
   ArrowLeft,
   Paperclip,
@@ -22,14 +21,9 @@ import {
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { api, Conversation, ConversationStatus, ApiError, Customer, Priority } from '@/lib/api';
+import { conversationStatusColors } from '@/lib/statusColors';
 
-const statusColors: Record<ConversationStatus, string> = {
-  OPEN: 'bg-blue-100 text-blue-800',
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  IN_PROGRESS: 'bg-amber-100 text-amber-800',
-  RESOLVED: 'bg-green-100 text-green-800',
-  CLOSED: 'bg-gray-100 text-gray-800',
-};
+const statusColors = conversationStatusColors;
 
 const priorityColors: Record<string, string> = {
   LOW: 'text-gray-500',
@@ -463,18 +457,22 @@ export default function MessagesPage() {
                     Reopen
                   </button>
                 )}
-                <button className="rounded-lg p-2 transition-colors hover:bg-gray-100">
-                  <Archive className="h-5 w-5 text-gray-600" />
-                </button>
+                {selectedConversation.status !== 'CLOSED' && (
+                  <button
+                    onClick={() => handleUpdateStatus(selectedConversation.id, 'CLOSED')}
+                    title="Close conversation"
+                    className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                  >
+                    <Archive className="h-5 w-5 text-gray-600" />
+                  </button>
+                )}
                 <button
                   onClick={() => handleDeleteConversation(selectedConversation.id)}
                   className="rounded-lg p-2 transition-colors hover:bg-gray-100"
                 >
                   <Trash2 className="h-5 w-5 text-gray-600" />
                 </button>
-                <button className="rounded-lg p-2 transition-colors hover:bg-gray-100">
-                  <MoreHorizontal className="h-5 w-5 text-gray-600" />
-                </button>
+                {/* Overflow menu removed — it had no handler and no menu. */}
               </div>
             </div>
 

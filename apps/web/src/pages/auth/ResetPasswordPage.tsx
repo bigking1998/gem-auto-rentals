@@ -76,7 +76,7 @@ export default function ResetPasswordPage() {
 
     // Redirect to login after 3 seconds
     setTimeout(() => {
-      navigate('/auth/login');
+      navigate('/login');
     }, 3000);
   };
 
@@ -98,7 +98,7 @@ export default function ResetPasswordPage() {
               This password reset link is invalid or has expired. Please request a new one.
             </p>
             <Link
-              to="/auth/forgot-password"
+              to="/forgot-password"
               className={cn(
                 'text-primary-foreground inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all',
                 'from-primary-light to-primary-dark hover:from-primary hover:to-primary-dark bg-gradient-to-r'
@@ -108,7 +108,7 @@ export default function ResetPasswordPage() {
             </Link>
             <div className="mt-6">
               <Link
-                to="/auth/login"
+                to="/login"
                 className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -277,7 +277,7 @@ export default function ResetPasswordPage() {
               </p>
 
               <Link
-                to="/auth/login"
+                to="/login"
                 className={cn(
                   'text-primary-foreground inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all',
                   'from-primary-light to-primary-dark hover:from-primary hover:to-primary-dark bg-gradient-to-r'
@@ -292,7 +292,7 @@ export default function ResetPasswordPage() {
           {!isSuccess && (
             <div className="mt-8 text-center">
               <Link
-                to="/auth/login"
+                to="/login"
                 className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft className="h-4 w-4" />

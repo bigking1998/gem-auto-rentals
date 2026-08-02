@@ -149,11 +149,15 @@ export function VehicleForm({
         setIsUploading(false);
       }
     } else {
-      // For new vehicles, store files and create previews (will upload after vehicle creation)
+      // For new vehicles, store files and create previews (will upload after vehicle creation).
+      // The file and its preview are appended together inside onloadend so the two
+      // arrays stay index-aligned — appending the file synchronously while the
+      // preview arrived from an async reader let multi-select desync the order,
+      // which made removePendingImage(index) drop the wrong file.
       fileArray.forEach((file) => {
-        setPendingFiles((prev) => [...prev, file]);
         const reader = new FileReader();
         reader.onloadend = () => {
+          setPendingFiles((prev) => [...prev, file]);
           setPendingPreviews((prev) => [...prev, reader.result as string]);
         };
         reader.readAsDataURL(file);

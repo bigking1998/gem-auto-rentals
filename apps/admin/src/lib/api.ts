@@ -3,7 +3,6 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
-const SERVER_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -20,65 +19,19 @@ export class ApiError extends Error {
   }
 }
 
-// Server wake-up utility for Render free tier
-let serverWakeUpPromise: Promise<void> | null = null;
-let isServerAwake = false;
-
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function wakeUpServer(): Promise<void> {
-  // If already awake or waking up, return existing promise
-  if (isServerAwake) return Promise.resolve();
-  if (serverWakeUpPromise) return serverWakeUpPromise;
-
-  serverWakeUpPromise = (async () => {
-    const maxRetries = 15; // More retries to wait for DB connection
-    let retryCount = 0;
-
-    while (retryCount < maxRetries) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-
-        const response = await fetch(`${SERVER_BASE_URL}/health`, {
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          // Check if database is connected (not just server responding)
-          const data = await response.json();
-          if (data.database === 'connected') {
-            isServerAwake = true;
-            serverWakeUpPromise = null;
-            return;
-          }
-          // Database still connecting, wait and retry
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console -- dev-only visibility into server wake-up retries
-            console.debug('Server up but database connecting, waiting...');
-          }
-        }
-      } catch (error) {
-        // Ignore errors and retry
-      }
-
-      retryCount++;
-      // Backoff: 2s, 3s, 4s, 5s, then 5s for remaining attempts
-      const delayMs = Math.min(2000 + retryCount * 1000, 5000);
-      await sleep(delayMs);
-    }
-
-    // If we exhausted retries, assume it's awake and let the actual API calls handle errors
-    isServerAwake = true;
-    serverWakeUpPromise = null;
-  })();
-
-  return serverWakeUpPromise;
-}
+/**
+ * Historical note: this used to be a blocking `wakeUpServer()` gate in front of
+ * every request. It polled `/health` (up to 15 times, 2-5s backoff) and refused
+ * to proceed until `database === "connected"` — written for Render's sleeping
+ * free tier. The API now runs on a droplet that never sleeps, so the gate was
+ * pure latency: a mandatory extra round trip before any data could load.
+ * It has been removed from the request path. Retries below cover a genuinely
+ * unavailable server.
+ */
 
 // Backend response wrapper type
 interface ApiResponse<T> {
@@ -94,22 +47,24 @@ interface ApiResponse<T> {
   };
 }
 
+/**
+ * Only idempotent requests may be replayed. Replaying a POST/PATCH/PUT/DELETE
+ * that 500'd after partially committing creates duplicate writes. The previous
+ * loop retried everything 10 times at 2-6s each, so the operator waited ~45s
+ * before seeing any error at all.
+ */
+function isRetryableMethod(method?: string): boolean {
+  const m = (method || 'GET').toUpperCase();
+  return m === 'GET' || m === 'HEAD';
+}
+
+const MAX_RETRIES = 2;
+
 async function request<T>(
   endpoint: string,
   options: RequestOptions = {},
   retryCount = 0
 ): Promise<T> {
-  // On first request, wait for server to wake up (blocking)
-  // This prevents 500 errors while server is starting
-  if (!isServerAwake && retryCount === 0) {
-    try {
-      await wakeUpServer();
-    } catch (error) {
-      // Continue anyway - retries will handle it if server isn't ready
-      console.error('Server wake-up check failed, continuing with request:', error);
-    }
-  }
-
   const { params, ...fetchOptions } = options;
 
   // Build URL with query params
@@ -149,9 +104,13 @@ async function request<T>(
     const text = await response.text();
     if (!text) {
       if (!response.ok) {
-        // Retry on 500 errors (server might still be waking up)
-        if (response.status === 500 && retryCount < 10) {
-          const delay = Math.min(2000 + retryCount * 1000, 6000); // 2s, 3s, 4s, 5s, 6s, then 6s
+        // Retry a 500 once or twice — only for idempotent methods.
+        if (
+          response.status === 500 &&
+          retryCount < MAX_RETRIES &&
+          isRetryableMethod(fetchOptions.method)
+        ) {
+          const delay = 400 * Math.pow(2, retryCount); // 400ms, 800ms
           await sleep(delay);
           return request<T>(endpoint, options, retryCount + 1);
         }
@@ -163,9 +122,13 @@ async function request<T>(
     const json = JSON.parse(text) as ApiResponse<T>;
 
     if (!response.ok || !json.success) {
-      // Retry on 500 errors (server might still be waking up)
-      if (response.status === 500 && retryCount < 10) {
-        const delay = Math.min(2000 + retryCount * 1000, 6000); // 2s, 3s, 4s, 5s, 6s, then 6s
+      // Retry a 500 once or twice — only for idempotent methods.
+      if (
+        response.status === 500 &&
+        retryCount < MAX_RETRIES &&
+        isRetryableMethod(fetchOptions.method)
+      ) {
+        const delay = 400 * Math.pow(2, retryCount); // 400ms, 800ms
         await sleep(delay);
         return request<T>(endpoint, options, retryCount + 1);
       }
@@ -180,9 +143,13 @@ async function request<T>(
     // Unwrap the data from the response wrapper
     return json.data;
   } catch (error) {
-    // Retry on network errors (server might be waking up)
-    if (retryCount < 10 && error instanceof TypeError) {
-      const delay = Math.min(2000 + retryCount * 1000, 6000); // 2s, 3s, 4s, 5s, 6s, then 6s
+    // Retry transient network errors — only for idempotent methods.
+    if (
+      retryCount < MAX_RETRIES &&
+      error instanceof TypeError &&
+      isRetryableMethod(fetchOptions.method)
+    ) {
+      const delay = 400 * Math.pow(2, retryCount); // 400ms, 800ms
       await sleep(delay);
       return request<T>(endpoint, options, retryCount + 1);
     }
@@ -196,17 +163,6 @@ async function requestWithPagination<T>(
   options: RequestOptions = {},
   retryCount = 0
 ): Promise<{ items: T; data: T; pagination: ApiResponse<T>['pagination'] }> {
-  // On first request, wait for server to wake up (blocking)
-  // This prevents 500 errors while server is starting
-  if (!isServerAwake && retryCount === 0) {
-    try {
-      await wakeUpServer();
-    } catch (error) {
-      // Continue anyway - retries will handle it if server isn't ready
-      console.error('Server wake-up check failed, continuing with request:', error);
-    }
-  }
-
   const { params, ...fetchOptions } = options;
 
   let url = `${API_BASE_URL}${endpoint}`;
@@ -239,9 +195,13 @@ async function requestWithPagination<T>(
 
     if (!text) {
       if (!response.ok) {
-        // Retry on 500 errors (server might still be waking up)
-        if (response.status === 500 && retryCount < 10) {
-          const delay = Math.min(2000 + retryCount * 1000, 6000); // 2s, 3s, 4s, 5s, 6s, then 6s
+        // Retry a 500 once or twice — only for idempotent methods.
+        if (
+          response.status === 500 &&
+          retryCount < MAX_RETRIES &&
+          isRetryableMethod(fetchOptions.method)
+        ) {
+          const delay = 400 * Math.pow(2, retryCount); // 400ms, 800ms
           await sleep(delay);
           return requestWithPagination<T>(endpoint, options, retryCount + 1);
         }
@@ -253,9 +213,13 @@ async function requestWithPagination<T>(
     const json = JSON.parse(text) as ApiResponse<T>;
 
     if (!response.ok || !json.success) {
-      // Retry on 500 errors (server might still be waking up)
-      if (response.status === 500 && retryCount < 10) {
-        const delay = Math.min(2000 + retryCount * 1000, 6000); // 2s, 3s, 4s, 5s, 6s, then 6s
+      // Retry a 500 once or twice — only for idempotent methods.
+      if (
+        response.status === 500 &&
+        retryCount < MAX_RETRIES &&
+        isRetryableMethod(fetchOptions.method)
+      ) {
+        const delay = 400 * Math.pow(2, retryCount); // 400ms, 800ms
         await sleep(delay);
         return requestWithPagination<T>(endpoint, options, retryCount + 1);
       }
@@ -274,9 +238,13 @@ async function requestWithPagination<T>(
       : ((json.data as { items?: T }).items ?? json.data);
     return { items: items as T, data: json.data, pagination: json.pagination };
   } catch (error) {
-    // Retry on network errors (server might be waking up)
-    if (retryCount < 10 && error instanceof TypeError) {
-      const delay = Math.min(2000 + retryCount * 1000, 6000); // 2s, 3s, 4s, 5s, 6s, then 6s
+    // Retry transient network errors — only for idempotent methods.
+    if (
+      retryCount < MAX_RETRIES &&
+      error instanceof TypeError &&
+      isRetryableMethod(fetchOptions.method)
+    ) {
+      const delay = 400 * Math.pow(2, retryCount); // 400ms, 800ms
       await sleep(delay);
       return requestWithPagination<T>(endpoint, options, retryCount + 1);
     }
@@ -455,14 +423,19 @@ export interface Customer extends User {
 }
 
 // ============ Stats Types ============
+/**
+ * Mirrors the payload of `GET /api/stats/revenue` (server/src/routes/stats.ts).
+ * The server does NOT return a growth rate or period-over-period delta — do not
+ * add one here without adding it server-side first.
+ */
 export interface RevenueStats {
+  period: string;
   data: { date: string; revenue: number; bookings: number }[];
   totals: {
     revenue: number;
     bookings: number;
+    averageBookingValue: number;
   };
-  averageOrderValue: number;
-  growthRate: number;
 }
 
 export interface FleetStats {
@@ -521,25 +494,36 @@ export interface UserPreferences {
 }
 
 // ============ Company Settings Types ============
+export interface OperatingHoursDay {
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
+/**
+ * Mirrors the `CompanySettings` Prisma model exactly (server/prisma/schema.prisma)
+ * and the zod schema accepted by `PUT /api/settings/company`
+ * (server/src/routes/preferences.ts). Field names here must match the server —
+ * zod strips unknown keys silently, so a mismatched name is a no-op save, not an error.
+ */
 export interface CompanySettings {
   id: string;
-  name: string;
-  legalName?: string;
-  taxId?: string;
-  email: string;
-  phone: string;
-  website?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country: string;
-  logo?: string;
-  currency: string;
-  timezone: string;
-  businessHours?: Record<string, { open: string; close: string; closed: boolean }>;
-  bookingTerms?: string;
-  cancellationPolicy?: string;
+  companyName: string;
+  companyEmail?: string | null;
+  companyPhone?: string | null;
+  companyAddress?: string | null;
+  companyLogo?: string | null;
+  defaultCurrency: string;
+  defaultTimezone: string;
+  taxRate: number;
+  minBookingHours: number;
+  maxBookingDays: number;
+  cancellationHours: number;
+  depositPercentage: number;
+  operatingHours?: Record<string, OperatingHoursDay> | null;
+  termsOfService?: string | null;
+  privacyPolicy?: string | null;
+  cancellationPolicy?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -769,7 +753,8 @@ export const api = {
 
     changePassword: (currentPassword: string, newPassword: string): Promise<{ message: string }> =>
       request('/auth/change-password', {
-        method: 'POST',
+        // Server implements PUT (server/src/routes/auth.ts). POST 404s.
+        method: 'PUT',
         body: JSON.stringify({ currentPassword, newPassword }),
       }),
   },
@@ -919,12 +904,14 @@ export const api = {
 
     update: (id: string, data: Partial<Booking>): Promise<Booking> =>
       request(`/bookings/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         body: JSON.stringify(data),
       }),
 
+    // Server exposes PATCH /bookings/:id (which accepts `status` and rejects
+    // status changes from non-staff). There is no /bookings/:id/status route.
     updateStatus: (id: string, status: Booking['status']): Promise<Booking> =>
-      request(`/bookings/${id}/status`, {
+      request(`/bookings/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       }),
@@ -976,6 +963,11 @@ export const api = {
 
     deleteAvatar: (id: string): Promise<{ message: string }> =>
       request(`/customers/${id}/avatar`, { method: 'DELETE' }),
+
+    // DELETE /api/customers/:id — adminOnly, refuses self-deletion and customers
+    // with active bookings (server/src/routes/customers.ts).
+    delete: (id: string): Promise<{ message: string }> =>
+      request(`/customers/${id}`, { method: 'DELETE' }),
   },
 
   // Documents

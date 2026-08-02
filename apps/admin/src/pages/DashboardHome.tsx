@@ -6,10 +6,7 @@ import {
   DollarSign,
   CalendarCheck,
   Clock,
-  ArrowUpRight,
-  ArrowDownRight,
   Plus,
-  Users,
   Wrench,
   ChevronRight,
   AlertCircle,
@@ -19,8 +16,9 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { api } from '@/lib/api';
+import { api, type ActivityLog } from '@/lib/api';
 import { CreateBookingModal } from '@/components/bookings/CreateBookingModal';
+import { bookingStatusColors } from '@/lib/statusColors';
 
 interface DashboardStats {
   activeRentals: number;
@@ -41,13 +39,7 @@ interface RecentBooking {
   amount: number;
 }
 
-const statusColors: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-blue-100 text-blue-800',
-  ACTIVE: 'bg-green-100 text-green-800',
-  COMPLETED: 'bg-gray-100 text-gray-800',
-  CANCELLED: 'bg-red-100 text-red-800',
-};
+const statusColors = bookingStatusColors;
 
 // Quick action items configuration
 const quickActions = [
@@ -59,8 +51,8 @@ const quickActions = [
     color: 'bg-navy',
     hoverBorder: 'hover:border-navy',
     hoverBg: 'hover:bg-accent',
-    route: '/fleet',
-    action: 'modal',
+    route: '/fleet/new',
+    action: 'navigate',
   },
   {
     id: 'new-booking',
@@ -74,31 +66,9 @@ const quickActions = [
     action: 'navigate',
   },
   {
-    id: 'add-customer',
-    label: 'Add Customer',
-    description: 'Register a new customer',
-    icon: Users,
-    color: 'bg-navy',
-    hoverBorder: 'hover:border-navy',
-    hoverBg: 'hover:bg-accent',
-    route: '/customers',
-    action: 'navigate',
-  },
-  {
-    id: 'record-payment',
-    label: 'Record Payment',
-    description: 'Log a payment transaction',
-    icon: DollarSign,
-    color: 'bg-navy',
-    hoverBorder: 'hover:border-navy',
-    hoverBg: 'hover:bg-accent',
-    route: '/bookings',
-    action: 'navigate',
-  },
-  {
     id: 'schedule-maintenance',
     label: 'Maintenance',
-    description: 'Schedule vehicle service',
+    description: 'Mark a vehicle out of service',
     icon: Wrench,
     color: 'bg-navy',
     hoverBorder: 'hover:border-navy',
@@ -119,16 +89,32 @@ const quickActions = [
   },
 ];
 
-// Mock revenue data for the chart (would be fetched from payments table in production)
-const revenueData = [
-  { name: 'Mon', revenue: 4000 },
-  { name: 'Tue', revenue: 3000 },
-  { name: 'Wed', revenue: 5000 },
-  { name: 'Thu', revenue: 4500 },
-  { name: 'Fri', revenue: 6000 },
-  { name: 'Sat', revenue: 7500 },
-  { name: 'Sun', revenue: 5500 },
-];
+const REVENUE_PERIODS = [
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+  { value: '90d', label: 'Last 90 days' },
+] as const;
+
+// Colour for the activity timeline dot, derived from the real ActivityLog action.
+function activityDotColor(action: string): string {
+  if (action.startsWith('BOOKING_')) return 'bg-primary';
+  if (action.startsWith('PAYMENT_')) return 'bg-green-500';
+  if (action.startsWith('VEHICLE_')) return 'bg-secondary';
+  if (action.startsWith('USER_') || action.startsWith('CUSTOMER_')) return 'bg-navy';
+  return 'bg-gray-500';
+}
+
+function formatRelativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '';
+  const diffMinutes = Math.round((Date.now() - then) / 60000);
+  if (diffMinutes < 1) return 'just now';
+  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  const diffDays = Math.round(diffHours / 24);
+  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+}
 
 export default function DashboardHome() {
   const navigate = useNavigate();
@@ -146,9 +132,67 @@ export default function DashboardHome() {
     { id: number; type: string; message: string; action: string; route: string }[]
   >([]);
   const [isCreateBookingModalOpen, setIsCreateBookingModalOpen] = useState(false);
+  const [revenuePeriod, setRevenuePeriod] = useState<string>('7d');
+  const [revenueSeries, setRevenueSeries] = useState<{ name: string; revenue: number }[]>([]);
+  const [isLoadingRevenue, setIsLoadingRevenue] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
+  const [isLoadingActivity, setIsLoadingActivity] = useState(true);
 
   useEffect(() => {
     fetchDashboardData();
+  }, []);
+
+  // Real revenue series from GET /api/stats/revenue
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRevenue = async () => {
+      setIsLoadingRevenue(true);
+      try {
+        const result = await api.stats.revenue(revenuePeriod);
+        if (cancelled) return;
+        setRevenueSeries(
+          (result.data || []).map((point) => ({
+            name: new Date(point.date).toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+            }),
+            revenue: point.revenue,
+          }))
+        );
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Error fetching revenue stats:', error);
+        setRevenueSeries([]);
+      } finally {
+        if (!cancelled) setIsLoadingRevenue(false);
+      }
+    };
+    fetchRevenue();
+    return () => {
+      cancelled = true;
+    };
+  }, [revenuePeriod]);
+
+  // Real activity feed from GET /api/activity
+  useEffect(() => {
+    let cancelled = false;
+    const fetchActivity = async () => {
+      setIsLoadingActivity(true);
+      try {
+        const { data } = await api.activity.list({ limit: 5 });
+        if (!cancelled) setRecentActivity(data || []);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Error fetching recent activity:', error);
+        setRecentActivity([]);
+      } finally {
+        if (!cancelled) setIsLoadingActivity(false);
+      }
+    };
+    fetchActivity();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const fetchDashboardData = async () => {
@@ -209,8 +253,9 @@ export default function DashboardHome() {
       setIsCreateBookingModalOpen(true);
       return;
     }
+    // No page reads location.state, so navigate plainly.
     if (action.route) {
-      navigate(action.route, { state: { action: action.id } });
+      navigate(action.route);
     }
   };
 
@@ -218,38 +263,36 @@ export default function DashboardHome() {
     navigate(alert.route);
   };
 
+  // NOTE: no `change` / `trend` fields here on purpose. The server exposes no
+  // period-over-period comparison, so any percentage shown would be invented.
+  // Add these back only once /api/stats returns a real delta.
   const statsConfig = [
     {
       label: 'Active Rentals',
       value: stats.activeRentals,
-      change: 12,
-      trend: 'up' as const,
+      caption: 'Currently on the road',
       icon: Car,
       color: 'bg-primary',
     },
     {
       label: "Today's Revenue",
       value: stats.todaysRevenue,
-      change: 8.2,
-      trend: 'up' as const,
+      caption: 'Payments received today',
       icon: DollarSign,
       color: 'bg-primary',
       isCurrency: true,
-      isDemo: true,
     },
     {
       label: 'Pending Bookings',
       value: stats.pendingBookings,
-      change: -3,
-      trend: 'down' as const,
+      caption: 'Awaiting confirmation',
       icon: Clock,
       color: 'bg-primary',
     },
     {
       label: 'Available Vehicles',
       value: stats.availableVehicles,
-      change: 5,
-      trend: 'up' as const,
+      caption: 'Ready to rent',
       icon: CalendarCheck,
       color: 'bg-primary',
     },
@@ -265,11 +308,11 @@ export default function DashboardHome() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/fleet', { state: { action: 'add-vehicle' } })}
+            onClick={() => navigate('/fleet/new')}
             className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 hidden items-center gap-2 rounded-xl px-4 py-2 shadow-lg transition-all sm:flex"
           >
             <Plus className="h-4 w-4" />
-            Quick Add
+            Add Vehicle
           </button>
         </div>
       </div>
@@ -350,11 +393,6 @@ export default function DashboardHome() {
               <div className="flex-1">
                 <div className="mb-1 flex items-center gap-2">
                   <p className="text-sm text-gray-500">{stat.label}</p>
-                  {'isDemo' in stat && stat.isDemo && (
-                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
-                      DEMO
-                    </span>
-                  )}
                 </div>
                 {isLoading ? (
                   <div className="flex items-center gap-2">
@@ -377,20 +415,7 @@ export default function DashboardHome() {
               </div>
             </div>
             <div className="mt-3 flex items-center gap-1">
-              {stat.trend === 'up' ? (
-                <ArrowUpRight className="h-4 w-4 text-green-500" />
-              ) : (
-                <ArrowDownRight className="h-4 w-4 text-red-500" />
-              )}
-              <span
-                className={cn(
-                  'text-sm font-medium',
-                  stat.trend === 'up' ? 'text-green-500' : 'text-red-500'
-                )}
-              >
-                {Math.abs(stat.change)}%
-              </span>
-              <span className="text-sm text-gray-500">vs last week</span>
+              <span className="text-sm text-gray-500">{stat.caption}</span>
             </div>
           </motion.div>
         ))}
@@ -407,7 +432,7 @@ export default function DashboardHome() {
           <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
           <span className="text-sm text-gray-500">Common tasks</span>
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {quickActions.map((action) => (
             <button
               key={action.id}
@@ -448,47 +473,66 @@ export default function DashboardHome() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-gray-900">Weekly Revenue</h2>
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
-                  DEMO
-                </span>
+                <h2 className="text-lg font-bold text-gray-900">Revenue</h2>
               </div>
-              <p className="text-sm text-gray-500">Last 7 days performance</p>
+              <p className="text-sm text-gray-500">
+                {REVENUE_PERIODS.find((p) => p.value === revenuePeriod)?.label} of successful
+                payments
+              </p>
             </div>
-            <select className="focus:ring-primary rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2">
-              <option>This Week</option>
-              <option>Last Week</option>
-              <option>This Month</option>
+            <select
+              value={revenuePeriod}
+              onChange={(e) => setRevenuePeriod(e.target.value)}
+              aria-label="Revenue period"
+              className="focus:ring-primary rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2"
+            >
+              {REVENUE_PERIODS.map((period) => (
+                <option key={period.value} value={period.value}>
+                  {period.label}
+                </option>
+              ))}
             </select>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#9ca3af' }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#9ca3af' }}
-                  tickFormatter={(value) => `$${value / 1000}k`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Revenue']}
-                />
-                <Bar dataKey="revenue" fill="#D4AF37" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {isLoadingRevenue ? (
+              <div className="flex h-full items-center justify-center gap-2 text-gray-400">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Loading revenue...
+              </div>
+            ) : revenueSeries.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                No revenue data for this period
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={revenueSeries}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af' }}
+                    minTickGap={16}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af' }}
+                    tickFormatter={(value) => (value >= 1000 ? `$${value / 1000}k` : `$${value}`)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                    }}
+                    formatter={(value: number) => [formatCurrency(value), 'Revenue']}
+                  />
+                  <Bar dataKey="revenue" fill="#D4AF37" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </motion.div>
 
@@ -506,7 +550,7 @@ export default function DashboardHome() {
             </div>
             <button
               onClick={() => navigate('/bookings')}
-              className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-bold transition-colors"
+              className="text-primary-ink hover:bg-accent flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-bold transition-colors"
             >
               View All
               <ChevronRight className="h-4 w-4" />
@@ -571,66 +615,44 @@ export default function DashboardHome() {
       >
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
-          <button className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-bold transition-colors">
-            View All
-            <ChevronRight className="h-4 w-4" />
-          </button>
+          {/* No "View All" — there is no full activity page in the admin yet. */}
+          <span className="text-sm text-gray-500">Last 5 events</span>
         </div>
-        <div className="relative">
-          <div className="absolute bottom-0 left-4 top-0 w-px bg-gray-200" />
-          <div className="space-y-6">
-            {[
-              {
-                time: '10 min ago',
-                event: 'New booking created',
-                detail: 'Sarah Johnson - Toyota Camry',
-                type: 'booking',
-              },
-              {
-                time: '25 min ago',
-                event: 'Payment received',
-                detail: '$360.00 - Michael Chen',
-                type: 'payment',
-              },
-              {
-                time: '1 hour ago',
-                event: 'Vehicle returned',
-                detail: '2024 BMW 5 Series - Emily Rodriguez',
-                type: 'return',
-              },
-              {
-                time: '2 hours ago',
-                event: 'Customer registered',
-                detail: 'New customer: James Wilson',
-                type: 'customer',
-              },
-              {
-                time: '3 hours ago',
-                event: 'Maintenance completed',
-                detail: '2024 Ford Explorer - Oil change',
-                type: 'maintenance',
-              },
-            ].map((activity, index) => (
-              <div key={index} className="relative pl-10">
-                <div
-                  className={cn(
-                    'absolute left-2 h-4 w-4 rounded-full border-2 border-white shadow-lg',
-                    activity.type === 'booking' && 'bg-primary',
-                    activity.type === 'payment' && 'bg-green-500',
-                    activity.type === 'return' && 'bg-secondary',
-                    activity.type === 'customer' && 'bg-navy',
-                    activity.type === 'maintenance' && 'bg-gray-500'
-                  )}
-                />
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{activity.event}</p>
-                  <p className="text-sm text-gray-500">{activity.detail}</p>
-                  <p className="mt-1 text-xs text-gray-400">{activity.time}</p>
-                </div>
-              </div>
-            ))}
+        {isLoadingActivity ? (
+          <div className="flex items-center gap-2 py-6 text-gray-400">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Loading activity...
           </div>
-        </div>
+        ) : recentActivity.length === 0 ? (
+          <p className="py-6 text-sm text-gray-400">No recorded activity yet.</p>
+        ) : (
+          <div className="relative">
+            <div className="absolute bottom-0 left-4 top-0 w-px bg-gray-200" />
+            <div className="space-y-6">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="relative pl-10">
+                  <div
+                    className={cn(
+                      'absolute left-2 h-4 w-4 rounded-full border-2 border-white shadow-lg',
+                      activityDotColor(activity.action)
+                    )}
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{activity.description}</p>
+                    {activity.user && (
+                      <p className="text-sm text-gray-500">
+                        {activity.user.firstName} {activity.user.lastName}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-400">
+                      {formatRelativeTime(activity.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Create Booking Modal */}

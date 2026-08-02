@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Calendar,
   Search,
@@ -22,14 +22,9 @@ import {
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { api, Booking, ApiError } from '@/lib/api';
 import { toast } from 'sonner';
+import { bookingStatusColors } from '@/lib/statusColors';
 
-const statusColors: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-blue-100 text-blue-800',
-  ACTIVE: 'bg-green-100 text-green-800',
-  COMPLETED: 'bg-gray-100 text-gray-800',
-  CANCELLED: 'bg-red-100 text-red-800',
-};
+const statusColors = bookingStatusColors;
 
 const statusIcons: Record<string, typeof Clock> = {
   PENDING: Clock,
@@ -42,6 +37,10 @@ const statusIcons: Record<string, typeof Clock> = {
 type StatusFilter = 'all' | 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
 export default function BookingsPage() {
+  // Customers → "View Bookings" links here with ?customerId=… ; honour it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const customerIdFilter = searchParams.get('customerId') || undefined;
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -60,9 +59,12 @@ export default function BookingsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const params: { status?: string; limit: number } = { limit: 100 };
+      const params: { status?: string; userId?: string; limit: number } = { limit: 100 };
       if (statusFilter !== 'all') {
         params.status = statusFilter;
+      }
+      if (customerIdFilter) {
+        params.userId = customerIdFilter;
       }
       const { items } = await api.bookings.list(params);
       setBookings(items);
@@ -72,7 +74,7 @@ export default function BookingsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, customerIdFilter]);
 
   useEffect(() => {
     fetchBookings();
@@ -170,6 +172,19 @@ export default function BookingsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
           <p className="text-gray-500">Manage all rental bookings</p>
+          {customerIdFilter && (
+            <button
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.delete('customerId');
+                setSearchParams(next);
+              }}
+              className="bg-accent text-primary-ink mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium"
+            >
+              Filtered to one customer
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
       </motion.div>
 
@@ -241,7 +256,7 @@ export default function BookingsPage() {
             <CheckCircle2 className="h-5 w-5 text-gray-600" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-600">{stats.completed}</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
             <p className="text-sm text-gray-500">Completed</p>
           </div>
         </motion.div>

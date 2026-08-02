@@ -3,6 +3,7 @@ import { NotificationType, NotificationChannel, Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 import { NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
+import { parsePagination } from '../lib/pagination.js';
 
 const router = Router();
 
@@ -11,9 +12,7 @@ router.get('/', authenticate, async (req, res, next) => {
   try {
     const { page = '1', limit = '20', unreadOnly, type } = req.query;
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = Math.min(parseInt(limit as string, 10), 100);
-    const skip = (pageNum - 1) * limitNum;
+    const { page: pageNum, limit: limitNum, skip } = parsePagination(page, limit);
 
     const where: Prisma.NotificationWhereInput = {
       userId: req.user!.id,
@@ -247,7 +246,11 @@ export async function sendBulkNotification(
  */
 function shouldSendEmailNotification(
   type: NotificationType,
-  preferences: { emailBookingConfirm?: boolean; emailBookingReminder?: boolean; emailPaymentReceipt?: boolean } | null
+  preferences: {
+    emailBookingConfirm?: boolean;
+    emailBookingReminder?: boolean;
+    emailPaymentReceipt?: boolean;
+  } | null
 ): boolean {
   if (!preferences) return true; // Default to sending if no preferences
 
@@ -308,7 +311,12 @@ export const NotificationService = {
     });
   },
 
-  bookingReminder: async (userId: string, bookingId: string, vehicleName: string, pickupDate: string) => {
+  bookingReminder: async (
+    userId: string,
+    bookingId: string,
+    vehicleName: string,
+    pickupDate: string
+  ) => {
     return sendNotification({
       userId,
       type: 'BOOKING_REMINDER',

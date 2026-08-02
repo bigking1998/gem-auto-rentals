@@ -44,7 +44,7 @@ export default function HowItWorks() {
           transition={{ duration: 0.5 }}
           className="mb-12 text-center lg:mb-16"
         >
-          <span className="bg-primary/10 text-primary mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
+          <span className="bg-primary/10 text-primary-ink mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
             Simple Process
           </span>
           <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">How It Works</h2>

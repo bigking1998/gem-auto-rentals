@@ -13,18 +13,13 @@ import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { api, Booking } from '@/lib/api';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { bookingStatusColors } from '@/lib/statusColors';
 
 interface VehicleBookingsProps {
   vehicleId: string;
 }
 
-const statusColors: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-blue-100 text-blue-800',
-  ACTIVE: 'bg-green-100 text-green-800',
-  COMPLETED: 'bg-gray-100 text-gray-800',
-  CANCELLED: 'bg-red-100 text-red-800',
-};
+const statusColors = bookingStatusColors;
 
 const statusIcons: Record<string, typeof Clock> = {
   PENDING: Clock,

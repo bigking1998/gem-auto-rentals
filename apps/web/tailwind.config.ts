@@ -116,8 +116,10 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-gradient': 'linear-gradient(135deg, #FF871E 0%, #F59E0B 100%)',
-        'cta-gradient': 'linear-gradient(to right, #FF871E 0%, #F59E0B 100%)',
+        // hero-gradient / cta-gradient were removed: they still held the old
+        // orange brand (#FF871E / #F59E0B), were referenced nowhere, and would
+        // have silently reintroduced orange for the next person who used them.
+        // Use the gold/navy CSS vars (--primary, --navy) instead.
       },
     },
   },

@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { BadRequestError, NotFoundError } from '../middleware/errorHandler.js';
+import { parsePagination } from '../lib/pagination.js';
 
 const router = Router();
 
@@ -71,9 +72,11 @@ router.get('/', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (r
   try {
     const { page = '1', limit = '20', status, customerId, search, startDate, endDate } = req.query;
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = Math.min(parseInt(limit as string, 10), 100);
-    const skip = (pageNum - 1) * limitNum;
+    const {
+      page: pageNum,
+      limit: limitNum,
+      skip,
+    } = parsePagination(page, limit, { defaultLimit: 20 });
 
     const where: Prisma.InvoiceWhereInput = {};
 

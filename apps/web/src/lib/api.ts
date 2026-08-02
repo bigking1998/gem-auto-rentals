@@ -20,65 +20,57 @@ class ApiError extends Error {
   }
 }
 
-// Server wake-up utility for Render free tier
-let serverWakeUpPromise: Promise<void> | null = null;
-let isServerAwake = false;
-
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Optional, non-blocking health probe.
+ *
+ * This used to gate every request: `request()` awaited it before the first
+ * fetch of a session and would not proceed until `/health` reported
+ * `database: "connected"`, retrying up to 15 times with 2s/3s/4s/5s backoff.
+ * That existed because the API lived on Render's free tier, which slept and
+ * genuinely needed waking. The API now runs on a droplet that never sleeps, so
+ * the probe was pure added latency — a mandatory extra round trip before any
+ * data could load, and tens of seconds of stall if /health happened to report
+ * "connecting" for a moment.
+ *
+ * It is kept as a fire-and-forget diagnostic (main.tsx calls it and ignores the
+ * result). Nothing in the request path may await it.
+ */
 export async function wakeUpServer(): Promise<void> {
-  // If already awake or waking up, return existing promise
-  if (isServerAwake) return Promise.resolve();
-  if (serverWakeUpPromise) return serverWakeUpPromise;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-  serverWakeUpPromise = (async () => {
-    const maxRetries = 15; // More retries to wait for DB connection
-    let retryCount = 0;
+    const response = await fetch(`${SERVER_BASE_URL}/health`, {
+      signal: controller.signal,
+    });
 
-    while (retryCount < maxRetries) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+    clearTimeout(timeoutId);
 
-        const response = await fetch(`${SERVER_BASE_URL}/health`, {
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          // Check if database is connected (not just server responding)
-          const data = await response.json();
-          if (data.database === 'connected') {
-            isServerAwake = true;
-            serverWakeUpPromise = null;
-            return;
-          }
-          // Database still connecting, wait and retry
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console -- dev-only visibility into server wake-up retries
-            console.debug('Server up but database connecting, waiting...');
-          }
-        }
-      } catch (error) {
-        // Ignore errors and retry
+    if (import.meta.env.DEV && response.ok) {
+      const data = await response.json();
+      if (data.database !== 'connected') {
+        // eslint-disable-next-line no-console -- dev-only visibility into API health
+        console.debug('API /health reports database:', data.database);
       }
-
-      retryCount++;
-      // Backoff: 2s, 3s, 4s, 5s, then 5s for remaining attempts
-      const delayMs = Math.min(2000 + retryCount * 1000, 5000);
-      await sleep(delayMs);
     }
-
-    // If we exhausted retries, assume it's awake and let the actual API calls handle errors
-    isServerAwake = true;
-    serverWakeUpPromise = null;
-  })();
-
-  return serverWakeUpPromise;
+  } catch {
+    // Diagnostic only — never let this affect the app.
+  }
 }
+
+/**
+ * How many times a request is retried after a 500 or a network-level failure.
+ *
+ * This was 10 retries with 2–6s delays, i.e. roughly 50 seconds of hanging
+ * before the user saw any error at all. Failures should surface fast.
+ */
+const MAX_REQUEST_RETRIES = 2;
+/** 400ms, then 800ms. */
+const retryDelayMs = (retryCount: number) => 400 * 2 ** retryCount;
 
 // Backend response wrapper type
 interface ApiResponse<T> {
@@ -93,17 +85,8 @@ async function request<T>(
   options: RequestOptions = {},
   retryCount = 0
 ): Promise<T> {
-  // On first request, wait for server to wake up (blocking)
-  // This prevents 500 errors while server is starting
-  if (!isServerAwake && retryCount === 0) {
-    try {
-      await wakeUpServer();
-    } catch (error) {
-      // Continue anyway - retries will handle it if server isn't ready
-      console.error('Server wake-up check failed, continuing with request:', error);
-    }
-  }
-
+  // NOTE: deliberately no health-probe gate here. Real requests go straight
+  // out; see wakeUpServer() above for why.
   const { params, ...fetchOptions } = options;
 
   // Build URL with query params
@@ -143,10 +126,9 @@ async function request<T>(
     const text = await response.text();
     if (!text) {
       if (!response.ok) {
-        // Retry on 500 errors (server might still be waking up)
-        if (response.status === 500 && retryCount < 10) {
-          const delay = Math.min(2000 + retryCount * 1000, 6000); // 2s, 3s, 4s, 5s, 6s, then 6s
-          await sleep(delay);
+        // Retry a transient 500 a couple of times, briefly.
+        if (response.status === 500 && retryCount < MAX_REQUEST_RETRIES) {
+          await sleep(retryDelayMs(retryCount));
           return request<T>(endpoint, options, retryCount + 1);
         }
         throw new ApiError(response.status, response.statusText, 'Empty response from server');
@@ -157,10 +139,9 @@ async function request<T>(
     const json = JSON.parse(text) as ApiResponse<T>;
 
     if (!response.ok || !json.success) {
-      // Retry on 500 errors (server might still be waking up)
-      if (response.status === 500 && retryCount < 10) {
-        const delay = Math.min(2000 + retryCount * 1000, 6000); // 2s, 3s, 4s, 5s, 6s, then 6s
-        await sleep(delay);
+      // Retry a transient 500 a couple of times, briefly.
+      if (response.status === 500 && retryCount < MAX_REQUEST_RETRIES) {
+        await sleep(retryDelayMs(retryCount));
         return request<T>(endpoint, options, retryCount + 1);
       }
 
@@ -174,10 +155,9 @@ async function request<T>(
     // Unwrap the data from the response wrapper
     return json.data;
   } catch (error) {
-    // Retry on network errors (server might be waking up)
-    if (retryCount < 10 && error instanceof TypeError) {
-      const delay = Math.min(2000 + retryCount * 1000, 6000); // 2s, 3s, 4s, 5s, 6s, then 6s
-      await sleep(delay);
+    // Retry a network-level failure a couple of times, briefly.
+    if (retryCount < MAX_REQUEST_RETRIES && error instanceof TypeError) {
+      await sleep(retryDelayMs(retryCount));
       return request<T>(endpoint, options, retryCount + 1);
     }
     throw error;

@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import {
   Shield,
   Smartphone,
-  Key,
   Monitor,
   Globe,
   Clock,
@@ -14,8 +13,6 @@ import {
   MapPin,
   Chrome,
   Laptop,
-  QrCode,
-  Copy,
   RefreshCw,
   Loader2,
 } from 'lucide-react';
@@ -90,19 +87,15 @@ function transformActivityToLogin(activity: ActivityLog): LoginActivity | null {
 }
 
 const tabs = [
-  { id: 'two-factor', label: 'Two-Factor Auth', icon: Smartphone },
   { id: 'sessions', label: 'Active Sessions', icon: Monitor },
   { id: 'history', label: 'Login History', icon: Clock },
+  { id: 'two-factor', label: 'Two-Factor Auth', icon: Smartphone },
 ];
 
 export default function SecurityPage() {
-  const [activeTab, setActiveTab] = useState('two-factor');
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [showSetup, setShowSetup] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
+  const [activeTab, setActiveTab] = useState('sessions');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loginHistory, setLoginHistory] = useState<LoginActivity[]>([]);
-  const [backupCodes] = useState(['ABC12-DEF34', 'GHI56-JKL78', 'MNO90-PQR12', 'STU34-VWX56']);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,28 +153,6 @@ export default function SecurityPage() {
       fetchLoginHistory();
     }
   }, [activeTab, fetchSessions, fetchLoginHistory]);
-
-  const handleEnable2FA = () => {
-    setShowSetup(true);
-  };
-
-  const handleVerify2FA = () => {
-    if (verificationCode.length === 6) {
-      setTwoFactorEnabled(true);
-      setShowSetup(false);
-      setVerificationCode('');
-    }
-  };
-
-  const handleDisable2FA = () => {
-    if (
-      window.confirm(
-        'Are you sure you want to disable two-factor authentication? This will make your account less secure.'
-      )
-    ) {
-      setTwoFactorEnabled(false);
-    }
-  };
 
   const handleLogoutSession = async (sessionId: string) => {
     try {
@@ -259,38 +230,18 @@ export default function SecurityPage() {
             className="mt-4 hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-sm lg:block"
           >
             <div className="mb-3 flex items-center gap-3">
-              <div
-                className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-xl',
-                  twoFactorEnabled ? 'bg-green-100' : 'bg-yellow-100'
-                )}
-              >
-                <Shield
-                  className={cn('h-5 w-5', twoFactorEnabled ? 'text-green-600' : 'text-yellow-600')}
-                />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-100">
+                <Shield className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">Security Status</p>
-                <p
-                  className={cn(
-                    'text-xs font-medium',
-                    twoFactorEnabled ? 'text-green-600' : 'text-yellow-600'
-                  )}
-                >
-                  {twoFactorEnabled ? 'Strong' : 'Moderate'}
-                </p>
+                <p className="text-xs font-medium text-yellow-600">Password only</p>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                {twoFactorEnabled ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-yellow-500" />
-                )}
-                <span className="text-gray-600">
-                  2FA {twoFactorEnabled ? 'Enabled' : 'Disabled'}
-                </span>
+                <XCircle className="h-4 w-4 text-yellow-500" />
+                <span className="text-gray-600">2FA not available yet</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -307,159 +258,44 @@ export default function SecurityPage() {
           transition={{ delay: 0.2 }}
           className="flex-1"
         >
-          {/* Two-Factor Authentication */}
+          {/* Two-Factor Authentication — not implemented yet */}
           {activeTab === 'two-factor' && (
-            <div className="space-y-6">
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="mb-6 flex items-start gap-4">
-                  <div
-                    className={cn(
-                      'flex h-12 w-12 items-center justify-center rounded-xl',
-                      twoFactorEnabled ? 'bg-green-100' : 'bg-accent'
-                    )}
-                  >
-                    <Smartphone
-                      className={cn(
-                        'h-6 w-6',
-                        twoFactorEnabled ? 'text-green-600' : 'text-primary-ink'
-                      )}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Two-Factor Authentication
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Add an extra layer of security to your account by requiring a verification
-                      code in addition to your password.
-                    </p>
-                  </div>
-                  <div
-                    className={cn(
-                      'rounded-full px-3 py-1 text-xs font-medium',
-                      twoFactorEnabled
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-yellow-100 text-yellow-700'
-                    )}
-                  >
-                    {twoFactorEnabled ? 'Enabled' : 'Disabled'}
-                  </div>
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+              <div className="mb-6 flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100">
+                  <Smartphone className="h-6 w-6 text-gray-400" />
                 </div>
-
-                {!twoFactorEnabled && !showSetup && (
-                  <button
-                    onClick={handleEnable2FA}
-                    className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300"
-                  >
-                    Enable Two-Factor Authentication
-                  </button>
-                )}
-
-                {showSetup && (
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-6 rounded-xl bg-gray-50 p-4">
-                      <div className="flex h-32 w-32 items-center justify-center rounded-xl border border-gray-200 bg-white">
-                        <QrCode className="h-24 w-24 text-gray-800" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="mb-2 font-medium text-gray-900">Scan QR Code</h3>
-                        <p className="mb-4 text-sm text-gray-600">
-                          Use your authenticator app (Google Authenticator, Authy, etc.) to scan
-                          this QR code.
-                        </p>
-                        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2">
-                          <code className="flex-1 font-mono text-sm text-gray-700">
-                            JBSWY3DPEHPK3PXP
-                          </code>
-                          <button className="rounded p-1.5 transition-colors hover:bg-gray-100">
-                            <Copy className="h-4 w-4 text-gray-500" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Enter verification code
-                      </label>
-                      <div className="flex gap-3">
-                        <input
-                          type="text"
-                          value={verificationCode}
-                          onChange={(e) =>
-                            setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))
-                          }
-                          placeholder="000000"
-                          maxLength={6}
-                          className="focus:ring-primary w-40 rounded-xl border border-gray-200 px-4 py-2.5 text-center font-mono text-lg tracking-widest focus:outline-none focus:ring-2"
-                        />
-                        <button
-                          onClick={handleVerify2FA}
-                          disabled={verificationCode.length !== 6}
-                          className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-                        >
-                          Verify & Enable
-                        </button>
-                        <button
-                          onClick={() => setShowSetup(false)}
-                          className="rounded-xl border border-gray-200 px-5 py-2.5 transition-colors hover:bg-gray-50"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {twoFactorEnabled && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-3">
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      <span className="text-sm text-green-700">
-                        Two-factor authentication is active on your account.
-                      </span>
-                    </div>
-                    <button
-                      onClick={handleDisable2FA}
-                      className="rounded-xl border border-red-200 px-5 py-2.5 text-red-600 transition-colors hover:bg-red-50"
-                    >
-                      Disable Two-Factor Authentication
-                    </button>
-                  </div>
-                )}
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-gray-900">Two-Factor Authentication</h2>
+                  <p className="text-sm text-gray-500">
+                    An extra verification code on top of your password. This is not built yet — your
+                    account is currently protected by your password alone.
+                  </p>
+                </div>
+                <div className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                  Coming soon
+                </div>
               </div>
 
-              {/* Backup Codes */}
-              {twoFactorEnabled && (
-                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                  <div className="mb-6 flex items-start gap-4">
-                    <div className="bg-accent flex h-12 w-12 items-center justify-center rounded-xl">
-                      <Key className="text-primary-ink h-6 w-6" />
-                    </div>
-                    <div className="flex-1">
-                      <h2 className="text-lg font-semibold text-gray-900">Backup Codes</h2>
-                      <p className="text-sm text-gray-500">
-                        Save these codes in a safe place. You can use them to access your account if
-                        you lose your authenticator device.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mb-4 grid grid-cols-2 gap-3">
-                    {backupCodes.map((code, index) => (
-                      <div
-                        key={index}
-                        className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center font-mono text-sm"
-                      >
-                        {code}
-                      </div>
-                    ))}
-                  </div>
-                  <button className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50">
-                    <RefreshCw className="h-4 w-4" />
-                    Generate New Codes
-                  </button>
+              <div className="mb-6 flex items-start gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+                <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
+                <div className="text-sm text-yellow-800">
+                  <p className="font-medium">Two-factor authentication is not active.</p>
+                  <p className="mt-1">
+                    Until it ships, use a long unique password and review your active sessions and
+                    login history regularly.
+                  </p>
                 </div>
-              )}
+              </div>
+
+              <button
+                type="button"
+                disabled
+                title="Two-factor authentication is not available yet"
+                className="cursor-not-allowed rounded-xl bg-gray-100 px-5 py-2.5 text-gray-400"
+              >
+                Enable Two-Factor Authentication
+              </button>
             </div>
           )}
 

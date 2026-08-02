@@ -5,6 +5,7 @@ import multer from 'multer';
 import prisma from '../lib/prisma.js';
 import { authenticate, staffOnly, adminOnly } from '../middleware/auth.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../middleware/errorHandler.js';
+import { parsePagination } from '../lib/pagination.js';
 import {
   BUCKETS,
   isStorageConfigured,
@@ -703,8 +704,13 @@ router.get('/:id/bookings', authenticate, async (req, res, next) => {
       throw ForbiddenError('You can only view your own bookings');
     }
 
-    const pageNum = parseInt(page as string);
-    const pageSizeNum = parseInt(pageSize as string);
+    const {
+      page: pageNum,
+      limit: pageSizeNum,
+      skip,
+    } = parsePagination(page, pageSize, {
+      defaultLimit: 20,
+    });
 
     const total = await prisma.booking.count({
       where: { userId: id },
@@ -713,7 +719,7 @@ router.get('/:id/bookings', authenticate, async (req, res, next) => {
     const bookings = await prisma.booking.findMany({
       where: { userId: id },
       orderBy: { createdAt: 'desc' },
-      skip: (pageNum - 1) * pageSizeNum,
+      skip,
       take: pageSizeNum,
       include: {
         vehicle: {

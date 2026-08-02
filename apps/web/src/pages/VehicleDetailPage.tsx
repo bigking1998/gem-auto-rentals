@@ -27,6 +27,7 @@ import AvailabilityCalendar from '@/components/vehicles/AvailabilityCalendar';
 import ReviewList from '@/components/vehicles/ReviewList';
 import FavoriteButton from '@/components/vehicles/FavoriteButton';
 import { api, Vehicle } from '@/lib/api';
+import { PRIMARY_PHONE, PRIMARY_PHONE_HREF } from '@/lib/contact';
 import { BOOKING_VEHICLE_KEY } from './BookingPage';
 import { useAuthStore } from '@/stores/authStore';
 import { useBookingDates, useBookingStore } from '@/stores/bookingStore';
@@ -608,10 +609,10 @@ export default function VehicleDetailPage() {
                       <p className="text-sm font-bold text-gray-900">Need Help?</p>
                       <p className="text-xs text-gray-500">Call our expert support team</p>
                       <a
-                        href="tel:+1234567890"
+                        href={PRIMARY_PHONE_HREF}
                         className="text-primary-ink mt-0.5 block text-sm font-bold hover:underline"
                       >
-                        +1 (555) 123-4567
+                        {PRIMARY_PHONE}
                       </a>
                     </div>
                   </div>

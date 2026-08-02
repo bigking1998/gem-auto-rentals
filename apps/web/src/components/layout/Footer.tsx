@@ -1,34 +1,27 @@
 import { Link } from 'react-router-dom';
-import { Car, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Car, Mail, Phone, MapPin } from 'lucide-react';
+import { ADDRESS, CONTACT_EMAIL, PRIMARY_PHONE, PRIMARY_PHONE_HREF } from '@/lib/contact';
 
+// Every href here must resolve to a real route in App.tsx.
+// `/pricing`, `/locations`, `/careers`, `/blog`, `/press` and `/help` were
+// removed rather than left as soft 404s — Vercel's SPA rewrite returns HTTP 200
+// for them, so uptime checks never catch it and only customers do.
 const footerLinks = {
   quickLinks: [
     { label: 'Browse Cars', href: '/vehicles' },
     { label: 'How It Works', href: '/#how-it-works' },
-    { label: 'Pricing', href: '/pricing' },
-    { label: 'Locations', href: '/locations' },
+    { label: 'Book a Car', href: '/booking' },
   ],
   company: [
     { label: 'About Us', href: '/about' },
-    { label: 'Careers', href: '/careers' },
-    { label: 'Blog', href: '/blog' },
-    { label: 'Press', href: '/press' },
+    { label: 'Contact Us', href: '/contact' },
   ],
   support: [
-    { label: 'Help Center', href: '/help' },
-    { label: 'Contact Us', href: '/contact' },
     { label: 'FAQs', href: '/#faq' },
     { label: 'Terms of Service', href: '/terms' },
     { label: 'Privacy Policy', href: '/privacy' },
   ],
 };
-
-const socialLinks = [
-  { icon: Facebook, href: 'https://facebook.com', label: 'Facebook' },
-  { icon: Twitter, href: 'https://twitter.com', label: 'Twitter' },
-  { icon: Instagram, href: 'https://instagram.com', label: 'Instagram' },
-  { icon: Linkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
-];
 
 export default function Footer() {
   return (
@@ -48,17 +41,23 @@ export default function Footer() {
               of the open road with Gem Auto Rentals.
             </p>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
+              <a
+                href={PRIMARY_PHONE_HREF}
+                className="hover:text-primary flex items-center space-x-3 transition-colors"
+              >
                 <Phone className="text-primary h-5 w-5" />
-                <span>863-277-7879</span>
-              </div>
-              <div className="flex items-center space-x-3">
+                <span>{PRIMARY_PHONE}</span>
+              </a>
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="hover:text-primary flex items-center space-x-3 transition-colors"
+              >
                 <Mail className="text-primary h-5 w-5" />
-                <span>gemautosalesinc@gmail.com</span>
-              </div>
+                <span>{CONTACT_EMAIL}</span>
+              </a>
               <div className="flex items-center space-x-3">
                 <MapPin className="text-primary h-5 w-5" />
-                <span>1311 E CANAL ST, MULBERRY, FL 33860</span>
+                <span>{ADDRESS}</span>
               </div>
             </div>
           </div>
@@ -132,23 +131,20 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
+        {/* Social icons removed: they pointed at bare platform homepages
+            (facebook.com, twitter.com, …), not at company profiles. Put them
+            back once the real profile URLs exist. */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-gray-800 pt-8 md:flex-row">
           <p className="text-sm text-gray-400">
             &copy; {new Date().getFullYear()} Gem Auto Rentals. All rights reserved.
           </p>
-          <div className="flex items-center space-x-4">
-            {socialLinks.map((social) => (
-              <a
-                key={social.label}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:bg-primary flex h-10 w-10 items-center justify-center rounded-full bg-gray-800 transition-colors"
-                aria-label={social.label}
-              >
-                <social.icon className="h-5 w-5" />
-              </a>
-            ))}
+          <div className="flex items-center gap-4 text-sm text-gray-400">
+            <Link to="/terms" className="hover:text-primary transition-colors">
+              Terms
+            </Link>
+            <Link to="/privacy" className="hover:text-primary transition-colors">
+              Privacy
+            </Link>
           </div>
         </div>
       </div>

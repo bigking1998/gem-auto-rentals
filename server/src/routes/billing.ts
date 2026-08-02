@@ -72,7 +72,7 @@ router.get('/payment-methods', authenticate, async (req, res, next) => {
     });
 
     // Get default payment method
-    const customer = await stripeClient.customers.retrieve(customerId) as Stripe.Customer;
+    const customer = (await stripeClient.customers.retrieve(customerId)) as Stripe.Customer;
     const defaultPaymentMethodId = customer.invoice_settings?.default_payment_method;
 
     const methods = paymentMethods.data.map((pm) => ({
@@ -243,11 +243,12 @@ router.get('/plan', authenticate, authorize('ADMIN', 'MANAGER'), async (_req, re
 router.post('/upgrade', authenticate, authorize('ADMIN'), async (req, res, next) => {
   try {
     const stripeClient = requireStripe();
-    const { planId } = req.body;
 
-    if (!planId) {
-      throw BadRequestError('Plan ID is required');
-    }
+    // planId is forwarded to Stripe as a Price ID. Checking the type here keeps a
+    // non-string body from reaching the SDK and surfacing as a 500 instead of a 400.
+    const { planId } = z
+      .object({ planId: z.string().min(1, 'Plan ID is required') })
+      .parse(req.body ?? {});
 
     // In production, create a Checkout session for the upgrade
     // For now, return a mock checkout URL

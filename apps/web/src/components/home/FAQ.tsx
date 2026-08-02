@@ -66,7 +66,7 @@ function FAQItem({
         <span
           className={cn(
             'text-lg font-medium transition-colors',
-            isOpen ? 'text-primary' : 'group-hover:text-primary text-gray-900'
+            isOpen ? 'text-primary-ink' : 'group-hover:text-primary-ink text-gray-900'
           )}
         >
           {question}
@@ -110,7 +110,7 @@ export default function FAQ() {
             transition={{ duration: 0.5 }}
             className="mb-12 text-center"
           >
-            <span className="bg-primary/10 text-primary mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold">
+            <span className="bg-primary/10 text-primary-ink mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold">
               <HelpCircle className="h-4 w-4" />
               FAQ
             </span>

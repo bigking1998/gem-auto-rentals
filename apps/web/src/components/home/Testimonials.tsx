@@ -63,7 +63,7 @@ export default function Testimonials() {
           transition={{ duration: 0.5 }}
           className="mb-12 text-center lg:mb-16"
         >
-          <span className="bg-primary/10 text-primary mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
+          <span className="bg-primary/10 text-primary-ink mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
             Testimonials
           </span>
           <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">
@@ -77,7 +77,9 @@ export default function Testimonials() {
 
         {/* Testimonial Carousel */}
         <div className="mx-auto max-w-4xl">
-          <div className="relative">
+          {/* overflow-hidden clips the slide's enter/exit translateX; without it
+              the animating card widened the document by ~34px at 375px wide. */}
+          <div className="relative overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}

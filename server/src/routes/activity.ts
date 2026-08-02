@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ActivityAction } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { parsePagination } from '../lib/pagination.js';
 
 const router = Router();
 
@@ -21,9 +22,11 @@ router.get('/', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (r
       search,
     } = req.query;
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = Math.min(parseInt(limit as string, 10), 100);
-    const skip = (pageNum - 1) * limitNum;
+    const {
+      page: pageNum,
+      limit: limitNum,
+      skip,
+    } = parsePagination(page, limit, { defaultLimit: 50 });
 
     // Build where clause
     const where: Record<string, unknown> = {};
@@ -116,124 +119,138 @@ router.get('/', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (r
 });
 
 // GET /api/activity/user/:userId - Get activity for specific user
-router.get('/user/:userId', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    const { page = '1', limit = '50' } = req.query;
+router.get(
+  '/user/:userId',
+  authenticate,
+  authorize('ADMIN', 'MANAGER', 'SUPPORT'),
+  async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const { page = '1', limit = '50' } = req.query;
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = Math.min(parseInt(limit as string, 10), 100);
-    const skip = (pageNum - 1) * limitNum;
-
-    const [activities, total, user] = await Promise.all([
-      prisma.activityLog.findMany({
-        where: { userId },
-        select: {
-          id: true,
-          action: true,
-          entityType: true,
-          entityId: true,
-          description: true,
-          metadata: true,
-          ipAddress: true,
-          status: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limitNum,
-      }),
-      prisma.activityLog.count({ where: { userId } }),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-        },
-      }),
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        user,
-        activities,
-      },
-      pagination: {
+      const {
         page: pageNum,
         limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum),
-      },
-    });
-  } catch (error) {
-    next(error);
+        skip,
+      } = parsePagination(page, limit, { defaultLimit: 50 });
+
+      const [activities, total, user] = await Promise.all([
+        prisma.activityLog.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            action: true,
+            entityType: true,
+            entityId: true,
+            description: true,
+            metadata: true,
+            ipAddress: true,
+            status: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limitNum,
+        }),
+        prisma.activityLog.count({ where: { userId } }),
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
+        }),
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          user,
+          activities,
+        },
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // GET /api/activity/entity/:type/:id - Get activity for specific entity
-router.get('/entity/:type/:id', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (req, res, next) => {
-  try {
-    const { type, id } = req.params;
-    const { page = '1', limit = '50' } = req.query;
+router.get(
+  '/entity/:type/:id',
+  authenticate,
+  authorize('ADMIN', 'MANAGER', 'SUPPORT'),
+  async (req, res, next) => {
+    try {
+      const { type, id } = req.params;
+      const { page = '1', limit = '50' } = req.query;
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = Math.min(parseInt(limit as string, 10), 100);
-    const skip = (pageNum - 1) * limitNum;
-
-    const [activities, total] = await Promise.all([
-      prisma.activityLog.findMany({
-        where: {
-          entityType: type,
-          entityId: id,
-        },
-        select: {
-          id: true,
-          action: true,
-          description: true,
-          metadata: true,
-          ipAddress: true,
-          status: true,
-          createdAt: true,
-          user: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-              role: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limitNum,
-      }),
-      prisma.activityLog.count({
-        where: {
-          entityType: type,
-          entityId: id,
-        },
-      }),
-    ]);
-
-    res.json({
-      success: true,
-      data: activities,
-      pagination: {
+      const {
         page: pageNum,
         limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum),
-      },
-    });
-  } catch (error) {
-    next(error);
+        skip,
+      } = parsePagination(page, limit, { defaultLimit: 50 });
+
+      const [activities, total] = await Promise.all([
+        prisma.activityLog.findMany({
+          where: {
+            entityType: type,
+            entityId: id,
+          },
+          select: {
+            id: true,
+            action: true,
+            description: true,
+            metadata: true,
+            ipAddress: true,
+            status: true,
+            createdAt: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limitNum,
+        }),
+        prisma.activityLog.count({
+          where: {
+            entityType: type,
+            entityId: id,
+          },
+        }),
+      ]);
+
+      res.json({
+        success: true,
+        data: activities,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // GET /api/activity/stats - Get activity statistics
 router.get('/stats', authenticate, authorize('ADMIN', 'MANAGER'), async (req, res, next) => {

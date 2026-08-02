@@ -71,14 +71,6 @@ const categoryColors: Record<string, string> = {
   VAN: 'bg-gray-100 text-gray-700',
 };
 
-const maintenanceTypes = [
-  { value: 'OIL_CHANGE', label: 'Oil Change' },
-  { value: 'TIRE_ROTATION', label: 'Tire Rotation' },
-  { value: 'BRAKE_SERVICE', label: 'Brake Service' },
-  { value: 'GENERAL_INSPECTION', label: 'General Inspection' },
-  { value: 'FULL_SERVICE', label: 'Full Service' },
-];
-
 // Helper function to convert API vehicle to local Vehicle type
 const apiToVehicle = (v: ApiVehicle & { bookingCount?: number }): Vehicle => ({
   id: v.id,
@@ -114,11 +106,6 @@ export default function FleetManagement() {
   // Maintenance modal state
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [maintenanceVehicle, setMaintenanceVehicle] = useState<Vehicle | null>(null);
-  const [maintenanceForm, setMaintenanceForm] = useState({
-    type: 'OIL_CHANGE' as MaintenanceSchedule['type'],
-    scheduledDate: '',
-    notes: '',
-  });
 
   // Delete confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -302,19 +289,16 @@ export default function FleetManagement() {
   // Maintenance handlers
   const handleOpenMaintenance = (vehicle: Vehicle) => {
     setMaintenanceVehicle(vehicle);
-    setMaintenanceForm({
-      type: 'OIL_CHANGE',
-      scheduledDate: new Date().toISOString().split('T')[0],
-      notes: '',
-    });
     setShowMaintenanceModal(true);
   };
 
+  // NOTE: this only flips the vehicle's status. There is no create endpoint for
+  // maintenance records on the server, so the modal no longer collects a service
+  // type, date or notes that would be silently discarded.
   const handleScheduleMaintenance = async () => {
-    if (!maintenanceVehicle || !maintenanceForm.scheduledDate) return;
+    if (!maintenanceVehicle) return;
 
     try {
-      // Update vehicle status to MAINTENANCE
       await api.vehicles.updateStatus(maintenanceVehicle.id, 'MAINTENANCE');
 
       setVehicles((prev) =>
@@ -325,10 +309,10 @@ export default function FleetManagement() {
 
       setShowMaintenanceModal(false);
       setMaintenanceVehicle(null);
-      toast.success('Maintenance scheduled successfully');
+      toast.success('Vehicle marked as under maintenance');
     } catch (error) {
-      console.error('Error scheduling maintenance:', error);
-      toast.error('Failed to schedule maintenance');
+      console.error('Error updating vehicle status:', error);
+      toast.error('Failed to mark vehicle as under maintenance');
     }
   };
 
@@ -812,14 +796,14 @@ export default function FleetManagement() {
                         </button>
                         <button
                           onClick={() => handleOpenMaintenance(vehicle)}
-                          className="hover:bg-accent hover:text-primary-ink rounded-lg p-2 text-gray-400 transition-colors"
+                          className="hover:bg-accent rounded-lg p-2 text-gray-400 transition-colors"
                           title="Schedule Maintenance"
                         >
                           <Wrench className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleOpenBookings(vehicle)}
-                          className="hover:bg-accent hover:text-primary-ink rounded-lg p-2 text-gray-400 transition-colors"
+                          className="hover:bg-accent rounded-lg p-2 text-gray-400 transition-colors"
                           title="View Bookings"
                         >
                           <Calendar className="h-4 w-4" />
@@ -862,54 +846,17 @@ export default function FleetManagement() {
             animate={{ opacity: 1, scale: 1 }}
             className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
           >
-            <h2 className="mb-4 text-xl font-bold text-gray-900">Schedule Maintenance</h2>
+            <h2 className="mb-2 text-xl font-bold text-gray-900">Mark as Under Maintenance</h2>
+            <p className="mb-4 text-sm text-gray-600">
+              This sets{' '}
+              <span className="font-medium text-gray-900">
+                {maintenanceVehicle.year} {maintenanceVehicle.make} {maintenanceVehicle.model}
+              </span>{' '}
+              to <span className="font-medium">MAINTENANCE</span> so it stops showing as available.
+              There is no maintenance record store yet, so the service type, date and notes cannot
+              be saved — keep those in your own records.
+            </p>
             <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Maintenance Type
-                </label>
-                <select
-                  value={maintenanceForm.type}
-                  onChange={(e) =>
-                    setMaintenanceForm({
-                      ...maintenanceForm,
-                      type: e.target.value as MaintenanceSchedule['type'],
-                    })
-                  }
-                  className="focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
-                >
-                  {maintenanceTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Scheduled Date
-                </label>
-                <input
-                  type="date"
-                  value={maintenanceForm.scheduledDate}
-                  onChange={(e) =>
-                    setMaintenanceForm({ ...maintenanceForm, scheduledDate: e.target.value })
-                  }
-                  className="focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Notes</label>
-                <textarea
-                  value={maintenanceForm.notes}
-                  onChange={(e) =>
-                    setMaintenanceForm({ ...maintenanceForm, notes: e.target.value })
-                  }
-                  className="focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
-                  rows={3}
-                  placeholder="Additional details..."
-                />
-              </div>
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   onClick={() => setShowMaintenanceModal(false)}
@@ -921,7 +868,7 @@ export default function FleetManagement() {
                   onClick={handleScheduleMaintenance}
                   className="bg-primary text-primary-foreground hover:bg-primary-dark rounded-lg px-4 py-2"
                 >
-                  Schedule
+                  Mark as Maintenance
                 </button>
               </div>
             </div>

@@ -312,7 +312,7 @@ router.post('/sso-code', authenticate, async (req, res, next) => {
 
 // POST /api/auth/sso-exchange - Exchange an SSO code for a token
 // Admin dashboard calls this to get a valid token from a code
-router.post('/sso-exchange', async (req, res, next) => {
+router.post('/sso-exchange', authLimiter, async (req, res, next) => {
   try {
     const { code } = z.object({ code: z.string().min(1, 'Code is required') }).parse(req.body);
 

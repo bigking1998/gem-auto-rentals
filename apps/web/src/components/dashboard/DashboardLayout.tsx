@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Navigate, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
   User,
   FileText,
   CreditCard,
-  Settings,
   LogOut,
   ChevronRight,
   Menu,
@@ -20,6 +19,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import PageLoader from '@/components/ui/PageLoader';
 import { useAuthStore } from '@/stores/authStore';
 import { BOOKING_VEHICLE_KEY } from '@/pages/BookingPage';
 
@@ -59,11 +59,6 @@ const sidebarLinks = [
     href: '/dashboard/referrals',
     icon: Share2,
   },
-  {
-    label: 'Settings',
-    href: '/dashboard/settings',
-    icon: Settings,
-  },
 ];
 
 // Session storage key for pending booking return URL
@@ -77,7 +72,7 @@ export default function DashboardLayout() {
     vehicleName: string;
     returnUrl: string;
   } | null>(null);
-  const { user, logout } = useAuthStore();
+  const { user, logout, isAuthenticated, isInitialized } = useAuthStore();
 
   // Check for pending booking on mount
   useEffect(() => {
@@ -118,7 +113,21 @@ export default function DashboardLayout() {
 
   const isActive = (href: string) => location.pathname === href;
 
-  // Fallback if user is not loaded yet
+  // Auth guard — mirrors the pattern used by BookingPage.tsx.
+  // Wait for the auth store to finish initialising, then send anonymous
+  // visitors to /login. Rendering must not fall through: the dashboard
+  // children below would otherwise fire authenticated API calls and paint
+  // account content for a logged-out visitor.
+  if (!isInitialized) {
+    return <PageLoader message="Loading your account..." />;
+  }
+
+  if (!isAuthenticated) {
+    const returnUrl = `${location.pathname}${location.search}`;
+    return <Navigate to={`/login?returnUrl=${encodeURIComponent(returnUrl)}`} replace />;
+  }
+
+  // Fallback if the profile fetch hasn't resolved yet
   const displayUser = user || { firstName: 'User', lastName: '', email: '' };
 
   return (
@@ -248,7 +257,7 @@ export default function DashboardLayout() {
           {/* Help & Logout */}
           <div className="border-t border-gray-100 p-4">
             <Link
-              to="/help"
+              to="/contact"
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
             >
               <HelpCircle className="h-5 w-5" />

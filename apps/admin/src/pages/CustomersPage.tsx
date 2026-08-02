@@ -1,17 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Users,
-  Search,
-  Filter,
-  ChevronDown,
-  Loader2,
-  MoreHorizontal,
-  Mail,
-  Phone,
-  Calendar,
-  User,
-} from 'lucide-react';
+import { Users, Search, Loader2, MoreHorizontal, Mail, Phone, Calendar, User } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { api, Customer, ApiError } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
@@ -128,11 +117,7 @@ export default function CustomersPage() {
               className="focus:ring-primary w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2"
             />
           </div>
-          <button className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 transition-colors hover:bg-gray-50">
-            <Filter className="h-5 w-5 text-gray-500" />
-            <span className="text-gray-700">Filters</span>
-            <ChevronDown className="h-4 w-4 text-gray-500" />
-          </button>
+          {/* "Filters" button removed — there was no filter UI behind it. */}
         </div>
       </motion.div>
 

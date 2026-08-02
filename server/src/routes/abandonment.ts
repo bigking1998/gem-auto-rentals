@@ -2,20 +2,34 @@ import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
+import { recordId } from '../lib/validation.js';
 
 const router = Router();
 
+// Ids here are cuids, not uuids. This previously read `.uuid()`, which rejected
+// every real vehicle id and made /track fail closed with a 400 — which is why
+// AbandonedBooking has 0 rows.
+const vehicleIdSchema = recordId('Invalid vehicle ID');
+
 // Validation schema for tracking abandonment
-const trackAbandonmentSchema = z.object({
-  vehicleId: z.string().uuid('Invalid vehicle ID'),
-  startDate: z.string().transform((s) => new Date(s)),
-  endDate: z.string().transform((s) => new Date(s)),
-  extras: z.record(z.any()).optional(),
-  step: z.number().int().min(1).max(4),
-  email: z.string().email().optional(),
-}).refine((data) => data.endDate > data.startDate, {
-  message: 'End date must be after start date',
-  path: ['endDate'],
+const trackAbandonmentSchema = z
+  .object({
+    vehicleId: vehicleIdSchema,
+    startDate: z.string().transform((s) => new Date(s)),
+    endDate: z.string().transform((s) => new Date(s)),
+    extras: z.record(z.any()).optional(),
+    step: z.number().int().min(1).max(4),
+    email: z.string().email().optional(),
+  })
+  .refine((data) => data.endDate > data.startDate, {
+    message: 'End date must be after start date',
+    path: ['endDate'],
+  });
+
+// vehicleId is optional here: the handler deliberately treats a missing id as a
+// no-op success rather than an error.
+const completeAbandonmentSchema = z.object({
+  vehicleId: vehicleIdSchema.optional(),
 });
 
 // POST /api/abandonment/track - Track booking progress (for abandonment recovery)
@@ -55,10 +69,7 @@ router.post('/track', optionalAuth, async (req, res, next) => {
       where: {
         vehicleId: data.vehicleId,
         recovered: false,
-        OR: [
-          { userId: userId || undefined },
-          { email: email || undefined },
-        ],
+        OR: [{ userId: userId || undefined }, { email: email || undefined }],
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -103,7 +114,10 @@ router.post('/track', optionalAuth, async (req, res, next) => {
 // POST /api/abandonment/complete - Mark abandonment as recovered (called when booking is completed)
 router.post('/complete', authenticate, async (req, res, next) => {
   try {
-    const { vehicleId } = req.body;
+    // vehicleId lands in a Prisma `where`, so it must be forced to a string.
+    // An object here (e.g. {"vehicleId":{"not":"x"}}) would otherwise be read as
+    // a Prisma filter operator and match far more rows than intended.
+    const { vehicleId } = completeAbandonmentSchema.parse(req.body ?? {});
     const userId = req.user!.id;
 
     if (!vehicleId) {

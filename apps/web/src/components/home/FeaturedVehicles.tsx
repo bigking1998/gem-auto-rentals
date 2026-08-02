@@ -13,7 +13,7 @@ interface FeaturedVehicle {
   year: number;
   category: string;
   dailyRate: number;
-  rating: number;
+  rating: number | null;
   reviewCount: number;
   seats: number;
   transmission: string;
@@ -47,8 +47,9 @@ export default function FeaturedVehicles() {
             year: v.year,
             category: v.category,
             dailyRate: Number(v.dailyRate),
-            rating: v.averageRating || 4.8,
-            reviewCount: v.reviewCount || 0,
+            // Never invent a rating — show "New" until real reviews exist.
+            rating: v.averageRating ?? null,
+            reviewCount: v.reviewCount ?? 0,
             seats: v.seats,
             transmission: v.transmission,
             fuelType: v.fuelType,
@@ -78,7 +79,7 @@ export default function FeaturedVehicles() {
           transition={{ duration: 0.5 }}
           className="mb-12 text-center lg:mb-16"
         >
-          <span className="bg-primary/10 text-primary mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
+          <span className="bg-primary/10 text-primary-ink mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
             Our Fleet
           </span>
           <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">Popular Vehicles</h2>
@@ -136,15 +137,21 @@ export default function FeaturedVehicles() {
                   {/* Content */}
                   <div className="p-5">
                     {/* Title */}
-                    <h3 className="group-hover:text-primary mb-1 text-lg font-bold text-gray-900 transition-colors">
+                    <h3 className="group-hover:text-primary-ink mb-1 text-lg font-bold text-gray-900 transition-colors">
                       {vehicle.year} {vehicle.make} {vehicle.model}
                     </h3>
 
                     {/* Rating */}
                     <div className="mb-4 flex items-center gap-1">
                       <Star className="text-primary h-4 w-4 fill-current" />
-                      <span className="text-sm font-medium text-gray-900">{vehicle.rating}</span>
-                      <span className="text-sm text-gray-500">({vehicle.reviewCount} reviews)</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {vehicle.rating != null ? vehicle.rating.toFixed(1) : 'New'}
+                      </span>
+                      {vehicle.reviewCount > 0 && (
+                        <span className="text-sm text-gray-500">
+                          ({vehicle.reviewCount} reviews)
+                        </span>
+                      )}
                     </div>
 
                     {/* Specs */}

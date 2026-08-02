@@ -18,6 +18,10 @@ const WaitingListThankYouPage = lazy(() => import('./pages/WaitingListThankYouPa
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
+// Legal pages - lazy loaded
+const TermsPage = lazy(() => import('./pages/legal/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/legal/PrivacyPage'));
+
 // Auth pages - lazy loaded
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
@@ -56,6 +60,11 @@ function App() {
           <Route path="/waitinglist" element={<WaitingListPage />} />
           <Route path="/waitinglist/thank-you" element={<WaitingListThankYouPage />} />
           <Route path="/contact" element={<ContactPage />} />
+
+          {/* Legal — linked from the signup and checkout consent checkboxes,
+              so these must always resolve to a real page. */}
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />

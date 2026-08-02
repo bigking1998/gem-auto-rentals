@@ -3,13 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu,
-  Search,
   Bell,
   Settings,
   User,
   LogOut,
-  Moon,
-  Sun,
   X,
   Car,
   CreditCard,
@@ -115,29 +112,18 @@ const formatTimeAgo = (date: Date) => {
 export default function Header({ onMenuClick }: HeaderProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const [searchFocused, setSearchFocused] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    // Initialize from localStorage
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('darkMode') === 'true';
-    }
-    return false;
-  });
-
-  // Apply dark mode class to document
+  // Dark mode was removed: the admin has no `dark:` variants and 130+ literal
+  // `bg-white` surfaces, so enabling `.dark` only flipped the CSS custom
+  // properties and dropped gold text to ~1.7:1 on still-white cards. Clear any
+  // flag left over from the old toggle so nobody is stuck in the broken state.
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
-    }
-  }, [darkMode]);
+    document.documentElement.classList.remove('dark');
+    localStorage.removeItem('darkMode');
+  }, []);
 
   const notificationsRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -235,25 +221,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
             <Menu className="h-5 w-5 text-gray-600" />
           </button>
 
-          {/* Search */}
-          <div
-            className={cn(
-              'hidden items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 transition-all sm:flex',
-              searchFocused && 'ring-primary bg-white ring-2'
-            )}
-          >
-            <Search className="h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-48 border-none bg-transparent text-sm outline-none lg:w-64"
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-            />
-            <kbd className="hidden items-center gap-1 rounded border border-gray-200 bg-white px-2 py-0.5 text-xs text-gray-400 lg:inline-flex">
-              <span>⌘</span>K
-            </kbd>
-          </div>
+          {/* Global search removed — the input had no onChange/onSubmit and the
+              ⌘K hint had no key listener anywhere in the app. Each page has its
+              own working search box. */}
         </div>
 
         {/* Right Section */}
@@ -313,7 +283,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className="text-primary-ink hover:text-primary-dark text-xs font-medium"
+                        className="text-primary-ink text-xs font-medium hover:underline"
                       >
                         Mark all read
                       </button>
@@ -397,7 +367,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                         setNotificationsOpen(false);
                         navigate('/settings?tab=notifications');
                       }}
-                      className="text-primary-ink hover:text-primary-dark w-full py-2 text-sm font-medium"
+                      className="text-primary-ink w-full py-2 text-sm font-medium hover:underline"
                     >
                       View notification settings
                     </button>
@@ -504,33 +474,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
                       </div>
                     </a>
 
-                    {/* Theme Toggle */}
-                    <div className="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-gray-100">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
-                          {darkMode ? (
-                            <Moon className="h-4 w-4 text-gray-600" />
-                          ) : (
-                            <Sun className="text-primary-ink h-4 w-4" />
-                          )}
-                        </div>
-                        <p className="text-sm font-medium text-gray-900">Dark Mode</p>
-                      </div>
-                      <button
-                        onClick={() => setDarkMode(!darkMode)}
-                        className={cn(
-                          'relative h-5 w-10 rounded-full transition-colors',
-                          darkMode ? 'bg-primary' : 'bg-gray-300'
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
-                            darkMode ? 'translate-x-5' : 'translate-x-0.5'
-                          )}
-                        />
-                      </button>
-                    </div>
+                    {/* Dark-mode toggle removed — see the comment on the cleanup
+                        effect above. Re-add it only once the pages use semantic
+                        surface tokens instead of literal bg-white. */}
                   </div>
 
                   {/* Logout */}
@@ -554,8 +500,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </AnimatePresence>
           </div>
 
-          {/* User Avatar */}
-          <button className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-gray-100">
+          {/* User Avatar — goes to the profile tab in Settings (previously a no-op button) */}
+          <button
+            onClick={() => navigate('/settings?tab=profile')}
+            aria-label="Open your profile settings"
+            className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-gray-100"
+          >
             <div className="from-primary-light to-primary-dark text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold">
               {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '??'}
             </div>

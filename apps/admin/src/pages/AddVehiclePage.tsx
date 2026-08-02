@@ -17,7 +17,6 @@ export default function AddVehiclePage() {
       const { pendingFiles, ...vehicleData } = data;
       // Destructure to omit `images` from the create payload — images are attached
       // server-side by the upload endpoint after the vehicle is created.
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { images: _images, ...createData } = vehicleData;
 
       // Sanitize data: remove empty VIN
@@ -30,14 +29,27 @@ export default function AddVehiclePage() {
 
       if (pendingFiles && pendingFiles.length > 0) {
         toast.info(`Uploading ${pendingFiles.length} image(s)...`);
-        const uploadedImages: string[] = [];
+
+        const failures: string[] = [];
         for (const file of pendingFiles) {
           try {
-            const result = await api.vehicles.uploadImage(newVehicle.id, file);
-            uploadedImages.push(result.imageUrl);
+            await api.vehicles.uploadImage(newVehicle.id, file);
           } catch (uploadError) {
             console.error('Error uploading image:', uploadError);
+            failures.push(file.name);
           }
+        }
+
+        if (failures.length > 0) {
+          // Do NOT claim success and do NOT navigate to /fleet — that would discard the
+          // pending files with no way to retry. Send the operator to the edit page, where
+          // images upload immediately and errors surface per file.
+          toast.error(
+            `Vehicle created, but ${failures.length} of ${pendingFiles.length} image(s) failed to upload: ${failures.join(', ')}. Re-add them below.`,
+            { duration: 10000 }
+          );
+          navigate(`/fleet/${newVehicle.id}`);
+          return;
         }
       }
 

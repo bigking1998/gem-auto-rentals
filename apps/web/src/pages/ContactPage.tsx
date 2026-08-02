@@ -5,10 +5,14 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import SEO from '@/components/SEO';
 
-const CONTACT_EMAIL = 'gemautosalesinc@gmail.com';
-const PRIMARY_PHONE = '863-277-7879';
-const SECONDARY_PHONE = '863-279-2907';
-const ADDRESS = '1311 E CANAL ST, MULBERRY, FL 33860';
+import {
+  CONTACT_EMAIL,
+  PRIMARY_PHONE,
+  PRIMARY_PHONE_HREF,
+  SECONDARY_PHONE,
+  SECONDARY_PHONE_HREF,
+  ADDRESS,
+} from '@/lib/contact';
 
 const openingHours = [
   { day: 'Monday', hours: '10:00 AM – 6:00 PM' },
@@ -25,12 +29,22 @@ export default function ContactPage() {
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   // NOTE: There is no public (unauthenticated) message-submission endpoint on the
   // API, so this form intentionally hands off to the visitor's own email client
   // instead of pretending to submit. See the mailto: link built below.
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Don't open an empty mail draft. The browser's own `required` handling
+    // covers most of this, but the guard also catches whitespace-only input.
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      setFormError('Please add your name, your email, and a message before sending.');
+      return;
+    }
+    setFormError(null);
+
     const mailSubject = subject.trim() || 'Website enquiry';
     const bodyLines = [
       message.trim(),
@@ -109,14 +123,14 @@ export default function ContactPage() {
                         <p className="font-medium text-gray-900">Call Us</p>
                         <p className="text-gray-600">
                           <a
-                            href={`tel:${PRIMARY_PHONE}`}
+                            href={PRIMARY_PHONE_HREF}
                             className="hover:text-primary-ink transition-colors"
                           >
                             {PRIMARY_PHONE}
                           </a>
                           <span className="mx-2 text-gray-300">/</span>
                           <a
-                            href={`tel:${SECONDARY_PHONE}`}
+                            href={SECONDARY_PHONE_HREF}
                             className="hover:text-primary-ink transition-colors"
                           >
                             {SECONDARY_PHONE}
@@ -207,7 +221,7 @@ export default function ContactPage() {
                         htmlFor="contact-name"
                         className="mb-2 block text-sm font-medium text-gray-700"
                       >
-                        Your Name
+                        Your Name <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="contact-name"
@@ -215,6 +229,7 @@ export default function ContactPage() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Jane Doe"
+                        required
                         className="focus:ring-primary w-full rounded-lg border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2"
                       />
                     </div>
@@ -224,7 +239,7 @@ export default function ContactPage() {
                         htmlFor="contact-email"
                         className="mb-2 block text-sm font-medium text-gray-700"
                       >
-                        Your Email
+                        Your Email <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="contact-email"
@@ -232,6 +247,7 @@ export default function ContactPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
+                        required
                         className="focus:ring-primary w-full rounded-lg border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2"
                       />
                     </div>
@@ -258,7 +274,7 @@ export default function ContactPage() {
                         htmlFor="contact-message"
                         className="mb-2 block text-sm font-medium text-gray-700"
                       >
-                        Message
+                        Message <span aria-hidden="true">*</span>
                       </label>
                       <textarea
                         id="contact-message"
@@ -266,9 +282,16 @@ export default function ContactPage() {
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Tell us what you need and the dates you have in mind."
+                        required
                         className="focus:ring-primary w-full resize-y rounded-lg border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2"
                       />
                     </div>
+
+                    {formError && (
+                      <p role="alert" className="text-sm font-medium text-red-600">
+                        {formError}
+                      </p>
+                    )}
 
                     <button
                       type="submit"
@@ -282,7 +305,7 @@ export default function ContactPage() {
                   <p className="mt-6 text-sm text-gray-500">
                     Prefer to talk it through? Call{' '}
                     <a
-                      href={`tel:${PRIMARY_PHONE}`}
+                      href={PRIMARY_PHONE_HREF}
                       className="text-primary-ink font-medium hover:underline"
                     >
                       {PRIMARY_PHONE}

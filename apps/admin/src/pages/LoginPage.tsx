@@ -109,7 +109,7 @@ export default function LoginPage() {
   // Show loading state while processing SSO token
   if (ssoLoading) {
     return (
-      <div className="from-accent to-accent flex min-h-screen items-center justify-center bg-gradient-to-br via-white p-4">
+      <div className="from-accent to-primary-light/30 flex min-h-screen items-center justify-center bg-gradient-to-br via-white p-4">
         <div className="text-center">
           <Loader2 className="text-primary-ink mx-auto mb-4 h-12 w-12 animate-spin" />
           <p className="font-medium text-gray-600">Signing you in...</p>
@@ -119,7 +119,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="from-accent to-accent flex min-h-screen items-center justify-center bg-gradient-to-br via-white p-4">
+    <div className="from-accent to-primary-light/30 flex min-h-screen items-center justify-center bg-gradient-to-br via-white p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -161,7 +161,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="focus:ring-primary w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 transition-all focus:border-transparent focus:ring-2"
-                  placeholder="admin@gemautorentals.com"
+                  placeholder="admin@gemrentalcars.com"
                   required
                   autoComplete="email"
                 />

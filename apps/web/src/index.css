@@ -28,8 +28,12 @@
   /* Gold #D4AF37 — use as a background */
   --primary-foreground: 215 61% 10%;
   /* Navy text on gold — 8.9:1, passes AAA */
-  --primary-ink: 42 73% 33%;
-  /* Darker gold #8A6715 for TEXT on white — 4.6:1, passes AA */
+  --primary-ink: 42 73% 30%;
+  /* Darker gold #7E5E14 for TEXT on light backgrounds.
+     5.7:1 on white, and still 5.3:1 on the pale gold tints
+     (bg-primary/10, bg-accent) that the section badges use — the
+     previous 33% lightness measured 4.43:1 on those tints, i.e. it
+     failed AA everywhere the badge had its own gold wash behind it. */
   --primary-light: 43 82% 75%;
   /* #F5D98B highlights, gradient tops */
   --primary-dark: 42 73% 38%;
@@ -51,7 +55,7 @@
 
   --accent: 46 60% 95%;
   /* Pale gold wash for tinted backgrounds */
-  --accent-foreground: 42 73% 33%;
+  --accent-foreground: 42 73% 30%;
 
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
@@ -87,7 +91,7 @@
 
   --primary: 46 65% 52%;
   --primary-foreground: 215 61% 10%;
-  --primary-ink: 42 73% 33%;
+  --primary-ink: 42 73% 30%;
   --primary-light: 43 82% 75%;
   --primary-dark: 42 73% 38%;
 
@@ -102,7 +106,7 @@
   --muted-foreground: 215 20% 42%;
 
   --accent: 46 60% 95%;
-  --accent-foreground: 42 73% 33%;
+  --accent-foreground: 42 73% 30%;
 
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;

@@ -78,6 +78,12 @@ export const useAuthStore = create<AuthState>()(
               tokenManager.removeToken();
               set({ user: null, isAuthenticated: false });
             }
+          } else {
+            // No token. `isAuthenticated` is persisted to localStorage but the
+            // token lives in a separate key, so a stale `true` here would let
+            // ProtectedRoute render the shell with the previous user's name
+            // while every API call 401s. Force the logged-out state.
+            set({ user: null, isAuthenticated: false });
           }
 
           set({ isLoading: false, isInitialized: true });
@@ -124,11 +130,12 @@ export const useAuthStore = create<AuthState>()(
           });
           return true;
         } catch (error) {
-          const message = error instanceof ApiError
-            ? error.message
-            : error instanceof Error
+          const message =
+            error instanceof ApiError
               ? error.message
-              : 'Login failed';
+              : error instanceof Error
+                ? error.message
+                : 'Login failed';
 
           set({
             isLoading: false,
@@ -181,9 +188,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      updateAvatar: (avatarUrl: string | null) => set((state) => ({
-        user: state.user ? { ...state.user, avatarUrl } : null,
-      })),
+      updateAvatar: (avatarUrl: string | null) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, avatarUrl } : null,
+        })),
 
       clearError: () => set({ error: null }),
     }),

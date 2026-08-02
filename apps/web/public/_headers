@@ -1,5 +1,13 @@
 # Cloudflare Headers Configuration for Gem Auto Rentals
 # https://developers.cloudflare.com/pages/configuration/headers/
+#
+# !! THIS FILE IS NOT USED BY THE CURRENT PRODUCTION DEPLOY !!
+# gemrentalcars.com is hosted on Vercel, which does not read `_headers` (that is
+# Cloudflare Pages syntax). It was silently ignored, which is why hashed assets
+# were being served `cache-control: public, max-age=0, must-revalidate` despite
+# the `immutable` rule below.
+# The headers that actually take effect live in the repo-root `vercel.json`.
+# Keep the two in sync if this project ever moves to Cloudflare Pages.
 
 # Static assets with content hash - cache aggressively (1 year)
 /assets/*

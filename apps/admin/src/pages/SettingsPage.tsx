@@ -5,13 +5,8 @@ import {
   User,
   Bell,
   Lock,
-  CreditCard,
   Building,
   Globe,
-  Plus,
-  Trash2,
-  Check,
-  Download,
   Clock,
   MapPin,
   Phone,
@@ -25,24 +20,38 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import { api, PaymentMethod, Integration } from '@/lib/api';
+import { cn, formatDate } from '@/lib/utils';
+import { api, Integration, CompanySettings, OperatingHoursDay } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import { AddPaymentMethodModal } from '@/components/settings/AddPaymentMethodModal';
-import { DeletePaymentMethodModal } from '@/components/settings/DeletePaymentMethodModal';
-import { UpgradePlanModal } from '@/components/settings/UpgradePlanModal';
 
-const mockInvoices = [
-  { id: 'INV-001', date: new Date('2026-01-01'), amount: 299, status: 'paid' },
-  { id: 'INV-002', date: new Date('2025-12-01'), amount: 299, status: 'paid' },
-  { id: 'INV-003', date: new Date('2025-11-01'), amount: 299, status: 'paid' },
-];
+const WEEK_DAYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const;
+
+const DAY_LABELS: Record<string, string> = {
+  monday: 'Monday',
+  tuesday: 'Tuesday',
+  wednesday: 'Wednesday',
+  thursday: 'Thursday',
+  friday: 'Friday',
+  saturday: 'Saturday',
+  sunday: 'Sunday',
+};
+
+const EMPTY_OPERATING_HOURS: Record<string, OperatingHoursDay> = Object.fromEntries(
+  WEEK_DAYS.map((day) => [day, { open: '09:00', close: '17:00', closed: false }])
+);
 
 const tabs = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security', label: 'Security', icon: Lock },
-  // { id: 'billing', label: 'Billing', icon: CreditCard }, // SaaS billing not needed - admin doesn't pay for own software
   { id: 'company', label: 'Company', icon: Building },
   { id: 'integrations', label: 'Integrations', icon: Globe },
 ];
@@ -56,6 +65,8 @@ export default function SettingsPage() {
 
   // Get user from auth store
   const { user, updateAvatar } = useAuthStore();
+  // PUT /api/settings/company is authorize('ADMIN') on the server.
+  const isCompanyEditor = user?.role === 'ADMIN';
 
   // Avatar upload state
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -66,16 +77,6 @@ export default function SettingsPage() {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
 
-  // Payment methods state
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(false);
-  const [isAddPaymentModalOpen, setIsAddPaymentModalOpen] = useState(false);
-  const [isDeletePaymentModalOpen, setIsDeletePaymentModalOpen] = useState(false);
-  const [paymentMethodToDelete, setPaymentMethodToDelete] = useState<PaymentMethod | null>(null);
-
-  // Upgrade plan modal state
-  const [isUpgradePlanModalOpen, setIsUpgradePlanModalOpen] = useState(false);
-
   // Profile form state
   const [profileForm, setProfileForm] = useState({
     firstName: '',
@@ -85,20 +86,22 @@ export default function SettingsPage() {
   });
   const [isProfileSaving, setIsProfileSaving] = useState(false);
 
-  // Company contact form state
+  // Company settings form state — seeded from GET /api/settings/company, never hardcoded.
   const [companyForm, setCompanyForm] = useState({
-    email: 'gemautosalesinc@gmail.com',
-    phone: '863-277-7879',
-    street: '1311 E CANAL ST',
-    city: 'Mulberry',
-    state: 'FL',
-    zipCode: '33860',
+    companyName: '',
+    companyEmail: '',
+    companyPhone: '',
+    companyAddress: '',
   });
+  const [operatingHours, setOperatingHours] =
+    useState<Record<string, OperatingHoursDay>>(EMPTY_OPERATING_HOURS);
   const [isCompanySaving, setIsCompanySaving] = useState(false);
+  const [isLoadingCompany, setIsLoadingCompany] = useState(true);
 
   // Integrations state
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [isLoadingIntegrations, setIsLoadingIntegrations] = useState(false);
+  const [integrationBusy, setIntegrationBusy] = useState<string | null>(null);
 
   // Initialize profile form when user loads
   useEffect(() => {
@@ -112,39 +115,40 @@ export default function SettingsPage() {
     }
   }, [user]);
 
-  // Fetch company settings for logo
-  useEffect(() => {
-    const fetchCompanySettings = async () => {
-      try {
-        const settings = await api.company.get();
-        if (settings.logo) {
-          setCompanyLogo(settings.logo);
-        }
-      } catch (error) {
-        console.error('Failed to fetch company settings:', error);
-      }
-    };
-    fetchCompanySettings();
-  }, []);
+  // Apply a settings payload from the server to local form state
+  const applyCompanySettings = (settings: CompanySettings) => {
+    setCompanyLogo(settings.companyLogo || null);
+    setCompanyForm({
+      companyName: settings.companyName || '',
+      companyEmail: settings.companyEmail || '',
+      companyPhone: settings.companyPhone || '',
+      companyAddress: settings.companyAddress || '',
+    });
+    setOperatingHours({
+      ...EMPTY_OPERATING_HOURS,
+      ...(settings.operatingHours || {}),
+    });
+  };
 
-  // Fetch payment methods when billing tab is active
-  const fetchPaymentMethods = async () => {
-    setIsLoadingPaymentMethods(true);
+  // Fetch company settings (logo, contact details, operating hours)
+  const fetchCompanySettings = async () => {
+    setIsLoadingCompany(true);
     try {
-      const methods = await api.billing.getPaymentMethods();
-      setPaymentMethods(methods);
+      const settings = await api.company.get();
+      applyCompanySettings(settings);
     } catch (error) {
-      console.error('Failed to fetch payment methods:', error);
+      console.error('Failed to fetch company settings:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to load company settings');
     } finally {
-      setIsLoadingPaymentMethods(false);
+      setIsLoadingCompany(false);
     }
   };
 
   useEffect(() => {
-    if (activeTab === 'billing') {
-      fetchPaymentMethods();
-    }
-  }, [activeTab]);
+    fetchCompanySettings();
+    // Runs once on mount; fetchCompanySettings only touches setState.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Password change state
   const [passwordForm, setPasswordForm] = useState({
@@ -200,14 +204,14 @@ export default function SettingsPage() {
   const handleCompanySave = async () => {
     setIsCompanySaving(true);
     try {
-      await api.company.update({
-        email: companyForm.email,
-        phone: companyForm.phone,
-        address: companyForm.street,
-        city: companyForm.city,
-        state: companyForm.state,
-        zipCode: companyForm.zipCode,
+      const updated = await api.company.update({
+        companyName: companyForm.companyName,
+        companyEmail: companyForm.companyEmail || null,
+        companyPhone: companyForm.companyPhone || null,
+        companyAddress: companyForm.companyAddress || null,
+        operatingHours,
       });
+      applyCompanySettings(updated);
       toast.success('Company settings updated successfully');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update company settings');
@@ -285,11 +289,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeletePaymentMethod = (method: PaymentMethod) => {
-    setPaymentMethodToDelete(method);
-    setIsDeletePaymentModalOpen(true);
-  };
-
   // Fetch integrations from API
   const fetchIntegrations = async () => {
     setIsLoadingIntegrations(true);
@@ -310,6 +309,35 @@ export default function SettingsPage() {
       fetchIntegrations();
     }
   }, [activeTab]);
+
+  // These were fire-and-forget before: not awaited, no error handling, no refetch.
+  const handleDisconnectIntegration = async (provider: Integration['provider']) => {
+    setIntegrationBusy(provider);
+    try {
+      await api.integrations.disconnect(provider);
+      toast.success(`${provider} disconnected`);
+      await fetchIntegrations();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : `Failed to disconnect ${provider}`);
+    } finally {
+      setIntegrationBusy(null);
+    }
+  };
+
+  const handleConnectIntegration = async (provider: Integration['provider']) => {
+    setIntegrationBusy(provider);
+    try {
+      // No credentials form exists yet, so the server will reject key-based
+      // providers. The error is surfaced instead of being swallowed.
+      await api.integrations.connect(provider, {});
+      toast.success(`${provider} connected`);
+      await fetchIntegrations();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : `Failed to connect ${provider}`);
+    } finally {
+      setIntegrationBusy(null);
+    }
+  };
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -625,161 +653,6 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {activeTab === 'billing' && (
-            <div className="space-y-6">
-              {/* Current Plan */}
-              <div className="from-primary-light to-primary-dark text-primary-foreground rounded-2xl bg-gradient-to-r p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-primary-foreground/80 mb-1 text-sm">Current Plan</p>
-                    <h3 className="text-2xl font-bold">Professional</h3>
-                    <p className="text-primary-foreground/80 mt-1">$299/month • Billed monthly</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-primary-foreground/80 mb-1 text-sm">Next billing date</p>
-                    <p className="text-lg font-semibold">February 1, 2026</p>
-                  </div>
-                </div>
-                <div className="border-primary-foreground/20 mt-4 flex items-center justify-between border-t pt-4">
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="flex items-center gap-1">
-                      <Check className="h-4 w-4" /> Unlimited vehicles
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Check className="h-4 w-4" /> Priority support
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Check className="h-4 w-4" /> Advanced analytics
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setIsUpgradePlanModalOpen(true)}
-                    className="rounded-xl bg-white/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/30"
-                  >
-                    Upgrade Plan
-                  </button>
-                </div>
-              </div>
-
-              {/* Payment Methods */}
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
-                  <button
-                    onClick={() => setIsAddPaymentModalOpen(true)}
-                    className="text-primary-ink border-primary hover:bg-accent flex items-center gap-2 rounded-xl border px-4 py-2 text-sm transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Method
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  {isLoadingPaymentMethods ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                    </div>
-                  ) : paymentMethods.length === 0 ? (
-                    <div className="py-8 text-center">
-                      <CreditCard className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-                      <p className="text-gray-500">No payment methods added yet</p>
-                      <button
-                        onClick={() => setIsAddPaymentModalOpen(true)}
-                        className="text-primary-ink hover:text-primary-ink mt-3 text-sm"
-                      >
-                        Add your first payment method
-                      </button>
-                    </div>
-                  ) : (
-                    paymentMethods.map((method) => (
-                      <div
-                        key={method.id}
-                        className={cn(
-                          'flex items-center justify-between rounded-xl border p-4 transition-colors',
-                          method.isDefault
-                            ? 'border-primary bg-accent'
-                            : 'border-gray-200 bg-gray-50'
-                        )}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-8 w-12 items-center justify-center rounded-lg border border-gray-200 bg-white">
-                            {method.brand.toLowerCase() === 'visa' ? (
-                              <span className="text-sm font-bold text-blue-600">VISA</span>
-                            ) : method.brand.toLowerCase() === 'mastercard' ? (
-                              <span className="text-xs font-bold text-red-500">MC</span>
-                            ) : method.brand.toLowerCase() === 'amex' ? (
-                              <span className="text-xs font-bold text-blue-500">AMEX</span>
-                            ) : (
-                              <CreditCard className="h-5 w-5 text-gray-400" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              •••• •••• •••• {method.last4}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Expires {method.expMonth}/{method.expYear}
-                            </p>
-                          </div>
-                          {method.isDefault && (
-                            <span className="text-primary-ink bg-accent rounded-full px-2 py-0.5 text-xs font-medium">
-                              Default
-                            </span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleDeletePaymentMethod(method)}
-                          className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Billing History */}
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h2 className="mb-6 text-lg font-semibold text-gray-900">Billing History</h2>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-100 text-left text-sm text-gray-500">
-                        <th className="pb-3 font-medium">Invoice</th>
-                        <th className="pb-3 font-medium">Date</th>
-                        <th className="pb-3 font-medium">Amount</th>
-                        <th className="pb-3 font-medium">Status</th>
-                        <th className="pb-3 text-right font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {mockInvoices.map((invoice) => (
-                        <tr key={invoice.id} className="text-sm">
-                          <td className="py-4 font-medium text-gray-900">{invoice.id}</td>
-                          <td className="py-4 text-gray-600">{formatDate(invoice.date)}</td>
-                          <td className="py-4 text-gray-900">{formatCurrency(invoice.amount)}</td>
-                          <td className="py-4">
-                            <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium capitalize text-green-700">
-                              {invoice.status}
-                            </span>
-                          </td>
-                          <td className="py-4 text-right">
-                            <button className="text-primary-ink hover:text-primary-ink ml-auto flex items-center gap-1">
-                              <Download className="h-4 w-4" />
-                              Download
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
           {activeTab === 'company' && (
             <div className="space-y-6">
               {/* Company Logo & Name */}
@@ -828,42 +701,18 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="mb-2 block text-sm font-medium text-gray-700">
                       Company Name
                     </label>
                     <input
                       type="text"
-                      defaultValue="Gem Auto Rentals"
-                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Business Type
-                    </label>
-                    <select className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2">
-                      <option>Car Rental Company</option>
-                      <option>Fleet Management</option>
-                      <option>Transportation Service</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Tax ID / EIN
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue="59-2586252"
-                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">Website</label>
-                    <input
-                      type="url"
-                      defaultValue="https://gemautosalesinc.com"
-                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
+                      value={companyForm.companyName}
+                      onChange={(e) =>
+                        setCompanyForm({ ...companyForm, companyName: e.target.value })
+                      }
+                      disabled={isLoadingCompany}
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2 disabled:bg-gray-50"
                     />
                   </div>
                 </div>
@@ -880,9 +729,12 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="email"
-                      value={companyForm.email}
-                      onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
-                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
+                      value={companyForm.companyEmail}
+                      onChange={(e) =>
+                        setCompanyForm({ ...companyForm, companyEmail: e.target.value })
+                      }
+                      disabled={isLoadingCompany}
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2 disabled:bg-gray-50"
                     />
                   </div>
                   <div>
@@ -891,9 +743,12 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="tel"
-                      value={companyForm.phone}
-                      onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })}
-                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
+                      value={companyForm.companyPhone}
+                      onChange={(e) =>
+                        setCompanyForm({ ...companyForm, companyPhone: e.target.value })
+                      }
+                      disabled={isLoadingCompany}
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2 disabled:bg-gray-50"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -902,35 +757,17 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
-                      value={companyForm.street}
-                      onChange={(e) => setCompanyForm({ ...companyForm, street: e.target.value })}
-                      className="focus:ring-primary mb-3 w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
+                      value={companyForm.companyAddress}
+                      onChange={(e) =>
+                        setCompanyForm({ ...companyForm, companyAddress: e.target.value })
+                      }
+                      disabled={isLoadingCompany}
+                      placeholder="Street, City, State ZIP"
+                      className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2 disabled:bg-gray-50"
                     />
-                    <div className="grid grid-cols-3 gap-3">
-                      <input
-                        type="text"
-                        value={companyForm.city}
-                        onChange={(e) => setCompanyForm({ ...companyForm, city: e.target.value })}
-                        placeholder="City"
-                        className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
-                      />
-                      <input
-                        type="text"
-                        value={companyForm.state}
-                        onChange={(e) => setCompanyForm({ ...companyForm, state: e.target.value })}
-                        placeholder="State"
-                        className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
-                      />
-                      <input
-                        type="text"
-                        value={companyForm.zipCode}
-                        onChange={(e) =>
-                          setCompanyForm({ ...companyForm, zipCode: e.target.value })
-                        }
-                        placeholder="ZIP"
-                        className="focus:ring-primary w-full rounded-xl border border-gray-200 px-4 py-2.5 transition-all focus:outline-none focus:ring-2"
-                      />
-                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Stored as a single line. Include city, state and ZIP.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -943,50 +780,81 @@ export default function SettingsPage() {
                 </h2>
 
                 <div className="space-y-3">
-                  {[
-                    { day: 'Monday', hours: '10:00 AM – 6:00 PM' },
-                    { day: 'Tuesday', hours: '10:00 AM – 12:30 PM' },
-                    { day: 'Wednesday', hours: '10:00 AM – 6:00 PM' },
-                    { day: 'Thursday', hours: '10:00 AM – 6:00 PM' },
-                    { day: 'Friday', hours: '10:00 AM – 6:00 PM' },
-                    { day: 'Saturday', hours: '11:00 AM – 3:00 PM' },
-                    { day: 'Sunday', hours: 'Closed' },
-                  ].map((schedule, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between rounded-xl bg-gray-50 p-4"
-                    >
-                      <span className="font-medium text-gray-900">{schedule.day}</span>
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="text"
-                          defaultValue={schedule.hours}
-                          className="focus:ring-primary rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2"
-                        />
+                  {WEEK_DAYS.map((day) => {
+                    const schedule = operatingHours[day] ?? EMPTY_OPERATING_HOURS[day];
+                    return (
+                      <div
+                        key={day}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gray-50 p-4"
+                      >
+                        <span className="font-medium text-gray-900">{DAY_LABELS[day]}</span>
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-2 text-sm text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={schedule.closed}
+                              disabled={isLoadingCompany}
+                              onChange={(e) =>
+                                setOperatingHours((prev) => ({
+                                  ...prev,
+                                  [day]: { ...schedule, closed: e.target.checked },
+                                }))
+                              }
+                              className="accent-primary h-4 w-4 rounded border-gray-300"
+                            />
+                            Closed
+                          </label>
+                          <input
+                            type="time"
+                            value={schedule.open}
+                            disabled={isLoadingCompany || schedule.closed}
+                            onChange={(e) =>
+                              setOperatingHours((prev) => ({
+                                ...prev,
+                                [day]: { ...schedule, open: e.target.value },
+                              }))
+                            }
+                            aria-label={`${DAY_LABELS[day]} opening time`}
+                            className="focus:ring-primary rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:text-gray-400"
+                          />
+                          <span className="text-sm text-gray-400">to</span>
+                          <input
+                            type="time"
+                            value={schedule.close}
+                            disabled={isLoadingCompany || schedule.closed}
+                            onChange={(e) =>
+                              setOperatingHours((prev) => ({
+                                ...prev,
+                                [day]: { ...schedule, close: e.target.value },
+                              }))
+                            }
+                            aria-label={`${DAY_LABELS[day]} closing time`}
+                            className="focus:ring-primary rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:text-gray-400"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+
+                {!isCompanyEditor && (
+                  <p className="mt-6 flex items-center gap-2 rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    Only an administrator can change company settings.
+                  </p>
+                )}
 
                 <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-6">
                   <button
-                    onClick={() =>
-                      setCompanyForm({
-                        email: 'gemautosalesinc@gmail.com',
-                        phone: '863-277-7879',
-                        street: '1311 E CANAL ST',
-                        city: 'Mulberry',
-                        state: 'FL',
-                        zipCode: '33860',
-                      })
-                    }
-                    className="rounded-xl border border-gray-200 px-5 py-2.5 text-gray-700 transition-all hover:bg-gray-50"
+                    onClick={fetchCompanySettings}
+                    disabled={isCompanySaving || isLoadingCompany}
+                    className="rounded-xl border border-gray-200 px-5 py-2.5 text-gray-700 transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCompanySave}
-                    disabled={isCompanySaving}
+                    disabled={isCompanySaving || isLoadingCompany || !isCompanyEditor}
                     className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 flex items-center gap-2 rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isCompanySaving ? (
@@ -1098,8 +966,9 @@ export default function SettingsPage() {
                               Connected
                             </span>
                             <button
-                              onClick={() => api.integrations.disconnect(integration.provider)}
-                              className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                              onClick={() => handleDisconnectIntegration(integration.provider)}
+                              disabled={integrationBusy === integration.provider}
+                              className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                               title="Disconnect"
                             >
                               <ExternalLink className="h-4 w-4" />
@@ -1107,8 +976,10 @@ export default function SettingsPage() {
                           </div>
                         ) : (
                           <button
-                            onClick={() => api.integrations.connect(integration.provider, {})}
-                            disabled={!integration.isEnabled}
+                            onClick={() => handleConnectIntegration(integration.provider)}
+                            disabled={
+                              !integration.isEnabled || integrationBusy === integration.provider
+                            }
                             className="bg-primary text-primary-foreground shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30 rounded-xl px-4 py-2 text-sm font-medium shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Connect
@@ -1119,67 +990,10 @@ export default function SettingsPage() {
                   </div>
                 )}
               </div>
-
-              {/* API Access */}
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900">API Access</h2>
-                <p className="mb-4 text-sm text-gray-500">
-                  Use our API to build custom integrations with your existing systems.
-                </p>
-
-                <div className="rounded-xl bg-gray-900 p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm text-gray-400">API Key</span>
-                    <button className="text-primary-ink hover:text-primary-ink text-sm">
-                      Copy
-                    </button>
-                  </div>
-                  <code className="font-mono text-sm text-green-400">
-                    gem_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-                  </code>
-                </div>
-
-                <div className="mt-4 flex items-center gap-4">
-                  <button className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50">
-                    <RefreshCw className="h-4 w-4" />
-                    Regenerate Key
-                  </button>
-                  <a
-                    href="#"
-                    className="text-primary-ink hover:text-primary-ink flex items-center gap-2 text-sm"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    View API Documentation
-                  </a>
-                </div>
-              </div>
             </div>
           )}
         </motion.div>
       </div>
-
-      {/* Payment Method Modals */}
-      <AddPaymentMethodModal
-        isOpen={isAddPaymentModalOpen}
-        onClose={() => setIsAddPaymentModalOpen(false)}
-        onSuccess={fetchPaymentMethods}
-      />
-      <DeletePaymentMethodModal
-        isOpen={isDeletePaymentModalOpen}
-        onClose={() => {
-          setIsDeletePaymentModalOpen(false);
-          setPaymentMethodToDelete(null);
-        }}
-        onSuccess={fetchPaymentMethods}
-        paymentMethod={paymentMethodToDelete}
-      />
-
-      {/* Upgrade Plan Modal */}
-      <UpgradePlanModal
-        isOpen={isUpgradePlanModalOpen}
-        onClose={() => setIsUpgradePlanModalOpen(false)}
-        currentPlan="professional"
-      />
     </div>
   );
 }

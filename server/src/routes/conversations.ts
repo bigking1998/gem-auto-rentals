@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { BadRequestError, NotFoundError } from '../middleware/errorHandler.js';
+import { parsePagination } from '../lib/pagination.js';
 import { ActivityLogger } from '../lib/activityLogger.js';
 
 const router = Router();
@@ -42,9 +43,11 @@ router.get('/', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (r
       unreadOnly,
     } = req.query;
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = Math.min(parseInt(limit as string, 10), 100);
-    const skip = (pageNum - 1) * limitNum;
+    const {
+      page: pageNum,
+      limit: limitNum,
+      skip,
+    } = parsePagination(page, limit, { defaultLimit: 20 });
 
     // Build where clause
     const where: Record<string, unknown> = {};
@@ -160,9 +163,10 @@ router.get('/', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (r
     }));
 
     // Filter for unread only if requested
-    const finalConversations = unreadOnly === 'true'
-      ? transformedConversations.filter((c) => c.unreadCount > 0)
-      : transformedConversations;
+    const finalConversations =
+      unreadOnly === 'true'
+        ? transformedConversations.filter((c) => c.unreadCount > 0)
+        : transformedConversations;
 
     res.json({
       success: true,
@@ -180,145 +184,157 @@ router.get('/', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (r
 });
 
 // GET /api/conversations/unread-count - Get unread message count
-router.get('/unread-count', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (_req, res, next) => {
-  try {
-    const count = await prisma.message.count({
-      where: {
-        senderType: 'CUSTOMER',
-        readAt: null,
-        conversation: {
-          status: { in: ['OPEN', 'PENDING'] },
+router.get(
+  '/unread-count',
+  authenticate,
+  authorize('ADMIN', 'MANAGER', 'SUPPORT'),
+  async (_req, res, next) => {
+    try {
+      const count = await prisma.message.count({
+        where: {
+          senderType: 'CUSTOMER',
+          readAt: null,
+          conversation: {
+            status: { in: ['OPEN', 'PENDING'] },
+          },
         },
-      },
-    });
+      });
 
-    res.json({
-      success: true,
-      data: { count },
-    });
-  } catch (error) {
-    next(error);
+      res.json({
+        success: true,
+        data: { count },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // GET /api/conversations/:id - Get conversation with messages
-router.get('/:id', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { page = '1', limit = '50' } = req.query;
+router.get(
+  '/:id',
+  authenticate,
+  authorize('ADMIN', 'MANAGER', 'SUPPORT'),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { page = '1', limit = '50' } = req.query;
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = Math.min(parseInt(limit as string, 10), 100);
-    const skip = (pageNum - 1) * limitNum;
+      const {
+        page: pageNum,
+        limit: limitNum,
+        skip,
+      } = parsePagination(page, limit, { defaultLimit: 50 });
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        subject: true,
-        status: true,
-        priority: true,
-        lastMessageAt: true,
-        createdAt: true,
-        updatedAt: true,
-        customer: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-            avatarUrl: true,
-            createdAt: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        booking: {
-          select: {
-            id: true,
-            status: true,
-            startDate: true,
-            endDate: true,
-            totalAmount: true,
-            vehicle: {
-              select: {
-                id: true,
-                make: true,
-                model: true,
-                year: true,
-                images: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!conversation) {
-      throw NotFoundError('Conversation not found');
-    }
-
-    // Get messages with pagination
-    const [messages, totalMessages] = await Promise.all([
-      prisma.message.findMany({
-        where: { conversationId: id },
+      const conversation = await prisma.conversation.findUnique({
+        where: { id },
         select: {
           id: true,
-          content: true,
-          contentType: true,
-          senderType: true,
-          readAt: true,
+          subject: true,
+          status: true,
+          priority: true,
+          lastMessageAt: true,
           createdAt: true,
-          sender: {
+          updatedAt: true,
+          customer: {
             select: {
               id: true,
               email: true,
               firstName: true,
               lastName: true,
+              phone: true,
               avatarUrl: true,
+              createdAt: true,
             },
           },
-          attachments: {
+          assignedTo: {
             select: {
               id: true,
-              fileName: true,
-              fileUrl: true,
-              fileSize: true,
-              mimeType: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          booking: {
+            select: {
+              id: true,
+              status: true,
+              startDate: true,
+              endDate: true,
+              totalAmount: true,
+              vehicle: {
+                select: {
+                  id: true,
+                  make: true,
+                  model: true,
+                  year: true,
+                  images: true,
+                },
+              },
             },
           },
         },
-        orderBy: { createdAt: 'asc' },
-        skip,
-        take: limitNum,
-      }),
-      prisma.message.count({ where: { conversationId: id } }),
-    ]);
+      });
 
-    res.json({
-      success: true,
-      data: {
-        ...conversation,
-        messages,
-      },
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total: totalMessages,
-        pages: Math.ceil(totalMessages / limitNum),
-      },
-    });
-  } catch (error) {
-    next(error);
+      if (!conversation) {
+        throw NotFoundError('Conversation not found');
+      }
+
+      // Get messages with pagination
+      const [messages, totalMessages] = await Promise.all([
+        prisma.message.findMany({
+          where: { conversationId: id },
+          select: {
+            id: true,
+            content: true,
+            contentType: true,
+            senderType: true,
+            readAt: true,
+            createdAt: true,
+            sender: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+              },
+            },
+            attachments: {
+              select: {
+                id: true,
+                fileName: true,
+                fileUrl: true,
+                fileSize: true,
+                mimeType: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+          skip,
+          take: limitNum,
+        }),
+        prisma.message.count({ where: { conversationId: id } }),
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          ...conversation,
+          messages,
+        },
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: totalMessages,
+          pages: Math.ceil(totalMessages / limitNum),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // POST /api/conversations - Create new conversation
 router.post('/', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (req, res, next) => {
@@ -404,244 +420,271 @@ router.post('/', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (
 });
 
 // PATCH /api/conversations/:id - Update conversation
-router.patch('/:id', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const data = updateConversationSchema.parse(req.body);
+router.patch(
+  '/:id',
+  authenticate,
+  authorize('ADMIN', 'MANAGER', 'SUPPORT'),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const data = updateConversationSchema.parse(req.body);
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id },
-      select: { id: true, status: true },
-    });
+      const conversation = await prisma.conversation.findUnique({
+        where: { id },
+        select: { id: true, status: true },
+      });
 
-    if (!conversation) {
-      throw NotFoundError('Conversation not found');
-    }
+      if (!conversation) {
+        throw NotFoundError('Conversation not found');
+      }
 
-    // Update conversation
-    const updated = await prisma.conversation.update({
-      where: { id },
-      data: {
-        ...data,
-        ...(data.status && data.status !== conversation.status
-          ? {
-              // Add system message for status change
-              messages: {
-                create: {
-                  senderId: req.user!.id,
-                  senderType: 'SYSTEM',
-                  content: `Status changed from ${conversation.status} to ${data.status}`,
-                  contentType: 'TEXT',
-                },
-              },
-            }
-          : {}),
-      },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-    });
-
-    res.json({
-      success: true,
-      data: updated,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// POST /api/conversations/:id/messages - Send a message
-router.post('/:id/messages', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const data = sendMessageSchema.parse(req.body);
-
-    const conversation = await prisma.conversation.findUnique({
-      where: { id },
-      select: { id: true, customerId: true, status: true },
-    });
-
-    if (!conversation) {
-      throw NotFoundError('Conversation not found');
-    }
-
-    // Create message and update conversation
-    const [message] = await prisma.$transaction([
-      prisma.message.create({
+      // Update conversation
+      const updated = await prisma.conversation.update({
+        where: { id },
         data: {
-          conversationId: id,
-          senderId: req.user!.id,
-          senderType: 'STAFF',
-          content: data.content,
-          contentType: data.contentType || 'TEXT',
+          ...data,
+          ...(data.status && data.status !== conversation.status
+            ? {
+                // Add system message for status change
+                messages: {
+                  create: {
+                    senderId: req.user!.id,
+                    senderType: 'SYSTEM',
+                    content: `Status changed from ${conversation.status} to ${data.status}`,
+                    contentType: 'TEXT',
+                  },
+                },
+              }
+            : {}),
         },
         include: {
-          sender: {
+          customer: {
             select: {
               id: true,
               email: true,
               firstName: true,
               lastName: true,
-              avatarUrl: true,
             },
           },
-          attachments: true,
+          assignedTo: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
-      }),
-      prisma.conversation.update({
-        where: { id },
-        data: {
-          lastMessageAt: new Date(),
-          // Reopen if was resolved/closed
-          ...(conversation.status === 'RESOLVED' || conversation.status === 'CLOSED'
-            ? { status: 'OPEN' }
-            : {}),
-        },
-      }),
-    ]);
-
-    // Log activity
-    await ActivityLogger.messageSend(req.user!.id, message.id, id);
-
-    // TODO: Send email notification to customer
-
-    res.status(201).json({
-      success: true,
-      data: message,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// PATCH /api/messages/:id/read - Mark message as read
-router.patch('/messages/:messageId/read', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (req, res, next) => {
-  try {
-    const { messageId } = req.params;
-
-    const message = await prisma.message.update({
-      where: { id: messageId },
-      data: { readAt: new Date() },
-      select: {
-        id: true,
-        readAt: true,
-        conversationId: true,
-      },
-    });
-
-    res.json({
-      success: true,
-      data: message,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// POST /api/conversations/:id/read-all - Mark all messages in conversation as read
-router.post('/:id/read-all', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    const result = await prisma.message.updateMany({
-      where: {
-        conversationId: id,
-        readAt: null,
-        senderType: 'CUSTOMER',
-      },
-      data: { readAt: new Date() },
-    });
-
-    res.json({
-      success: true,
-      data: { count: result.count },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// POST /api/conversations/:id/assign - Assign conversation to staff
-router.post('/:id/assign', authenticate, authorize('ADMIN', 'MANAGER', 'SUPPORT'), async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { assignedToId } = z.object({
-      assignedToId: z.string().nullable(),
-    }).parse(req.body);
-
-    const conversation = await prisma.conversation.findUnique({
-      where: { id },
-      select: { id: true, assignedToId: true },
-    });
-
-    if (!conversation) {
-      throw NotFoundError('Conversation not found');
-    }
-
-    // Verify staff member if assigning
-    if (assignedToId) {
-      const staff = await prisma.user.findUnique({
-        where: { id: assignedToId },
-        select: { id: true, role: true },
       });
 
-      if (!staff || staff.role === 'CUSTOMER') {
-        throw BadRequestError('Invalid staff member');
-      }
+      res.json({
+        success: true,
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
     }
-
-    // Update assignment and add system message
-    const updated = await prisma.conversation.update({
-      where: { id },
-      data: {
-        assignedToId,
-        messages: {
-          create: {
-            senderId: req.user!.id,
-            senderType: 'SYSTEM',
-            content: assignedToId
-              ? `Conversation assigned to staff member`
-              : 'Conversation unassigned',
-            contentType: 'TEXT',
-          },
-        },
-      },
-      include: {
-        assignedTo: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-    });
-
-    res.json({
-      success: true,
-      data: updated,
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
+
+// POST /api/conversations/:id/messages - Send a message
+router.post(
+  '/:id/messages',
+  authenticate,
+  authorize('ADMIN', 'MANAGER', 'SUPPORT'),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const data = sendMessageSchema.parse(req.body);
+
+      const conversation = await prisma.conversation.findUnique({
+        where: { id },
+        select: { id: true, customerId: true, status: true },
+      });
+
+      if (!conversation) {
+        throw NotFoundError('Conversation not found');
+      }
+
+      // Create message and update conversation
+      const [message] = await prisma.$transaction([
+        prisma.message.create({
+          data: {
+            conversationId: id,
+            senderId: req.user!.id,
+            senderType: 'STAFF',
+            content: data.content,
+            contentType: data.contentType || 'TEXT',
+          },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+              },
+            },
+            attachments: true,
+          },
+        }),
+        prisma.conversation.update({
+          where: { id },
+          data: {
+            lastMessageAt: new Date(),
+            // Reopen if was resolved/closed
+            ...(conversation.status === 'RESOLVED' || conversation.status === 'CLOSED'
+              ? { status: 'OPEN' }
+              : {}),
+          },
+        }),
+      ]);
+
+      // Log activity
+      await ActivityLogger.messageSend(req.user!.id, message.id, id);
+
+      // TODO: Send email notification to customer
+
+      res.status(201).json({
+        success: true,
+        data: message,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// PATCH /api/messages/:id/read - Mark message as read
+router.patch(
+  '/messages/:messageId/read',
+  authenticate,
+  authorize('ADMIN', 'MANAGER', 'SUPPORT'),
+  async (req, res, next) => {
+    try {
+      const { messageId } = req.params;
+
+      const message = await prisma.message.update({
+        where: { id: messageId },
+        data: { readAt: new Date() },
+        select: {
+          id: true,
+          readAt: true,
+          conversationId: true,
+        },
+      });
+
+      res.json({
+        success: true,
+        data: message,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// POST /api/conversations/:id/read-all - Mark all messages in conversation as read
+router.post(
+  '/:id/read-all',
+  authenticate,
+  authorize('ADMIN', 'MANAGER', 'SUPPORT'),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+
+      const result = await prisma.message.updateMany({
+        where: {
+          conversationId: id,
+          readAt: null,
+          senderType: 'CUSTOMER',
+        },
+        data: { readAt: new Date() },
+      });
+
+      res.json({
+        success: true,
+        data: { count: result.count },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// POST /api/conversations/:id/assign - Assign conversation to staff
+router.post(
+  '/:id/assign',
+  authenticate,
+  authorize('ADMIN', 'MANAGER', 'SUPPORT'),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { assignedToId } = z
+        .object({
+          assignedToId: z.string().nullable(),
+        })
+        .parse(req.body);
+
+      const conversation = await prisma.conversation.findUnique({
+        where: { id },
+        select: { id: true, assignedToId: true },
+      });
+
+      if (!conversation) {
+        throw NotFoundError('Conversation not found');
+      }
+
+      // Verify staff member if assigning
+      if (assignedToId) {
+        const staff = await prisma.user.findUnique({
+          where: { id: assignedToId },
+          select: { id: true, role: true },
+        });
+
+        if (!staff || staff.role === 'CUSTOMER') {
+          throw BadRequestError('Invalid staff member');
+        }
+      }
+
+      // Update assignment and add system message
+      const updated = await prisma.conversation.update({
+        where: { id },
+        data: {
+          assignedToId,
+          messages: {
+            create: {
+              senderId: req.user!.id,
+              senderType: 'SYSTEM',
+              content: assignedToId
+                ? `Conversation assigned to staff member`
+                : 'Conversation unassigned',
+              contentType: 'TEXT',
+            },
+          },
+        },
+        include: {
+          assignedTo: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 // DELETE /api/conversations/:id - Archive/delete conversation (Admin only)
 router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res, next) => {

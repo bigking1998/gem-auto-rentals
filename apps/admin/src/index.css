@@ -15,7 +15,7 @@
     --popover-foreground: 215 28% 17%;
 
     --primary: 46 65% 52%;
-    --primary-ink: 42 73% 33%;
+    --primary-ink: 42 73% 30%;
     --primary-light: 43 82% 75%;
     --primary-dark: 42 73% 38%;
     --navy: 215 61% 10%;
@@ -32,7 +32,7 @@
 
     --accent: 46 60% 95%;
     /* Pale gold wash - matches customer site */
-    --accent-foreground: 42 73% 33%;
+    --accent-foreground: 42 73% 30%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;

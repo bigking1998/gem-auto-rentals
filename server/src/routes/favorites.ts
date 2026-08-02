@@ -2,8 +2,14 @@ import { Router } from 'express';
 import prisma from '../lib/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 import { NotFoundError } from '../middleware/errorHandler.js';
+import { recordId } from '../lib/validation.js';
 
 const router = Router();
+
+// These routes take the vehicle id from the path rather than a body, so the
+// value is always a string. Validating the shape anyway keeps obviously bad ids
+// from reaching the database and returns a 400 instead of a misleading 404.
+const vehicleIdParamSchema = recordId('Invalid vehicle ID');
 
 // GET /api/favorites - Get user's favorites list
 router.get('/', authenticate, async (req, res, next) => {
@@ -45,7 +51,7 @@ router.get('/', authenticate, async (req, res, next) => {
 router.post('/:vehicleId', authenticate, async (req, res, next) => {
   try {
     const userId = req.user!.id;
-    const { vehicleId } = req.params;
+    const vehicleId = vehicleIdParamSchema.parse(req.params.vehicleId);
 
     // Check if vehicle exists
     const vehicle = await prisma.vehicle.findUnique({
@@ -96,7 +102,7 @@ router.post('/:vehicleId', authenticate, async (req, res, next) => {
 router.delete('/:vehicleId', authenticate, async (req, res, next) => {
   try {
     const userId = req.user!.id;
-    const { vehicleId } = req.params;
+    const vehicleId = vehicleIdParamSchema.parse(req.params.vehicleId);
 
     const favorite = await prisma.favorite.findUnique({
       where: {
@@ -125,7 +131,7 @@ router.delete('/:vehicleId', authenticate, async (req, res, next) => {
 router.get('/check/:vehicleId', authenticate, async (req, res, next) => {
   try {
     const userId = req.user!.id;
-    const { vehicleId } = req.params;
+    const vehicleId = vehicleIdParamSchema.parse(req.params.vehicleId);
 
     const favorite = await prisma.favorite.findUnique({
       where: {

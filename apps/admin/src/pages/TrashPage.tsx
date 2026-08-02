@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import { cn, formatDate } from '@/lib/utils';
 import { api, TrashSummary, DeletedItem, TrashEntityType } from '@/lib/api';
+import { conversationStatusColors, statusColor } from '@/lib/statusColors';
 
 // Entity type configuration
 const entityTypes: { key: TrashEntityType; label: string; icon: typeof Users }[] = [
@@ -230,11 +231,7 @@ export default function TrashPage() {
             <span
               className={cn(
                 'mt-1 inline-block rounded px-2 py-0.5 text-xs',
-                item.status === 'OPEN'
-                  ? 'bg-green-100 text-green-700'
-                  : item.status === 'CLOSED'
-                    ? 'bg-gray-100 text-gray-700'
-                    : 'bg-yellow-100 text-yellow-700'
+                statusColor(conversationStatusColors, item.status as string)
               )}
             >
               {item.status as string}

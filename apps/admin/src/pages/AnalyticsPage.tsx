@@ -499,7 +499,7 @@ export default function AnalyticsPage() {
                   ]
                 );
               }}
-              className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors"
+              className="text-primary-ink hover:bg-accent flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors"
             >
               <Download className="h-3 w-3" />
               CSV
@@ -562,7 +562,7 @@ export default function AnalyticsPage() {
                   ]
                 );
               }}
-              className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors"
+              className="text-primary-ink hover:bg-accent flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors"
             >
               <Download className="h-3 w-3" />
               CSV
@@ -630,7 +630,7 @@ export default function AnalyticsPage() {
                 ]
               );
             }}
-            className="text-primary-ink hover:bg-accent hover:text-primary-ink flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors"
+            className="text-primary-ink hover:bg-accent flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors"
           >
             <Download className="h-3 w-3" />
             CSV

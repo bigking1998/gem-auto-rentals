@@ -127,7 +127,10 @@ export default function BookingPage() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (isInitialized && !isAuthenticated) {
-      const returnUrl = `/booking?${searchParams.toString()}`;
+      // Only append the query string when there is one, otherwise the
+      // returnUrl carries a stray trailing "?".
+      const query = searchParams.toString();
+      const returnUrl = query ? `/booking?${query}` : '/booking';
       navigate(`/login?returnUrl=${encodeURIComponent(returnUrl)}`, { replace: true });
     }
   }, [isInitialized, isAuthenticated, navigate, searchParams]);

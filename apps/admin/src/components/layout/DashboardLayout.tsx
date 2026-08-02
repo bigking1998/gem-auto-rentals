@@ -12,17 +12,20 @@ export default function DashboardLayout() {
 
   const fetchBadgeCounts = useCallback(async () => {
     try {
-      // Fetch total bookings count (total is in pagination object)
-      const bookingsResponse = await api.bookings.list({ limit: 1 });
-      const totalBookings = bookingsResponse.pagination?.total || 0;
+      // The Bookings badge means "needs my attention", so it must be the PENDING
+      // count, not the total — a total never decreases as work gets done.
+      const [pendingResponse, unread] = await Promise.all([
+        api.bookings.list({ status: 'PENDING', limit: 1 }),
+        // Real unread message count, not the number of OPEN conversations.
+        api.conversations.getUnreadCount(),
+      ]);
 
-      // Fetch open conversations count (total is in pagination object)
-      const conversationsResponse = await api.conversations.list({ status: 'OPEN', limit: 1 });
-      const openConversations = conversationsResponse.pagination?.total || 0;
+      const pendingBookings = pendingResponse.pagination?.total || 0;
+      const unreadMessages = unread?.count || 0;
 
       setBadges({
-        pendingBookings: totalBookings > 0 ? totalBookings : undefined,
-        unreadMessages: openConversations > 0 ? openConversations : undefined,
+        pendingBookings: pendingBookings > 0 ? pendingBookings : undefined,
+        unreadMessages: unreadMessages > 0 ? unreadMessages : undefined,
       });
     } catch (error) {
       console.error('Failed to fetch badge counts:', error);
@@ -31,9 +34,39 @@ export default function DashboardLayout() {
 
   useEffect(() => {
     fetchBadgeCounts();
-    // Refresh badge counts every 30 seconds
-    const interval = setInterval(fetchBadgeCounts, 30000);
-    return () => clearInterval(interval);
+
+    // Refresh every 30s, but only while the tab is visible — a background tab
+    // was previously polling two endpoints forever.
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const start = () => {
+      if (interval === null) {
+        interval = setInterval(fetchBadgeCounts, 30000);
+      }
+    };
+    const stop = () => {
+      if (interval !== null) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        fetchBadgeCounts();
+        start();
+      }
+    };
+
+    if (!document.hidden) start();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [fetchBadgeCounts]);
 
   return (

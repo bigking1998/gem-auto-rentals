@@ -55,7 +55,7 @@ export default function WhyChooseUs() {
           transition={{ duration: 0.5 }}
           className="mb-12 text-center"
         >
-          <span className="bg-primary/10 text-primary mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
+          <span className="bg-primary/10 text-primary-ink mb-4 inline-block rounded-full px-4 py-1.5 text-sm font-semibold">
             Why Us
           </span>
           <h2 className="mb-4 text-3xl font-bold text-gray-900 lg:text-4xl">
@@ -83,7 +83,7 @@ export default function WhyChooseUs() {
               >
                 <benefit.icon className="h-6 w-6" />
               </div>
-              <h3 className="group-hover:text-primary mb-2 text-lg font-bold text-gray-900 transition-colors">
+              <h3 className="group-hover:text-primary-ink mb-2 text-lg font-bold text-gray-900 transition-colors">
                 {benefit.title}
               </h3>
               <p className="text-sm leading-relaxed text-gray-600">{benefit.description}</p>

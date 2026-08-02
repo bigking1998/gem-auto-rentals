@@ -70,7 +70,12 @@ export default function Sidebar({
   const mainNavItems = getMainNavItems(badges);
 
   const NavItem = ({ item }: { item: (typeof mainNavItems)[0] }) => {
-    const isActive = location.pathname === item.href;
+    // Highlight the section on nested routes too (/fleet/new, /customers/:id …).
+    // '/' is exact-only, otherwise it would match every route.
+    const isActive =
+      item.href === '/'
+        ? location.pathname === '/'
+        : location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
 
     return (
       <Link

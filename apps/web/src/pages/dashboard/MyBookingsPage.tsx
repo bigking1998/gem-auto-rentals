@@ -5,7 +5,6 @@ import {
   Calendar,
   MapPin,
   Car,
-  ChevronRight,
   AlertCircle,
   CheckCircle,
   XCircle,
@@ -342,8 +341,12 @@ export default function MyBookingsPage() {
                               Receipt
                             </button>
                             {vehicle && (
+                              // `/vehicles/:id/book` is not a route. The booking
+                              // flow reads the selected vehicle out of session
+                              // storage, which only the detail page populates —
+                              // so send them there rather than to a 404.
                               <Link
-                                to={`/vehicles/${vehicle.id}/book`}
+                                to={`/vehicles/${vehicle.id}`}
                                 className="text-primary-ink hover:bg-accent inline-flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                               >
                                 <RotateCcw className="h-4 w-4" />
@@ -352,13 +355,9 @@ export default function MyBookingsPage() {
                             )}
                           </>
                         )}
-                        <Link
-                          to={`/dashboard/bookings/${booking.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-                        >
-                          View Details
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
+                        {/* "View Details" removed — `/dashboard/bookings/:id`
+                            has never existed. Restore it when the booking
+                            detail route is actually built. */}
                       </div>
                     </div>
                   </div>
