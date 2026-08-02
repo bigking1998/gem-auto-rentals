@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Gem Car Rentals">
+  <!-- Simplified for small sizes: the full logo's car silhouette and thin
+       facet lines turn to mud below ~32px, so this keeps only the diamond
+       with heavier strokes and a navy plate for contrast in both light and
+       dark browser chrome. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F5D98B"/>
+      <stop offset="50%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#A67C1A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="13" fill="#0A1628"/>
+
+  <!-- diamond body -->
+  <polygon points="14,26 50,26 32,52" fill="#1E3A6E"/>
+  <polygon points="18,14 46,14 50,26 14,26" fill="#2C4F8C"/>
+  <polygon points="32,26 50,26 32,52" fill="#16305C"/>
+
+  <!-- gold frame -->
+  <g fill="none" stroke="url(#g)" stroke-width="3.4" stroke-linejoin="round">
+    <polygon points="14,26 50,26 32,52"/>
+    <polygon points="18,14 46,14 50,26 14,26"/>
+    <path d="M18 14 L24 26 M32 14 L32 26 M46 14 L40 26"/>
+  </g>
+</svg>
