@@ -146,6 +146,15 @@ export default function Footer() {
             <Link to="/privacy" className="hover:text-primary transition-colors">
               Privacy
             </Link>
+            {/* A2P/10DLC: the compliance site lives on rent.gemrentalcars.com. Carriers want a
+                clear discovery path from the main site, or a subdomain can read as a
+                compliance "front". Plain <a>, not <Link> — this leaves the SPA. */}
+            <a
+              href="https://rent.gemrentalcars.com/home"
+              className="hover:text-primary transition-colors"
+            >
+              Text Updates &amp; SMS Policy
+            </a>
           </div>
         </div>
       </div>
