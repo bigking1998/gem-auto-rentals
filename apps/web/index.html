@@ -28,5 +28,33 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!--
+      GoHighLevel chat widget — needed for A2P/10DLC verification.
+
+      Loaded on every page EXCEPT the routes that collect a phone number. A2P compliance
+      review rejects any single URL that hosts BOTH a chat widget and a phone/SMS-collecting
+      form ("multiple opt-ins detected"); the rule is binary and per-URL, not per-site.
+      See docs/a2p/a2p-constraints.md.
+
+      Phone-collecting routes as of 2026-09-19: /waitinglist, /signup, /booking.
+      Keep this list in step with the forms, or the widget will appear beside a phone field.
+    -->
+    <script>
+      (function () {
+        var phoneFormRoutes = ['/waitinglist', '/signup', '/booking'];
+        var path = location.pathname.replace(/\/+$/, '') || '/';
+        for (var i = 0; i < phoneFormRoutes.length; i++) {
+          var r = phoneFormRoutes[i];
+          if (path === r || path.indexOf(r + '/') === 0) return;
+        }
+        var s = document.createElement('script');
+        s.src = 'https://widgets.leadconnectorhq.com/loader.js';
+        s.setAttribute('data-resources-url', 'https://widgets.leadconnectorhq.com/chat-widget/loader.js');
+        s.setAttribute('data-widget-id', '6aaf2990599f010aec32cba9');
+        s.setAttribute('data-source', 'WEB_USER');
+        document.body.appendChild(s);
+      })();
+    </script>
   </body>
 </html>
