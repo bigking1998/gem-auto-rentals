@@ -1,6 +1,22 @@
+---
+title: 'Cloudflare Optimization Setup Guide'
+aliases: [cloudflare-setup]
+type: leaf
+status: active
+tags: [type/leaf, project/gem-auto-rentals, topic/infra, topic/performance]
+updated: 2026-01-29
+summary: >
+  Step-by-step guide to the free Cloudflare optimizations for the site — dashboard settings,
+  verification, and performance monitoring.
+related:
+  - '[[DEPLOYMENT]]'
+  - '[[OPTIMIZATION_PLAN]]'
+---
+
 # Cloudflare Optimization Setup Guide
 
 ## Overview
+
 This guide covers FREE Cloudflare optimizations for Gem Auto Rentals to maximize site speed and performance.
 
 ---
@@ -15,6 +31,7 @@ The following files have been created and will be deployed with your next build:
 - `apps/admin/public/_redirects` - SPA routing for admin
 
 **What these do:**
+
 - Static assets (JS, CSS, fonts) cached for 1 year at the edge
 - Images cached for 30 days
 - HTML always revalidated (ensures users get latest app version)
@@ -34,22 +51,23 @@ The following files have been created and will be deployed with your next build:
 
 Configure these settings:
 
-| Setting | Value | Notes |
-|---------|-------|-------|
-| Auto Minify - JavaScript | ✅ ON | Additional minification |
-| Auto Minify - CSS | ✅ ON | Additional minification |
-| Auto Minify - HTML | ✅ ON | Additional minification |
-| Brotli | ✅ ON | Better compression than gzip |
+| Setting                  | Value | Notes                        |
+| ------------------------ | ----- | ---------------------------- |
+| Auto Minify - JavaScript | ✅ ON | Additional minification      |
+| Auto Minify - CSS        | ✅ ON | Additional minification      |
+| Auto Minify - HTML       | ✅ ON | Additional minification      |
+| Brotli                   | ✅ ON | Better compression than gzip |
 
 4. Go to **Speed → Optimization → Protocol Optimization**
 
-| Setting | Value | Notes |
-|---------|-------|-------|
-| HTTP/2 | ✅ ON | Should be on by default |
-| HTTP/3 (with QUIC) | ✅ ON | Fastest protocol |
+| Setting                     | Value                | Notes                                          |
+| --------------------------- | -------------------- | ---------------------------------------------- |
+| HTTP/2                      | ✅ ON                | Should be on by default                        |
+| HTTP/3 (with QUIC)          | ✅ ON                | Fastest protocol                               |
 | 0-RTT Connection Resumption | ⚠️ ON (with caution) | Faster repeat visits - see security note below |
 
 > **Security Note for 0-RTT:** 0-RTT Connection Resumption enables replay attacks on non-idempotent HTTP methods (POST, PUT, DELETE). Only enable if you have implemented anti-replay protections such as:
+>
 > - Requiring idempotency keys for all mutating operations
 > - Server-side replay detection caches
 > - Strict authentication and CSRF token validation
@@ -59,9 +77,9 @@ Configure these settings:
 
 5. Go to **Speed → Optimization → Other**
 
-| Setting | Value | Notes |
-|---------|-------|-------|
-| Early Hints | ✅ ON | Preloads resources |
+| Setting       | Value  | Notes                            |
+| ------------- | ------ | -------------------------------- |
+| Early Hints   | ✅ ON  | Preloads resources               |
 | Rocket Loader | ❌ OFF | **IMPORTANT: Breaks React apps** |
 
 ---
@@ -70,16 +88,16 @@ Configure these settings:
 
 1. Go to **Caching → Configuration**
 
-| Setting | Value | Notes |
-|---------|-------|-------|
-| Caching Level | Standard | Default is fine |
-| Browser Cache TTL | Respect Existing Headers | Uses our _headers file |
-| Always Online | ✅ ON | Shows cached version if origin down |
+| Setting           | Value                    | Notes                               |
+| ----------------- | ------------------------ | ----------------------------------- |
+| Caching Level     | Standard                 | Default is fine                     |
+| Browser Cache TTL | Respect Existing Headers | Uses our \_headers file             |
+| Always Online     | ✅ ON                    | Shows cached version if origin down |
 
 2. Go to **Caching → Tiered Cache**
 
-| Setting | Value |
-|---------|-------|
+| Setting      | Value                               |
+| ------------ | ----------------------------------- |
 | Tiered Cache | ✅ ON (Smart Tiered Cache Topology) |
 
 ---
@@ -89,6 +107,7 @@ Configure these settings:
 Go to **Caching → Cache Rules** and create these rules:
 
 #### Rule 1: Bypass Cache for API
+
 - **Rule name:** Bypass API Cache
 - **When incoming requests match:**
   - Field: `URI Path`
@@ -98,6 +117,7 @@ Go to **Caching → Cache Rules** and create these rules:
   - Cache eligibility: `Bypass cache`
 
 #### Rule 2: Cache Static Assets
+
 - **Rule name:** Cache Static Assets
 - **When incoming requests match:**
   - Field: `URI Path`
@@ -109,6 +129,7 @@ Go to **Caching → Cache Rules** and create these rules:
   - Browser TTL: `Override: 1 year`
 
 #### Rule 3: Cache JS/CSS Files
+
 - **Rule name:** Cache JS CSS
 - **When incoming requests match:**
   - Field: `URI Path`
@@ -120,6 +141,7 @@ Go to **Caching → Cache Rules** and create these rules:
   - Browser TTL: `Override: 1 year`
 
 #### Rule 4: Cache Images
+
 - **Rule name:** Cache Images
 - **When incoming requests match:**
   - Field: `URI Path`
@@ -136,18 +158,18 @@ Go to **Caching → Cache Rules** and create these rules:
 
 1. Go to **SSL/TLS → Overview**
 
-| Setting | Value |
-|---------|-------|
+| Setting                 | Value         |
+| ----------------------- | ------------- |
 | SSL/TLS encryption mode | Full (strict) |
 
 2. Go to **SSL/TLS → Edge Certificates**
 
-| Setting | Value |
-|---------|-------|
-| Always Use HTTPS | ✅ ON |
-| Automatic HTTPS Rewrites | ✅ ON |
-| TLS 1.3 | ✅ ON |
-| Minimum TLS Version | TLS 1.2 |
+| Setting                  | Value   |
+| ------------------------ | ------- |
+| Always Use HTTPS         | ✅ ON   |
+| Automatic HTTPS Rewrites | ✅ ON   |
+| TLS 1.3                  | ✅ ON   |
+| Minimum TLS Version      | TLS 1.2 |
 
 ---
 
@@ -155,11 +177,11 @@ Go to **Caching → Cache Rules** and create these rules:
 
 1. Go to **Security → Settings**
 
-| Setting | Value |
-|---------|-------|
-| Security Level | Medium |
-| Challenge Passage | 30 minutes |
-| Browser Integrity Check | ✅ ON |
+| Setting                 | Value      |
+| ----------------------- | ---------- |
+| Security Level          | Medium     |
+| Challenge Passage       | 30 minutes |
+| Browser Integrity Check | ✅ ON      |
 
 ---
 
@@ -168,25 +190,33 @@ Go to **Caching → Cache Rules** and create these rules:
 After completing the setup, verify everything works:
 
 ### Test 1: Check Headers
+
 ```bash
 curl -I https://gemrentalcars.com/
 ```
+
 Should see security headers like `X-Content-Type-Options`, `X-Frame-Options`
 
 ### Test 2: Check Asset Caching
+
 > **Note:** Replace `index-abc123.js` with an actual asset filename from your deployed app (check your build output or browser DevTools Network tab).
+
 ```bash
 curl -I https://gemrentalcars.com/assets/index-abc123.js
 ```
+
 Should see `Cache-Control: public, max-age=31536000, immutable`
 
 ### Test 3: Check Compression
+
 ```bash
 curl -I -H "Accept-Encoding: br" https://gemrentalcars.com/
 ```
+
 Should see `Content-Encoding: br` (Brotli)
 
 ### Test 4: Run Lighthouse
+
 1. Open Chrome DevTools
 2. Go to Lighthouse tab
 3. Run audit on https://gemrentalcars.com
@@ -197,11 +227,13 @@ Should see `Content-Encoding: br` (Brotli)
 ## Phase 4: Monitor Performance
 
 ### Cloudflare Analytics (Free)
+
 - Go to **Analytics & Logs → Traffic**
 - Monitor cache hit ratio (aim for 80%+)
 - Check bandwidth saved
 
 ### Web Analytics (Free)
+
 - Go to **Analytics & Logs → Web Analytics**
 - Enable if not already
 - Tracks Core Web Vitals
@@ -211,12 +243,14 @@ Should see `Content-Encoding: br` (Brotli)
 ## Summary Checklist
 
 ### Code (Already Done ✅)
+
 - [x] Created `_headers` for web app
 - [x] Created `_redirects` for web app
 - [x] Created `_headers` for admin app
 - [x] Updated `_redirects` for admin app
 
 ### Cloudflare Dashboard (Your Action Items)
+
 - [ ] Enable Auto Minify (JS, CSS, HTML)
 - [ ] Enable Brotli compression
 - [ ] Enable HTTP/3 (QUIC)
@@ -238,11 +272,11 @@ Should see `Content-Encoding: br` (Brotli)
 
 ## Expected Performance Gains
 
-| Metric | Before | After (Expected) |
-|--------|--------|------------------|
-| TTFB (Time to First Byte) | ~200-500ms | ~50-100ms |
-| LCP (Largest Contentful Paint) | ~2-4s | ~1-2s |
-| Cache Hit Ratio | 0% | 80%+ |
-| Bandwidth Saved | 0% | 60-80% |
+| Metric                         | Before     | After (Expected) |
+| ------------------------------ | ---------- | ---------------- |
+| TTFB (Time to First Byte)      | ~200-500ms | ~50-100ms        |
+| LCP (Largest Contentful Paint) | ~2-4s      | ~1-2s            |
+| Cache Hit Ratio                | 0%         | 80%+             |
+| Bandwidth Saved                | 0%         | 60-80%           |
 
 All optimizations are **FREE** on Cloudflare's free plan!

@@ -1,3 +1,17 @@
+---
+title: 'Gem Auto Rentals - Admin Dashboard Implementation Plan'
+aliases: [admin-dashboard-plan]
+type: meta
+status: active
+tags: [type/meta, project/gem-auto-rentals, topic/planning, topic/admin]
+updated: 2026-01-25
+summary: >
+  Phased plan for the admin dashboard: messages and communications, security and session
+  management, settings completion. Includes a feature status overview.
+related:
+  - '[[@ralph_admin_dashboard]]'
+---
+
 # Gem Auto Rentals - Admin Dashboard Implementation Plan
 
 > **Purpose:** Complete the admin dashboard CRM functionality by building out all partially working and non-functional features.
@@ -23,22 +37,24 @@
 ## Executive Summary
 
 ### Current State
+
 The admin dashboard has **strong core functionality** (fleet, bookings, customers, payments, analytics) but several features exist only as UI mockups without backend integration.
 
 ### Goal
+
 Transform the admin dashboard into a **fully functional CRM** where every feature connects to the database and provides real business value.
 
 ### Scope of Work
 
-| Priority | Feature | Effort Estimate | Business Impact |
-|----------|---------|-----------------|-----------------|
-| 🔴 High | Messages System | Large | Critical for customer communication |
-| 🔴 High | Activity/Audit Logging | Medium | Security & compliance |
-| 🟡 Medium | Session Management | Medium | Security monitoring |
-| 🟡 Medium | Notification Preferences | Medium | Customer experience |
-| 🟡 Medium | Settings - Billing | Medium | Admin convenience |
-| 🟢 Low | Two-Factor Authentication | Large | Enhanced security |
-| 🟢 Low | External Integrations | Large | Marketing automation |
+| Priority  | Feature                   | Effort Estimate | Business Impact                     |
+| --------- | ------------------------- | --------------- | ----------------------------------- |
+| 🔴 High   | Messages System           | Large           | Critical for customer communication |
+| 🔴 High   | Activity/Audit Logging    | Medium          | Security & compliance               |
+| 🟡 Medium | Session Management        | Medium          | Security monitoring                 |
+| 🟡 Medium | Notification Preferences  | Medium          | Customer experience                 |
+| 🟡 Medium | Settings - Billing        | Medium          | Admin convenience                   |
+| 🟢 Low    | Two-Factor Authentication | Large           | Enhanced security                   |
+| 🟢 Low    | External Integrations     | Large           | Marketing automation                |
 
 ---
 
@@ -46,25 +62,26 @@ Transform the admin dashboard into a **fully functional CRM** where every featur
 
 ### ⚠️ Partially Working Features
 
-| Feature | Working | Not Working |
-|---------|---------|-------------|
-| **Settings Page** | Profile updates, password change | Billing/invoices, integrations, notifications |
-| **Customer Profile** | Basic info, booking history | Document verification UI connection, communication history |
+| Feature              | Working                          | Not Working                                                |
+| -------------------- | -------------------------------- | ---------------------------------------------------------- |
+| **Settings Page**    | Profile updates, password change | Billing/invoices, integrations, notifications              |
+| **Customer Profile** | Basic info, booking history      | Document verification UI connection, communication history |
 
 ### ❌ Non-Functional Features (UI Only)
 
-| Feature | Current State | Required Work |
-|---------|--------------|---------------|
-| **Messages** | Hardcoded mock data | Full backend implementation |
-| **Security Page** | Mock sessions & login history | Session tracking, activity logging |
-| **Two-Factor Auth** | UI toggle only | TOTP/SMS implementation |
-| **Integrations** | Mock connection toggles | OAuth flows, webhooks |
+| Feature             | Current State                 | Required Work                      |
+| ------------------- | ----------------------------- | ---------------------------------- |
+| **Messages**        | Hardcoded mock data           | Full backend implementation        |
+| **Security Page**   | Mock sessions & login history | Session tracking, activity logging |
+| **Two-Factor Auth** | UI toggle only                | TOTP/SMS implementation            |
+| **Integrations**    | Mock connection toggles       | OAuth flows, webhooks              |
 
 ---
 
 ## Phase 1: Messages & Communications System
 
 ### Overview
+
 Build a complete internal messaging system for staff-to-customer communication, including email integration.
 
 ### 1.1 Database Schema
@@ -181,17 +198,17 @@ enum MessageContentType {
 
 ### 1.2 API Endpoints
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/conversations` | List all conversations (with filters) | Staff |
-| `GET` | `/api/conversations/:id` | Get conversation with messages | Staff |
-| `POST` | `/api/conversations` | Create new conversation | Staff |
-| `PATCH` | `/api/conversations/:id` | Update conversation (status, assignment, priority) | Staff |
-| `DELETE` | `/api/conversations/:id` | Archive/delete conversation | Admin |
-| `POST` | `/api/conversations/:id/messages` | Send a message | Staff |
-| `PATCH` | `/api/messages/:id/read` | Mark message as read | Staff |
-| `GET` | `/api/conversations/unread-count` | Get unread message count | Staff |
-| `POST` | `/api/conversations/:id/assign` | Assign conversation to staff | Staff |
+| Method   | Endpoint                          | Description                                        | Auth  |
+| -------- | --------------------------------- | -------------------------------------------------- | ----- |
+| `GET`    | `/api/conversations`              | List all conversations (with filters)              | Staff |
+| `GET`    | `/api/conversations/:id`          | Get conversation with messages                     | Staff |
+| `POST`   | `/api/conversations`              | Create new conversation                            | Staff |
+| `PATCH`  | `/api/conversations/:id`          | Update conversation (status, assignment, priority) | Staff |
+| `DELETE` | `/api/conversations/:id`          | Archive/delete conversation                        | Admin |
+| `POST`   | `/api/conversations/:id/messages` | Send a message                                     | Staff |
+| `PATCH`  | `/api/messages/:id/read`          | Mark message as read                               | Staff |
+| `GET`    | `/api/conversations/unread-count` | Get unread message count                           | Staff |
+| `POST`   | `/api/conversations/:id/assign`   | Assign conversation to staff                       | Staff |
 
 ### 1.3 Backend Implementation
 
@@ -230,14 +247,14 @@ enum MessageContentType {
 
 **Files to modify/create in `apps/admin/src/`:**
 
-| File | Changes |
-|------|---------|
-| `pages/MessagesPage.tsx` | Replace mock data with real API calls |
-| `components/messages/ConversationList.tsx` | New - Sidebar list of conversations |
-| `components/messages/ConversationView.tsx` | New - Message thread display |
-| `components/messages/MessageComposer.tsx` | New - Rich text editor for replies |
-| `components/messages/ConversationFilters.tsx` | New - Status/assignment filters |
-| `lib/api.ts` | Add conversation API methods |
+| File                                          | Changes                               |
+| --------------------------------------------- | ------------------------------------- |
+| `pages/MessagesPage.tsx`                      | Replace mock data with real API calls |
+| `components/messages/ConversationList.tsx`    | New - Sidebar list of conversations   |
+| `components/messages/ConversationView.tsx`    | New - Message thread display          |
+| `components/messages/MessageComposer.tsx`     | New - Rich text editor for replies    |
+| `components/messages/ConversationFilters.tsx` | New - Status/assignment filters       |
+| `lib/api.ts`                                  | Add conversation API methods          |
 
 ### 1.5 Email Integration
 
@@ -270,6 +287,7 @@ enum MessageContentType {
 ## Phase 2: Security & Session Management
 
 ### Overview
+
 Implement real session tracking, login activity logging, and audit trails for security compliance.
 
 ### 2.1 Database Schema
@@ -396,15 +414,15 @@ enum ActivityStatus {
 
 ### 2.2 API Endpoints
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/sessions` | List active sessions for current user | User |
-| `GET` | `/api/sessions/all` | List all sessions (admin view) | Admin |
-| `DELETE` | `/api/sessions/:id` | Revoke specific session | User (own) / Admin |
-| `DELETE` | `/api/sessions/all` | Revoke all sessions except current | User |
-| `GET` | `/api/activity` | Get activity logs (with filters) | Staff |
-| `GET` | `/api/activity/user/:userId` | Get activity for specific user | Staff |
-| `GET` | `/api/activity/entity/:type/:id` | Get activity for entity | Staff |
+| Method   | Endpoint                         | Description                           | Auth               |
+| -------- | -------------------------------- | ------------------------------------- | ------------------ |
+| `GET`    | `/api/sessions`                  | List active sessions for current user | User               |
+| `GET`    | `/api/sessions/all`              | List all sessions (admin view)        | Admin              |
+| `DELETE` | `/api/sessions/:id`              | Revoke specific session               | User (own) / Admin |
+| `DELETE` | `/api/sessions/all`              | Revoke all sessions except current    | User               |
+| `GET`    | `/api/activity`                  | Get activity logs (with filters)      | Staff              |
+| `GET`    | `/api/activity/user/:userId`     | Get activity for specific user        | Staff              |
+| `GET`    | `/api/activity/entity/:type/:id` | Get activity for entity               | Staff              |
 
 ### 2.3 Backend Implementation
 
@@ -449,13 +467,13 @@ enum ActivityStatus {
 
 **Files to modify/create:**
 
-| File | Changes |
-|------|---------|
-| `pages/SecurityPage.tsx` | Replace mock data with real API calls |
-| `components/security/SessionList.tsx` | Display active sessions with revoke |
-| `components/security/ActivityLog.tsx` | Display activity history |
-| `components/security/SessionDetails.tsx` | Device, location, time details |
-| `lib/api.ts` | Add session and activity API methods |
+| File                                     | Changes                               |
+| ---------------------------------------- | ------------------------------------- |
+| `pages/SecurityPage.tsx`                 | Replace mock data with real API calls |
+| `components/security/SessionList.tsx`    | Display active sessions with revoke   |
+| `components/security/ActivityLog.tsx`    | Display activity history              |
+| `components/security/SessionDetails.tsx` | Device, location, time details        |
+| `lib/api.ts`                             | Add session and activity API methods  |
 
 ### 2.5 Acceptance Criteria
 
@@ -475,6 +493,7 @@ enum ActivityStatus {
 ## Phase 3: Settings Completion
 
 ### Overview
+
 Complete the Settings page with real billing data, working notification preferences, and company settings.
 
 ### 3.1 Database Schema
@@ -602,28 +621,28 @@ enum InvoiceStatus {
 
 ### 3.2 API Endpoints
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/users/:id/preferences` | Get user preferences | User (own) / Staff |
-| `PUT` | `/api/users/:id/preferences` | Update user preferences | User (own) / Staff |
-| `GET` | `/api/settings/company` | Get company settings | Staff |
-| `PUT` | `/api/settings/company` | Update company settings | Admin |
-| `GET` | `/api/invoices` | List invoices | Staff |
-| `GET` | `/api/invoices/:id` | Get invoice details | Staff |
-| `POST` | `/api/invoices` | Create invoice | Staff |
-| `PUT` | `/api/invoices/:id` | Update invoice | Staff |
-| `POST` | `/api/invoices/:id/send` | Send invoice to customer | Staff |
-| `GET` | `/api/invoices/:id/pdf` | Generate/download PDF | Staff |
+| Method | Endpoint                     | Description              | Auth               |
+| ------ | ---------------------------- | ------------------------ | ------------------ |
+| `GET`  | `/api/users/:id/preferences` | Get user preferences     | User (own) / Staff |
+| `PUT`  | `/api/users/:id/preferences` | Update user preferences  | User (own) / Staff |
+| `GET`  | `/api/settings/company`      | Get company settings     | Staff              |
+| `PUT`  | `/api/settings/company`      | Update company settings  | Admin              |
+| `GET`  | `/api/invoices`              | List invoices            | Staff              |
+| `GET`  | `/api/invoices/:id`          | Get invoice details      | Staff              |
+| `POST` | `/api/invoices`              | Create invoice           | Staff              |
+| `PUT`  | `/api/invoices/:id`          | Update invoice           | Staff              |
+| `POST` | `/api/invoices/:id/send`     | Send invoice to customer | Staff              |
+| `GET`  | `/api/invoices/:id/pdf`      | Generate/download PDF    | Staff              |
 
 ### 3.3 Frontend Updates
 
-| File | Changes |
-|------|---------|
-| `pages/SettingsPage.tsx` | Connect to real APIs |
-| `components/settings/NotificationSettings.tsx` | Real preference toggle states |
-| `components/settings/BillingSettings.tsx` | Real invoice list, payment methods |
-| `components/settings/CompanySettings.tsx` | New - Company info management |
-| `components/settings/InvoiceList.tsx` | New - Invoice management |
+| File                                           | Changes                            |
+| ---------------------------------------------- | ---------------------------------- |
+| `pages/SettingsPage.tsx`                       | Connect to real APIs               |
+| `components/settings/NotificationSettings.tsx` | Real preference toggle states      |
+| `components/settings/BillingSettings.tsx`      | Real invoice list, payment methods |
+| `components/settings/CompanySettings.tsx`      | New - Company info management      |
+| `components/settings/InvoiceList.tsx`          | New - Invoice management           |
 
 ### 3.4 Acceptance Criteria
 
@@ -640,6 +659,7 @@ enum InvoiceStatus {
 ## Phase 4: Notification System
 
 ### Overview
+
 Build a centralized notification system for emails, in-app notifications, and SMS.
 
 ### 4.1 Database Schema
@@ -721,13 +741,13 @@ enum NotificationChannel {
 
 ### 4.2 API Endpoints
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/notifications` | List user notifications | User |
-| `GET` | `/api/notifications/unread-count` | Get unread count | User |
-| `PATCH` | `/api/notifications/:id/read` | Mark as read | User |
-| `PATCH` | `/api/notifications/read-all` | Mark all as read | User |
-| `DELETE` | `/api/notifications/:id` | Delete notification | User |
+| Method   | Endpoint                          | Description             | Auth |
+| -------- | --------------------------------- | ----------------------- | ---- |
+| `GET`    | `/api/notifications`              | List user notifications | User |
+| `GET`    | `/api/notifications/unread-count` | Get unread count        | User |
+| `PATCH`  | `/api/notifications/:id/read`     | Mark as read            | User |
+| `PATCH`  | `/api/notifications/read-all`     | Mark all as read        | User |
+| `DELETE` | `/api/notifications/:id`          | Delete notification     | User |
 
 ### 4.3 Backend Implementation
 
@@ -783,12 +803,12 @@ Create templates in `server/src/templates/emails/`:
 
 ### 4.6 Frontend Components
 
-| File | Changes |
-|------|---------|
-| `components/layout/Header.tsx` | Add notification bell with badge |
-| `components/notifications/NotificationDropdown.tsx` | New - Dropdown list |
-| `components/notifications/NotificationItem.tsx` | New - Individual notification |
-| `pages/NotificationsPage.tsx` | New - Full notification history |
+| File                                                | Changes                          |
+| --------------------------------------------------- | -------------------------------- |
+| `components/layout/Header.tsx`                      | Add notification bell with badge |
+| `components/notifications/NotificationDropdown.tsx` | New - Dropdown list              |
+| `components/notifications/NotificationItem.tsx`     | New - Individual notification    |
+| `pages/NotificationsPage.tsx`                       | New - Full notification history  |
 
 ### 4.7 Acceptance Criteria
 
@@ -806,6 +826,7 @@ Create templates in `server/src/templates/emails/`:
 ## Phase 5: External Integrations
 
 ### Overview
+
 Implement real OAuth connections and webhook handlers for third-party services.
 
 ### 5.1 Database Schema
@@ -884,46 +905,52 @@ enum WebhookStatus {
 
 ### 5.2 API Endpoints
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/integrations` | List all integrations | Admin |
-| `GET` | `/api/integrations/:provider` | Get integration status | Admin |
-| `POST` | `/api/integrations/:provider/connect` | Start OAuth flow | Admin |
-| `GET` | `/api/integrations/:provider/callback` | OAuth callback | Public |
-| `POST` | `/api/integrations/:provider/disconnect` | Disconnect integration | Admin |
-| `PUT` | `/api/integrations/:provider/config` | Update config | Admin |
-| `POST` | `/api/integrations/:provider/test` | Test connection | Admin |
-| `POST` | `/api/webhooks/:provider` | Webhook endpoint | Public (verified) |
+| Method | Endpoint                                 | Description            | Auth              |
+| ------ | ---------------------------------------- | ---------------------- | ----------------- |
+| `GET`  | `/api/integrations`                      | List all integrations  | Admin             |
+| `GET`  | `/api/integrations/:provider`            | Get integration status | Admin             |
+| `POST` | `/api/integrations/:provider/connect`    | Start OAuth flow       | Admin             |
+| `GET`  | `/api/integrations/:provider/callback`   | OAuth callback         | Public            |
+| `POST` | `/api/integrations/:provider/disconnect` | Disconnect integration | Admin             |
+| `PUT`  | `/api/integrations/:provider/config`     | Update config          | Admin             |
+| `POST` | `/api/integrations/:provider/test`       | Test connection        | Admin             |
+| `POST` | `/api/webhooks/:provider`                | Webhook endpoint       | Public (verified) |
 
 ### 5.3 Integration Implementations
 
 **Stripe (Payment Processing)** - Already partially implemented
+
 - Enhance with subscription billing
 - Add invoice sync
 - Webhook handling for payment events
 
 **PayPal (Alternative Payments)**
+
 - OAuth connection
 - Payment processing alternative
 - Webhook handling
 
 **Mailchimp (Email Marketing)**
+
 - OAuth connection
 - Sync customers to audience
 - Tag customers by booking status
 - Automated campaign triggers
 
 **Twilio (SMS)**
+
 - API key configuration
 - Send booking reminders via SMS
 - Two-factor authentication codes
 
 **Google Calendar**
+
 - OAuth connection
 - Sync bookings to calendar
 - Block out vehicle availability
 
 **QuickBooks (Accounting)**
+
 - OAuth connection
 - Sync invoices
 - Sync customer records
@@ -931,10 +958,10 @@ enum WebhookStatus {
 
 ### 5.4 Frontend Components
 
-| File | Changes |
-|------|---------|
-| `pages/SettingsPage.tsx` | Real integration statuses |
-| `components/settings/IntegrationCard.tsx` | Connect/disconnect buttons |
+| File                                        | Changes                    |
+| ------------------------------------------- | -------------------------- |
+| `pages/SettingsPage.tsx`                    | Real integration statuses  |
+| `components/settings/IntegrationCard.tsx`   | Connect/disconnect buttons |
 | `components/settings/IntegrationConfig.tsx` | Provider-specific settings |
 
 ### 5.5 Acceptance Criteria
@@ -1019,16 +1046,16 @@ npx prisma generate
 
 ### New Route Files
 
-| File | Endpoints |
-|------|-----------|
-| `server/src/routes/conversations.ts` | 9 endpoints |
-| `server/src/routes/sessions.ts` | 4 endpoints |
-| `server/src/routes/activity.ts` | 3 endpoints |
-| `server/src/routes/preferences.ts` | 2 endpoints |
-| `server/src/routes/invoices.ts` | 6 endpoints |
-| `server/src/routes/notifications.ts` | 5 endpoints |
-| `server/src/routes/integrations.ts` | 7 endpoints |
-| `server/src/routes/webhooks.ts` | 1 endpoint per provider |
+| File                                 | Endpoints               |
+| ------------------------------------ | ----------------------- |
+| `server/src/routes/conversations.ts` | 9 endpoints             |
+| `server/src/routes/sessions.ts`      | 4 endpoints             |
+| `server/src/routes/activity.ts`      | 3 endpoints             |
+| `server/src/routes/preferences.ts`   | 2 endpoints             |
+| `server/src/routes/invoices.ts`      | 6 endpoints             |
+| `server/src/routes/notifications.ts` | 5 endpoints             |
+| `server/src/routes/integrations.ts`  | 7 endpoints             |
+| `server/src/routes/webhooks.ts`      | 1 endpoint per provider |
 
 ### Total New Endpoints: ~40
 
@@ -1038,37 +1065,38 @@ npx prisma generate
 
 ### New Pages
 
-| Page | Route | Purpose |
-|------|-------|---------|
+| Page                    | Route            | Purpose                   |
+| ----------------------- | ---------------- | ------------------------- |
 | `NotificationsPage.tsx` | `/notifications` | Full notification history |
 
 ### Modified Pages
 
-| Page | Changes |
-|------|---------|
-| `MessagesPage.tsx` | Replace mock with real API |
-| `SecurityPage.tsx` | Replace mock with real API |
+| Page               | Changes                     |
+| ------------------ | --------------------------- |
+| `MessagesPage.tsx` | Replace mock with real API  |
+| `SecurityPage.tsx` | Replace mock with real API  |
 | `SettingsPage.tsx` | Connect all sections to API |
 
 ### New Components
 
-| Component | Purpose |
-|-----------|---------|
-| `ConversationList.tsx` | Message sidebar |
-| `ConversationView.tsx` | Message thread |
-| `MessageComposer.tsx` | Reply editor |
-| `SessionList.tsx` | Active sessions |
-| `ActivityLog.tsx` | Activity history |
+| Component                  | Purpose              |
+| -------------------------- | -------------------- |
+| `ConversationList.tsx`     | Message sidebar      |
+| `ConversationView.tsx`     | Message thread       |
+| `MessageComposer.tsx`      | Reply editor         |
+| `SessionList.tsx`          | Active sessions      |
+| `ActivityLog.tsx`          | Activity history     |
 | `NotificationDropdown.tsx` | Header notifications |
-| `NotificationItem.tsx` | Single notification |
-| `IntegrationCard.tsx` | Integration status |
-| `InvoiceList.tsx` | Invoice management |
+| `NotificationItem.tsx`     | Single notification  |
+| `IntegrationCard.tsx`      | Integration status   |
+| `InvoiceList.tsx`          | Invoice management   |
 
 ---
 
 ## Testing Checklist
 
 ### Phase 1: Messages
+
 - [ ] Create conversation via API
 - [ ] Send message via API
 - [ ] List conversations with pagination
@@ -1079,6 +1107,7 @@ npx prisma generate
 - [ ] Unread count updates
 
 ### Phase 2: Security
+
 - [ ] Session created on login
 - [ ] Session list accurate
 - [ ] Revoke session works
@@ -1087,6 +1116,7 @@ npx prisma generate
 - [ ] Failed login logged
 
 ### Phase 3: Settings
+
 - [ ] Preferences save correctly
 - [ ] Company settings save
 - [ ] Invoice generation works
@@ -1094,6 +1124,7 @@ npx prisma generate
 - [ ] Tax calculation correct
 
 ### Phase 4: Notifications
+
 - [ ] In-app notification created
 - [ ] Email sent based on preferences
 - [ ] Unread count correct
@@ -1101,6 +1132,7 @@ npx prisma generate
 - [ ] Cron jobs execute
 
 ### Phase 5: Integrations
+
 - [ ] OAuth flow completes
 - [ ] Tokens stored securely
 - [ ] Webhook received
@@ -1145,15 +1177,17 @@ Integrations
 
 ---
 
-*Document created: January 2025*
-*Last updated: January 2025*
+_Document created: January 2025_
+_Last updated: January 2025_
 
 ---
 
 ## Technical Review & Robustness Findings
 
 ### 1. recent Codebase Updates (Gap Analysis)
+
 Recent work has implemented the following features which were listed as "Non-Functional":
+
 - **Customer Deletion**: Connected to API and working.
 - **Booking Deletion**: Connected to API and working.
 - **Booking Edit**: Connected to API (price recalculation active).
@@ -1162,28 +1196,34 @@ Recent work has implemented the following features which were listed as "Non-Fun
 **Action Item**: The implementation of "Phase 2: Security" (logging) should immediately instrument these newly active features to ensure audit trails are captured from Day 1.
 
 ### 2. Manual Payments & Invoicing
+
 The "Payment Tracking" modal requires backend support for non-Stripe payments (Cash, Wire).
+
 - **Recommendation**: Accelerate **Phase 3 (Invoicing)**.
 - **Robustness Add**:
-    - Extend `PaymentMethod` enum in `Payment` model to include `CASH`, `CHECK`, `WIRE`.
-    - Allow creating a `Payment` record with `status: SUCCEEDED` directly for manual payments if the user is an Admin.
-    - Link these manual payments to the `Invoice` model for generation of receipts.
+  - Extend `PaymentMethod` enum in `Payment` model to include `CASH`, `CHECK`, `WIRE`.
+  - Allow creating a `Payment` record with `status: SUCCEEDED` directly for manual payments if the user is an Admin.
+  - Link these manual payments to the `Invoice` model for generation of receipts.
 
 ### 3. Data Integrity & Concurrency
+
 - **Booking Edits**: Moving a booking's dates (handled in `PATCH /api/bookings/:id`) currently performs an availability check.
-    - **Risk**: Race conditions if two admins edit bookings simultaneously.
-    - **Fix**: Use Prisma Transaction with `optimistic concurrency control` (using a version field or checking `updatedAt`) or stricter database locking during the check-then-update phase.
+  - **Risk**: Race conditions if two admins edit bookings simultaneously.
+  - **Fix**: Use Prisma Transaction with `optimistic concurrency control` (using a version field or checking `updatedAt`) or stricter database locking during the check-then-update phase.
 
 ### 4. Security & Performance
+
 - **Activity Logs**:
-    - **Risk**: Infinite growth of the `ActivityLog` table.
-    - **Mitigation**: Implement a retention policy (e.g., Cron job to archive/delete logs > 1 year old).
-    - **Rate Limiting**: New endpoints (especially `POST /api/messages` and `POST /api/conversations`) must be rate-limited to prevent spam/abuse, even from authenticated staff accounts (compromised account protection).
+  - **Risk**: Infinite growth of the `ActivityLog` table.
+  - **Mitigation**: Implement a retention policy (e.g., Cron job to archive/delete logs > 1 year old).
+  - **Rate Limiting**: New endpoints (especially `POST /api/messages` and `POST /api/conversations`) must be rate-limited to prevent spam/abuse, even from authenticated staff accounts (compromised account protection).
 
 ### 5. Notification Reliability
+
 - **Risk**: Critical notifications (Booking Confirmations) relying on casual execution.
 - **Mitigation**: Implement a queue system (e.g., BullMQ) for `Notification` delivery rather than direct synchronous calls. This ensures retries if the email provider (Resend) is temporary down.
 
 ### 6. Secrets Management
+
 - **Integrations**: Storing OAuth tokens requires encryption at rest.
 - **Action**: Ensure `ENCRYPTION_KEY` is added to `.env` and use AES-256 for the `accessToken` and `refreshToken` fields in the `Integration` model.

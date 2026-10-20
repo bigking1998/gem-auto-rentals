@@ -1,4 +1,17 @@
+---
+title: 'Product Requirements Document (PRD)'
+aliases: [prd-specs-copy]
+type: leaf
+status: active
+tags: [type/leaf, project/gem-auto-rentals, topic/spec, topic/prd]
+updated: 2026-01-17
+summary: >
+  In-repo copy of the full product requirements document for the car rental platform and
+  CRM. DUPLICATE: byte-identical to the copy at the project root.
+---
+
 # Product Requirements Document (PRD)
+
 ## Car Rental Platform & CRM System
 
 **Version:** 1.0  
@@ -8,6 +21,7 @@
 ---
 
 ## Table of Contents
+
 1. [Executive Summary](#executive-summary)
 2. [Product Overview](#product-overview)
 3. [Design System & Visual Identity](#design-system--visual-identity)
@@ -29,11 +43,14 @@
 ## 1. Executive Summary
 
 ### 1.1 Purpose
+
 This document outlines the requirements for a dual-sided car rental platform consisting of:
+
 - **Customer-Facing Platform**: Modern, professional public website for browsing, booking, and managing car rentals (inspired by Extendas.com design language)
 - **Admin CRM System**: Comprehensive internal management dashboard for fleet, customers, contracts, and operations (based on Nexus dashboard design)
 
 ### 1.2 Goals
+
 - Create a visually stunning, user-friendly rental booking experience
 - Centralize vehicle inventory and customer relationship management
 - Automate rental workflows and reduce manual administrative tasks
@@ -42,6 +59,7 @@ This document outlines the requirements for a dual-sided car rental platform con
 - Deliver a seamless, modern interface matching industry-leading designs
 
 ### 1.3 Success Metrics
+
 - Booking conversion rate: >15%
 - Average booking time: <5 minutes
 - Customer satisfaction score: >4.5/5
@@ -55,14 +73,17 @@ This document outlines the requirements for a dual-sided car rental platform con
 ## 2. Product Overview
 
 ### 2.1 Product Vision
+
 Create a modern, visually appealing car rental platform that simplifies the rental process for customers while providing comprehensive management tools for business operations. The platform should feel premium, trustworthy, and efficient.
 
 ### 2.2 Target Users
+
 - **Primary**: Individuals seeking short-term car rentals
 - **Secondary**: Business administrators managing fleet and operations
 - **Tertiary**: Customer support staff
 
 ### 2.3 Key Differentiators
+
 - Modern, gradient-rich design inspired by leading SaaS platforms
 - Integrated CRM and customer platform with seamless data flow
 - Real-time availability and instant booking
@@ -78,9 +99,11 @@ Create a modern, visually appealing car rental platform that simplifies the rent
 ### 3.1 Design References
 
 #### Customer-Facing Platform Design
+
 **Primary Reference:** Extendas.com (https://www.extendas.com/en/)
 
 **Design Characteristics:**
+
 - Clean, modern, professional aesthetic
 - Generous whitespace for content breathing room
 - Soft gradient backgrounds (particularly on hero sections and CTAs)
@@ -93,6 +116,7 @@ Create a modern, visually appealing car rental platform that simplifies the rent
 - Clear typography hierarchy
 
 **Key Design Elements to Implement:**
+
 1. **Hero Section**: Full-width with video background or gradient overlay
 2. **Navigation**: Clean header with mega-menu support
 3. **Cards**: Rounded corners, subtle shadows, hover effects
@@ -102,9 +126,11 @@ Create a modern, visually appealing car rental platform that simplifies the rent
 7. **Animations**: Subtle fade-ins, parallax effects on scroll
 
 #### Admin Dashboard Design
+
 **Primary Reference:** Nexus Dashboard (uploaded reference image)
 
 **Design Characteristics:**
+
 - Left sidebar navigation with collapsible sections
 - Clean, data-dense layouts with card-based widgets
 - Soft blue/purple color scheme with gradients
@@ -120,6 +146,7 @@ Create a modern, visually appealing car rental platform that simplifies the rent
 **Dashboard Components to Implement:**
 
 **Sidebar Navigation:**
+
 ```
 ┌─────────────────────┐
 │ Logo                │
@@ -145,6 +172,7 @@ Create a modern, visually appealing car rental platform that simplifies the rent
 ```
 
 **Dashboard Metrics Cards:**
+
 ```
 ┌────────────────────┬────────────────────┬────────────────────┐
 │ 👁 Page Views      │ 📄 Total Revenue   │ 📉 Bounce Rate     │
@@ -154,6 +182,7 @@ Create a modern, visually appealing car rental platform that simplifies the rent
 ```
 
 **Chart Styling:**
+
 - Bar charts with rounded tops
 - Soft blue/purple gradient fills
 - Light gray backgrounds
@@ -165,6 +194,7 @@ Create a modern, visually appealing car rental platform that simplifies the rent
 ### 3.2 UI Framework & Component Library
 
 **Primary UI Framework:**
+
 - **shadcn/ui** - Complete component library
   - Built on Radix UI primitives
   - Fully accessible (WCAG 2.1 AA compliant)
@@ -173,6 +203,7 @@ Create a modern, visually appealing car rental platform that simplifies the rent
   - Dark mode ready (if needed in future)
 
 **shadcn/ui Components to Use:**
+
 - Button (with variants: default, destructive, outline, ghost, link)
 - Card (for content containers)
 - Dialog/Modal
@@ -200,13 +231,14 @@ Create a modern, visually appealing car rental platform that simplifies the rent
 ### 3.3 Color Palette
 
 **Primary Colors:**
+
 ```css
 /* Main Brand Colors - Adjust based on your brand */
---primary: 222.2 47.4% 11.2%;        /* Dark blue-gray */
---primary-foreground: 210 40% 98%;    /* Light text on primary */
+--primary: 222.2 47.4% 11.2%; /* Dark blue-gray */
+--primary-foreground: 210 40% 98%; /* Light text on primary */
 
 /* Secondary accent */
---secondary: 210 40% 96.1%;           /* Light gray-blue */
+--secondary: 210 40% 96.1%; /* Light gray-blue */
 --secondary-foreground: 222.2 47.4% 11.2%;
 
 /* Accent colors */
@@ -214,27 +246,28 @@ Create a modern, visually appealing car rental platform that simplifies the rent
 --accent-foreground: 222.2 47.4% 11.2%;
 
 /* UI Colors */
---background: 0 0% 100%;              /* White */
---foreground: 222.2 84% 4.9%;         /* Near black */
+--background: 0 0% 100%; /* White */
+--foreground: 222.2 84% 4.9%; /* Near black */
 
---muted: 210 40% 96.1%;               /* Muted backgrounds */
+--muted: 210 40% 96.1%; /* Muted backgrounds */
 --muted-foreground: 215.4 16.3% 46.9%; /* Muted text */
 
---card: 0 0% 100%;                    /* Card backgrounds */
+--card: 0 0% 100%; /* Card backgrounds */
 --card-foreground: 222.2 84% 4.9%;
 
---border: 214.3 31.8% 91.4%;          /* Border colors */
---input: 214.3 31.8% 91.4%;           /* Input borders */
---ring: 222.2 84% 4.9%;               /* Focus rings */
+--border: 214.3 31.8% 91.4%; /* Border colors */
+--input: 214.3 31.8% 91.4%; /* Input borders */
+--ring: 222.2 84% 4.9%; /* Focus rings */
 
 /* Status Colors */
---success: 142 76% 36%;               /* Green */
---warning: 38 92% 50%;                /* Orange */
---error: 0 72% 51%;                   /* Red */
---info: 199 89% 48%;                  /* Blue */
+--success: 142 76% 36%; /* Green */
+--warning: 38 92% 50%; /* Orange */
+--error: 0 72% 51%; /* Red */
+--info: 199 89% 48%; /* Blue */
 ```
 
 **Gradient Examples (inspired by Extendas):**
+
 ```css
 /* Hero gradients */
 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -251,12 +284,22 @@ background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 1
 ### 3.4 Typography
 
 **Font System:**
+
 ```css
 /* Primary Font Family - Clean, modern sans-serif */
-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+font-family:
+  'Inter',
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  sans-serif;
 
 /* Alternative: Geist (if preferred) */
-font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+font-family:
+  'Geist',
+  -apple-system,
+  BlinkMacSystemFont,
+  sans-serif;
 
 /* Headings */
 --font-heading: 'Inter', sans-serif;
@@ -264,16 +307,16 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 --font-mono: 'Fira Code', 'Consolas', monospace; /* For code/data */
 
 /* Font Sizes (Tailwind scale) */
---text-xs: 0.75rem;      /* 12px */
---text-sm: 0.875rem;     /* 14px */
---text-base: 1rem;       /* 16px */
---text-lg: 1.125rem;     /* 18px */
---text-xl: 1.25rem;      /* 20px */
---text-2xl: 1.5rem;      /* 24px */
---text-3xl: 1.875rem;    /* 30px */
---text-4xl: 2.25rem;     /* 36px */
---text-5xl: 3rem;        /* 48px */
---text-6xl: 3.75rem;     /* 60px */
+--text-xs: 0.75rem; /* 12px */
+--text-sm: 0.875rem; /* 14px */
+--text-base: 1rem; /* 16px */
+--text-lg: 1.125rem; /* 18px */
+--text-xl: 1.25rem; /* 20px */
+--text-2xl: 1.5rem; /* 24px */
+--text-3xl: 1.875rem; /* 30px */
+--text-4xl: 2.25rem; /* 36px */
+--text-5xl: 3rem; /* 48px */
+--text-6xl: 3.75rem; /* 60px */
 
 /* Font Weights */
 --font-light: 300;
@@ -292,10 +335,11 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 ```
 
 **Typography Hierarchy:**
+
 ```css
 /* Hero Heading */
 .hero-title {
-  font-size: 3.75rem;  /* 60px */
+  font-size: 3.75rem; /* 60px */
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -303,21 +347,21 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 
 /* Section Headings */
 .section-heading {
-  font-size: 2.25rem;  /* 36px */
+  font-size: 2.25rem; /* 36px */
   font-weight: 600;
   line-height: 1.2;
 }
 
 /* Card Titles */
 .card-title {
-  font-size: 1.5rem;   /* 24px */
+  font-size: 1.5rem; /* 24px */
   font-weight: 600;
   line-height: 1.3;
 }
 
 /* Body Text */
 .body-text {
-  font-size: 1rem;     /* 16px */
+  font-size: 1rem; /* 16px */
   font-weight: 400;
   line-height: 1.625;
 }
@@ -333,6 +377,7 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 ### 3.5 Spacing & Layout
 
 **Spacing Scale (Tailwind):**
+
 ```
 0:    0px
 0.5:  2px
@@ -360,6 +405,7 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 ```
 
 **Container Widths:**
+
 ```css
 /* Max widths for content */
 --container-sm: 640px;
@@ -377,6 +423,7 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 ```
 
 **Layout Grid:**
+
 - 12-column grid system
 - Gutter: 24px (1.5rem)
 - Responsive breakpoints:
@@ -389,22 +436,28 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 ### 3.6 Component Styling Guidelines
 
 **Cards:**
+
 ```css
 .card {
   background: white;
-  border-radius: 0.75rem;  /* 12px */
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border-radius: 0.75rem; /* 12px */
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
   padding: 1.5rem;
   transition: all 0.3s ease;
 }
 
 .card:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
 ```
 
 **Buttons:**
+
 ```css
 /* Primary Button */
 .btn-primary {
@@ -434,6 +487,7 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 ```
 
 **Forms:**
+
 ```css
 .input {
   border: 1px solid #e5e7eb;
@@ -451,6 +505,7 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 ```
 
 **Tables:**
+
 ```css
 .table {
   width: 100%;
@@ -485,12 +540,14 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 ### 3.7 Icons
 
 **Icon Library:** Lucide React (https://lucide.dev/)
+
 - Consistent with shadcn/ui ecosystem
 - 1000+ icons
 - Customizable size and stroke
 - Tree-shakeable
 
 **Common Icons to Use:**
+
 - Car, Truck (vehicles)
 - Calendar, Clock (dates/times)
 - User, Users (customers)
@@ -503,6 +560,7 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 - MoreHorizontal, MoreVertical (actions menu)
 
 **Icon Sizes:**
+
 - sm: 16px
 - md: 20px (default)
 - lg: 24px
@@ -511,6 +569,7 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 ### 3.8 Animation & Transitions
 
 **Animation Principles:**
+
 - Subtle and purposeful
 - Enhance UX, don't distract
 - Consistent timing functions
@@ -519,68 +578,74 @@ font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 **Framer Motion Animations:**
 
 **Page Transitions:**
+
 ```javascript
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 }
+  exit: { opacity: 0, y: -20 },
 };
 
 const pageTransition = {
-  type: "tween",
-  ease: "anticipate",
-  duration: 0.3
+  type: 'tween',
+  ease: 'anticipate',
+  duration: 0.3,
 };
 ```
 
 **Card Animations:**
+
 ```javascript
 const cardVariants = {
   hover: {
     y: -4,
-    boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
-    transition: { duration: 0.2 }
-  }
+    boxShadow: '0 10px 20px rgba(0,0,0,0.1)',
+    transition: { duration: 0.2 },
+  },
 };
 ```
 
 **Stagger Children:**
+
 ```javascript
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
+  show: { opacity: 1, y: 0 },
 };
 ```
 
 ### 3.9 Responsive Design
 
 **Mobile-First Approach:**
+
 - Design for mobile (375px) first
 - Scale up to tablet (768px)
 - Optimize for desktop (1280px+)
 
 **Breakpoint Strategy:**
+
 ```javascript
 const breakpoints = {
-  sm: '640px',   // Small tablets
-  md: '768px',   // Tablets
-  lg: '1024px',  // Small laptops
-  xl: '1280px',  // Desktops
-  '2xl': '1536px' // Large screens
+  sm: '640px', // Small tablets
+  md: '768px', // Tablets
+  lg: '1024px', // Small laptops
+  xl: '1280px', // Desktops
+  '2xl': '1536px', // Large screens
 };
 ```
 
 **Responsive Patterns:**
+
 - Stack columns on mobile
 - Show hamburger menu < 768px
 - Collapse sidebar on mobile
@@ -591,6 +656,7 @@ const breakpoints = {
 ### 3.10 Dark Mode (Future Enhancement)
 
 **Preparation:**
+
 - Use CSS variables for all colors
 - Define both light and dark palettes
 - Test contrast ratios
@@ -601,6 +667,7 @@ const breakpoints = {
 ## 4. System Architecture
 
 ### 4.1 High-Level Architecture
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Load Balancer / CDN                  │
@@ -644,6 +711,7 @@ const breakpoints = {
 ### 4.2 Technology Stack
 
 #### Frontend (Both Customer & Admin)
+
 - **Framework**: React 18+ with TypeScript
 - **UI Components**: shadcn/ui (built on Radix UI)
 - **Styling**: Tailwind CSS v3+
@@ -662,28 +730,31 @@ const breakpoints = {
 - **Notifications**: Sonner (toast notifications)
 
 **Customer Frontend Specific:**
+
 - Image galleries: Swiper or Embla Carousel
 - Maps integration: Mapbox or Google Maps
 - Video backgrounds: HTML5 video with fallbacks
 
 **Admin Frontend Specific:**
+
 - Data visualization: Recharts + custom charts
 - Rich text editor: Tiptap or Slate
 - Drag and drop: dnd-kit
 - Export functionality: xlsx, jsPDF
 
 #### Backend
+
 - **Runtime**: Node.js 20+ LTS
 - **Framework**: Express.js
 - **Language**: TypeScript
 - **ORM**: Prisma (type-safe, modern)
-- **Authentication**: 
+- **Authentication**:
   - JWT for session management
   - bcrypt for password hashing
   - Passport.js for OAuth strategies
 - **Validation**: Zod (shared schemas with frontend)
 - **File Upload**: Multer
-- **Email**: 
+- **Email**:
   - SendGrid for transactional emails
   - Handlebars for email templates
 - **SMS**: Twilio
@@ -692,6 +763,7 @@ const breakpoints = {
 - **API Documentation**: Swagger/OpenAPI
 
 #### Database & Storage
+
 - **Primary Database**: PostgreSQL 15+
   - ACID compliant
   - JSON support for flexible data
@@ -702,14 +774,15 @@ const breakpoints = {
   - Rate limiting
   - Query caching
   - Real-time pub/sub
-- **File Storage**: 
+- **File Storage**:
   - AWS S3 or Cloudinary
   - CDN for image delivery
   - Image optimization and transformation
 - **Search**: PostgreSQL Full-Text Search (upgrade to Elasticsearch if needed)
 
 #### Infrastructure
-- **Hosting**: 
+
+- **Hosting**:
   - Frontend: Vercel (optimized for React)
   - Backend: AWS EC2, DigitalOcean, or Railway
   - Database: AWS RDS or DigitalOcean Managed Database
@@ -722,23 +795,24 @@ const breakpoints = {
   - Automated testing
   - Build and deploy
   - Database migrations
-- **Monitoring**: 
+- **Monitoring**:
   - Sentry (error tracking)
   - LogRocket (session replay)
   - DataDog or New Relic (APM)
-- **Backup**: 
+- **Backup**:
   - Automated daily database backups
   - Point-in-time recovery
   - S3 backup for files
 
 #### External Services
+
 - **Payment Processing**: Stripe
   - Card payments
   - ACH payments
   - Payment intents
   - Webhooks for status updates
   - Refunds and disputes
-- **Identity Verification**: 
+- **Identity Verification**:
   - Onfido or Jumio (driver's license)
   - OCR for license data extraction
 - **VIN Decoding**: NHTSA Vehicle API (free)
@@ -746,12 +820,13 @@ const breakpoints = {
   - Email: SendGrid
   - SMS: Twilio
 - **Maps**: Google Maps API or Mapbox
-- **Analytics**: 
+- **Analytics**:
   - Google Analytics 4
   - Mixpanel (product analytics)
   - Custom event tracking
 
 ### 4.3 Development Tools
+
 - **Package Manager**: pnpm (fast, efficient)
 - **Build Tool**: Vite (frontend)
 - **Linting**: ESLint + Prettier
@@ -767,7 +842,9 @@ const breakpoints = {
 ### 5.1 Role Definitions
 
 #### Customer (Public User)
+
 **Permissions:**
+
 - Browse available vehicles
 - Create account and manage profile
 - Make reservations
@@ -781,7 +858,9 @@ const breakpoints = {
 - Download receipts and contracts
 
 #### Support Staff
+
 **Permissions:**
+
 - View customer information
 - View and update reservations
 - Communicate with customers (email/SMS/chat)
@@ -793,7 +872,9 @@ const breakpoints = {
 - **Cannot**: Delete records, access financial settings, modify vehicles
 
 #### Manager (Limited Admin)
+
 **Permissions:**
+
 - All Support Staff permissions
 - View all vehicles and customers
 - Manage reservations (create, modify, cancel)
@@ -806,7 +887,9 @@ const breakpoints = {
 - **Cannot**: Delete records, access sensitive financial data, modify system settings
 
 #### Admin (Full Access)
+
 **Permissions:**
+
 - All Manager permissions
 - Full CRUD on vehicles
 - Full CRUD on customers
@@ -823,70 +906,71 @@ const breakpoints = {
 
 ### 5.2 Permission Matrix
 
-| Feature | Customer | Support | Manager | Admin |
-|---------|----------|---------|---------|-------|
-| **Authentication** |
-| Register Account | ✓ | ✗ | ✗ | ✗ |
-| Login | ✓ | ✓ | ✓ | ✓ |
-| Password Reset | ✓ | ✓ | ✓ | ✓ |
-| **Vehicle Browsing** |
-| View Available Vehicles | ✓ | ✓ | ✓ | ✓ |
-| View Vehicle Details | ✓ | ✓ | ✓ | ✓ |
-| Search/Filter Vehicles | ✓ | ✓ | ✓ | ✓ |
-| **Booking Management** |
-| Create Booking | ✓ | ✗ | ✓ | ✓ |
-| View Own Bookings | ✓ | ✗ | ✗ | ✗ |
-| View All Bookings | ✗ | ✓ | ✓ | ✓ |
-| Modify Own Booking | ✓ | ✗ | ✗ | ✓ |
-| Modify Any Booking | ✗ | Limited | ✓ | ✓ |
-| Cancel Own Booking | ✓ | ✗ | ✗ | ✓ |
-| Cancel Any Booking | ✗ | ✗ | ✓ | ✓ |
-| **Customer Management** |
-| View Own Profile | ✓ | ✗ | ✗ | ✓ |
-| Edit Own Profile | ✓ | ✗ | ✗ | ✓ |
-| View Customer Data | Own Only | ✓ | ✓ | ✓ |
-| Edit Customer Data | Own Only | Limited | ✓ | ✓ |
-| Delete Customer | ✗ | ✗ | ✗ | ✓ |
-| Approve Verifications | ✗ | ✗ | ✓ | ✓ |
-| **Fleet Management** |
-| View Vehicles | Public Only | ✓ | ✓ | ✓ |
-| Add Vehicle | ✗ | ✗ | ✗ | ✓ |
-| Edit Vehicle | ✗ | ✗ | ✓ | ✓ |
-| Delete Vehicle | ✗ | ✗ | ✗ | ✓ |
-| Change Vehicle Status | ✗ | ✗ | ✓ | ✓ |
+| Feature                  | Customer    | Support | Manager   | Admin |
+| ------------------------ | ----------- | ------- | --------- | ----- |
+| **Authentication**       |
+| Register Account         | ✓           | ✗       | ✗         | ✗     |
+| Login                    | ✓           | ✓       | ✓         | ✓     |
+| Password Reset           | ✓           | ✓       | ✓         | ✓     |
+| **Vehicle Browsing**     |
+| View Available Vehicles  | ✓           | ✓       | ✓         | ✓     |
+| View Vehicle Details     | ✓           | ✓       | ✓         | ✓     |
+| Search/Filter Vehicles   | ✓           | ✓       | ✓         | ✓     |
+| **Booking Management**   |
+| Create Booking           | ✓           | ✗       | ✓         | ✓     |
+| View Own Bookings        | ✓           | ✗       | ✗         | ✗     |
+| View All Bookings        | ✗           | ✓       | ✓         | ✓     |
+| Modify Own Booking       | ✓           | ✗       | ✗         | ✓     |
+| Modify Any Booking       | ✗           | Limited | ✓         | ✓     |
+| Cancel Own Booking       | ✓           | ✗       | ✗         | ✓     |
+| Cancel Any Booking       | ✗           | ✗       | ✓         | ✓     |
+| **Customer Management**  |
+| View Own Profile         | ✓           | ✗       | ✗         | ✓     |
+| Edit Own Profile         | ✓           | ✗       | ✗         | ✓     |
+| View Customer Data       | Own Only    | ✓       | ✓         | ✓     |
+| Edit Customer Data       | Own Only    | Limited | ✓         | ✓     |
+| Delete Customer          | ✗           | ✗       | ✗         | ✓     |
+| Approve Verifications    | ✗           | ✗       | ✓         | ✓     |
+| **Fleet Management**     |
+| View Vehicles            | Public Only | ✓       | ✓         | ✓     |
+| Add Vehicle              | ✗           | ✗       | ✗         | ✓     |
+| Edit Vehicle             | ✗           | ✗       | ✓         | ✓     |
+| Delete Vehicle           | ✗           | ✗       | ✗         | ✓     |
+| Change Vehicle Status    | ✗           | ✗       | ✓         | ✓     |
 | **Financial Operations** |
-| Make Payment | ✓ | ✗ | ✗ | ✗ |
-| View Own Payments | ✓ | ✗ | ✗ | ✗ |
-| View All Payments | ✗ | Limited | View Only | ✓ |
-| Process Refund | ✗ | ✗ | Limited | ✓ |
-| Access Financial Reports | ✗ | ✗ | View Only | ✓ |
-| Modify Pricing | ✗ | ✗ | ✗ | ✓ |
-| **Documents** |
-| Upload Own Documents | ✓ | ✗ | ✗ | ✓ |
-| View Own Documents | ✓ | ✗ | ✗ | ✓ |
-| View All Documents | ✗ | Limited | ✓ | ✓ |
-| Delete Documents | Own Only | ✗ | Limited | ✓ |
-| **Analytics & Reports** |
-| View Own Stats | ✓ | ✗ | ✗ | ✓ |
-| View Dashboard Analytics | ✗ | Limited | ✓ | ✓ |
-| Export Reports | ✗ | Limited | ✓ | ✓ |
-| Create Custom Reports | ✗ | ✗ | ✗ | ✓ |
-| **System Settings** |
-| Modify System Settings | ✗ | ✗ | ✗ | ✓ |
-| Manage Users/Staff | ✗ | ✗ | ✗ | ✓ |
-| Manage Integrations | ✗ | ✗ | ✗ | ✓ |
-| Access Audit Logs | ✗ | ✗ | Limited | ✓ |
+| Make Payment             | ✓           | ✗       | ✗         | ✗     |
+| View Own Payments        | ✓           | ✗       | ✗         | ✗     |
+| View All Payments        | ✗           | Limited | View Only | ✓     |
+| Process Refund           | ✗           | ✗       | Limited   | ✓     |
+| Access Financial Reports | ✗           | ✗       | View Only | ✓     |
+| Modify Pricing           | ✗           | ✗       | ✗         | ✓     |
+| **Documents**            |
+| Upload Own Documents     | ✓           | ✗       | ✗         | ✓     |
+| View Own Documents       | ✓           | ✗       | ✗         | ✓     |
+| View All Documents       | ✗           | Limited | ✓         | ✓     |
+| Delete Documents         | Own Only    | ✗       | Limited   | ✓     |
+| **Analytics & Reports**  |
+| View Own Stats           | ✓           | ✗       | ✗         | ✓     |
+| View Dashboard Analytics | ✗           | Limited | ✓         | ✓     |
+| Export Reports           | ✗           | Limited | ✓         | ✓     |
+| Create Custom Reports    | ✗           | ✗       | ✗         | ✓     |
+| **System Settings**      |
+| Modify System Settings   | ✗           | ✗       | ✗         | ✓     |
+| Manage Users/Staff       | ✗           | ✗       | ✗         | ✓     |
+| Manage Integrations      | ✗           | ✗       | ✗         | ✓     |
+| Access Audit Logs        | ✗           | ✗       | Limited   | ✓     |
 
 ### 5.3 Role-Based Access Control (RBAC) Implementation
 
 **Backend Implementation:**
+
 ```typescript
 // Example middleware structure
 const permissions = {
   customer: ['bookings:create:own', 'bookings:read:own', 'profile:update:own'],
   support: ['bookings:read:all', 'customers:read:all', 'tickets:create'],
   manager: ['bookings:*:all', 'vehicles:read:all', 'vehicles:update:all'],
-  admin: ['*:*:*'] // Full access
+  admin: ['*:*:*'], // Full access
 };
 
 const checkPermission = (requiredPermission: string) => {
@@ -914,12 +998,14 @@ const checkPermission = (requiredPermission: string) => {
 #### 6.1.1 Header/Navigation
 
 **Design:**
+
 - Fixed header with backdrop blur on scroll
 - White/transparent background
 - Shadow appears on scroll
 - Mobile hamburger menu < 768px
 
 **Components:**
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ [Logo]    Browse Cars   How It Works   Pricing   About    │
@@ -928,6 +1014,7 @@ const checkPermission = (requiredPermission: string) => {
 ```
 
 **Navigation Items:**
+
 - Logo (left, clickable to home)
 - Browse Cars (link to `/vehicles`)
 - How It Works (link to `/how-it-works`)
@@ -938,6 +1025,7 @@ const checkPermission = (requiredPermission: string) => {
 - Sign Up (gradient button, primary CTA)
 
 **Mobile Navigation:**
+
 - Hamburger icon (≡)
 - Slide-in menu from right
 - Full-screen overlay
@@ -947,6 +1035,7 @@ const checkPermission = (requiredPermission: string) => {
 #### 6.1.2 Hero Section
 
 **Design:**
+
 - Full viewport height (min-height: 100vh)
 - Background options:
   - Video background (like Extendas)
@@ -956,6 +1045,7 @@ const checkPermission = (requiredPermission: string) => {
 - Scroll indicator at bottom
 
 **Components:**
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │                                                            │
@@ -975,6 +1065,7 @@ const checkPermission = (requiredPermission: string) => {
 ```
 
 **Content:**
+
 - **Main Headline**: Large, bold, attention-grabbing
   - Font size: 60px (desktop), 36px (mobile)
   - Font weight: 700
@@ -994,6 +1085,7 @@ const checkPermission = (requiredPermission: string) => {
 
 **Quick Booking Widget (Optional):**
 Floating card at bottom of hero section:
+
 ```
 ┌────────────────────────────────────────────────┐
 │  Pickup Date  │  Return Date  │  Car Type ▼   │
@@ -1005,12 +1097,14 @@ Floating card at bottom of hero section:
 #### 6.1.3 Featured Vehicles Section
 
 **Design:**
+
 - White or light gray background
 - Generous padding (80px top/bottom)
 - Container max-width: 1280px
 - Card-based layout
 
 **Structure:**
+
 ```
 Section Title: "Popular Vehicles" or "Featured Fleet"
 Subtitle: "Choose from our selection of quality vehicles"
@@ -1033,6 +1127,7 @@ Subtitle: "Choose from our selection of quality vehicles"
 ```
 
 **Vehicle Card Design:**
+
 - White background
 - Rounded corners (12px)
 - Subtle shadow
@@ -1049,6 +1144,7 @@ Subtitle: "Choose from our selection of quality vehicles"
   - CTA button
 
 **Grid Layout:**
+
 - Desktop (>1024px): 4 columns
 - Tablet (768-1023px): 3 columns
 - Mobile (640-767px): 2 columns
@@ -1057,11 +1153,13 @@ Subtitle: "Choose from our selection of quality vehicles"
 #### 6.1.4 How It Works Section
 
 **Design:**
+
 - Colored or gradient background
 - Container max-width: 1280px
 - 4-step process visualization
 
 **Structure:**
+
 ```
 Section Title: "Simple Rental Process"
 Subtitle: "Get on the road in four easy steps"
@@ -1080,6 +1178,7 @@ Subtitle: "Get on the road in four easy steps"
 ```
 
 **Step Card Design:**
+
 - Circular number badge (large)
 - Icon (64px)
 - Title (bold, 20px)
@@ -1090,11 +1189,13 @@ Subtitle: "Get on the road in four easy steps"
 #### 6.1.5 Why Choose Us Section
 
 **Design:**
+
 - White background
 - Grid of benefit cards
 - Icons + text
 
 **Structure:**
+
 ```
 Section Title: "Why Rent With Us"
 
@@ -1118,6 +1219,7 @@ Section Title: "Why Rent With Us"
 ```
 
 **Benefit Card:**
+
 - Icon (colored, 48px)
 - Title (18px, bold)
 - Description (14px, 2-3 lines)
@@ -1127,10 +1229,12 @@ Section Title: "Why Rent With Us"
 #### 6.1.6 Pricing Overview Section
 
 **Design:**
+
 - Light gray background
 - Table or card-based pricing display
 
 **Structure:**
+
 ```
 Section Title: "Transparent Pricing"
 
@@ -1152,11 +1256,13 @@ Section Title: "Transparent Pricing"
 #### 6.1.7 Statistics Section
 
 **Design:**
+
 - Gradient or colored background
 - Large numbers with labels
 - Inspired by Extendas.com stats
 
 **Structure:**
+
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
 │    1,250+   │  │    99.9%    │  │     10+     │  │    50,000+  │
@@ -1166,6 +1272,7 @@ Section Title: "Transparent Pricing"
 ```
 
 **Stat Display:**
+
 - Very large number (48-60px)
 - Bold font weight
 - Animated count-up on scroll
@@ -1174,11 +1281,13 @@ Section Title: "Transparent Pricing"
 #### 6.1.8 Testimonials/Reviews Section
 
 **Design:**
+
 - White background
 - Carousel or grid layout
 - Customer photos (optional)
 
 **Structure:**
+
 ```
 Section Title: "What Our Customers Say"
 
@@ -1194,6 +1303,7 @@ Section Title: "What Our Customers Say"
 ```
 
 **Review Card:**
+
 - Customer photo (circular, 64px)
 - Quote text (italic, 18px)
 - Customer name
@@ -1204,10 +1314,12 @@ Section Title: "What Our Customers Say"
 #### 6.1.9 FAQ Section
 
 **Design:**
+
 - Light background
 - Accordion-style expandable items
 
 **Structure:**
+
 ```
 Section Title: "Frequently Asked Questions"
 
@@ -1222,6 +1334,7 @@ Section Title: "Frequently Asked Questions"
 ```
 
 **FAQ Item:**
+
 - Question (16px, bold)
 - Expand/collapse icon
 - Answer (hidden until expanded)
@@ -1231,11 +1344,13 @@ Section Title: "Frequently Asked Questions"
 #### 6.1.10 CTA Section (Before Footer)
 
 **Design:**
+
 - Gradient background
 - Centered content
 - Final conversion opportunity
 
 **Structure:**
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │                                                            │
@@ -1250,12 +1365,14 @@ Section Title: "Frequently Asked Questions"
 #### 6.1.11 Footer
 
 **Design:**
+
 - Dark background (navy or dark gray)
 - White text
 - Multi-column layout
 - Comprehensive links
 
 **Structure:**
+
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │  [Logo]                      Quick Links    Company    Connect │
@@ -1277,6 +1394,7 @@ Section Title: "Frequently Asked Questions"
 ```
 
 **Footer Sections:**
+
 1. **Brand Column:**
    - Logo
    - Tagline/description
@@ -1312,18 +1430,20 @@ Section Title: "Frequently Asked Questions"
 
 [Continue with complete vehicle browsing section...]
 
-*(Due to length constraints, I'll create a second file to continue this comprehensive PRD)*
+_(Due to length constraints, I'll create a second file to continue this comprehensive PRD)_
 
 ---
 
-*This PRD continues in Part 2 with detailed specifications for:*
-- *Complete Vehicle Browsing & Search*
-- *Booking Flow with Designs*
-- *Customer Dashboard*
-- *Admin CRM with Nexus-style Dashboard*
-- *All remaining sections*
+_This PRD continues in Part 2 with detailed specifications for:_
+
+- _Complete Vehicle Browsing & Search_
+- _Booking Flow with Designs_
+- _Customer Dashboard_
+- _Admin CRM with Nexus-style Dashboard_
+- _All remaining sections_
 
 **Would you like me to:**
+
 1. Create Part 2 of the PRD with remaining sections?
 2. Create separate design specification documents?
 3. Create wireframes/mockups based on these specs?

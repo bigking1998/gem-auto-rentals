@@ -175,7 +175,16 @@ nginx -t && systemctl reload nginx
 
 Live in `/var/www/gem/server/.env` (mode `600`, owned by `deploy`). **Not in git, and never should be.**
 
-Set: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `PORT`, `NODE_ENV`, `WEB_URL`, `ADMIN_URL`, `RESEND_API_KEY`, `FROM_EMAIL`, all six `R2_*` vars, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`.
+Set: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `PORT`, `NODE_ENV`, `WEB_URL`, `ADMIN_URL`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `FROM_EMAIL`, all six `R2_*` vars, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`.
+
+`RESEND_API_KEY` is a **send-only** key — it cannot read audiences, manage domains, or mint
+further keys. Keep it that way; the blast radius if the droplet is ever compromised is then
+limited to sending mail.
+
+Account-level Resend work (registering the webhook below, managing domains) needs a
+**full-access** key. That key is deliberately **not** on the droplet — it is kept off-server
+in the local Obsidian vault at `vault/infrastructure/api-credentials.md`, which is not a git
+repo and is not synced. Nothing in this repository should ever contain it.
 
 **Deliberately dropped during migration** (verified unused by any code):
 
@@ -183,6 +192,35 @@ Set: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `PORT`, `NODE
 - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` — the package isn't even installed
 
 **Deliberately omitted:** `STRIPE_SECRET_KEY` — see §9.
+
+### Resend delivery webhook
+
+Registered 2026-08-02. Without it, dead addresses stay on the waiting list forever, the
+bounce rate climbs, and eventually Gmail and Outlook route _everything_ from this domain to
+spam — including booking confirmations and password resets.
+
+|            |                                                     |
+| ---------- | --------------------------------------------------- |
+| Webhook ID | `a4fd43e0-3c23-46c8-89b1-46b15034e593`              |
+| Endpoint   | `https://api.gemrentalcars.com/api/webhooks/resend` |
+| Events     | `email.bounced`, `email.complained`                 |
+| Status     | enabled                                             |
+
+Handled in [`server/src/routes/webhooks.ts`](server/src/routes/webhooks.ts). Policy: 3 bounces
+→ suppress; 1 spam complaint → suppress immediately.
+
+Two things that will break it if changed carelessly:
+
+1. The router is mounted **before** `express.json()` in `server/src/index.ts`. Svix signs the
+   raw bytes, so parsed-then-reserialised JSON will not match and every event 401s.
+2. `RESEND_WEBHOOK_SECRET` must match the webhook's signing secret. If it is unset the
+   endpoint returns **503** by design rather than silently accepting unverified payloads.
+
+Verify it end to end at any time — unsigned must 401, correctly signed must 200:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://api.gemrentalcars.com/api/webhooks/resend -d '{}'
+```
 
 ---
 

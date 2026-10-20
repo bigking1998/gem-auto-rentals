@@ -1,9 +1,25 @@
+---
+title: 'Fix Render Database Connection'
+aliases: [render-database-url-fix]
+type: leaf
+status: active
+tags: [type/leaf, project/gem-auto-rentals, topic/infra, topic/database, topic/trap]
+updated: 2026-01-26
+summary: >
+  The Render server pointed at the wrong port for Supabase's transaction pooler. Problem,
+  root cause, fix, the direct-connection alternative, and how to verify.
+related:
+  - '[[DEPLOYMENT]]'
+---
+
 # Fix Render Database Connection
 
 ## Problem
+
 Your Render server is using the wrong port for Supabase's transaction pooler.
 
 ## Root Cause
+
 - Supabase Transaction Pooler uses port **6543**
 - Your current DATABASE_URL uses port **5432** (which is for direct connections)
 - This causes "Tenant or user not found" error
@@ -25,6 +41,7 @@ postgresql://postgres:Kinggodfrey.1998@aws-1-us-east-2.pooler.supabase.com:6543/
 ### Step 2: Verify DIRECT_URL (should remain unchanged)
 
 Make sure `DIRECT_URL` is still:
+
 ```
 postgresql://postgres:Kinggodfrey.1998@db.szvnxiozrxmsudtcsddx.supabase.co:5432/postgres
 ```
@@ -47,6 +64,7 @@ DIRECT_URL=postgresql://postgres:Kinggodfrey.1998@db.szvnxiozrxmsudtcsddx.supaba
 ## Verification
 
 Once redeployed, test your endpoints:
+
 - Login: https://gem-auto-rentals-server.onrender.com/api/auth/login
 - Vehicles: https://gem-auto-rentals-server.onrender.com/api/vehicles
 

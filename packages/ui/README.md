@@ -1,3 +1,15 @@
+---
+title: '@gem-auto-rentals/ui'
+aliases: [ui-package-readme]
+type: leaf
+status: active
+tags: [type/leaf, project/gem-auto-rentals, topic/frontend, topic/design-system]
+updated: 2026-01-18
+summary: >
+  Reference for the shared @gem-auto-rentals/ui component library (React, Tailwind, Radix) —
+  components, utility functions, design tokens and best practices.
+---
+
 # @gem-auto-rentals/ui
 
 Shared UI component library for Gem Auto Rentals, built with React, Tailwind CSS, and Radix UI primitives.
@@ -49,12 +61,12 @@ import { Button } from '@gem-auto-rentals/ui';
 
 #### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `'default' \| 'secondary' \| 'outline' \| 'ghost' \| 'link' \| 'destructive' \| 'gradient' \| 'success' \| 'warning'` | `'default'` | Visual style variant |
-| `size` | `'default' \| 'sm' \| 'lg' \| 'xl' \| 'icon'` | `'default'` | Button size |
-| `loading` | `boolean` | `false` | Shows loading spinner and disables button |
-| `asChild` | `boolean` | `false` | Render as child element (for composition) |
+| Prop      | Type                                                                                                                  | Default     | Description                               |
+| --------- | --------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------- |
+| `variant` | `'default' \| 'secondary' \| 'outline' \| 'ghost' \| 'link' \| 'destructive' \| 'gradient' \| 'success' \| 'warning'` | `'default'` | Visual style variant                      |
+| `size`    | `'default' \| 'sm' \| 'lg' \| 'xl' \| 'icon'`                                                                         | `'default'` | Button size                               |
+| `loading` | `boolean`                                                                                                             | `false`     | Shows loading spinner and disables button |
+| `asChild` | `boolean`                                                                                                             | `false`     | Render as child element (for composition) |
 
 ---
 
@@ -63,7 +75,14 @@ import { Button } from '@gem-auto-rentals/ui';
 Container component with optional hover effects.
 
 ```tsx
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@gem-auto-rentals/ui';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@gem-auto-rentals/ui';
 
 <Card hover>
   <CardHeader>
@@ -76,13 +95,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
   <CardFooter>
     <Button>Action</Button>
   </CardFooter>
-</Card>
+</Card>;
 ```
 
 #### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
+| Prop    | Type      | Default | Description                             |
+| ------- | --------- | ------- | --------------------------------------- |
 | `hover` | `boolean` | `false` | Enables lift and shadow effect on hover |
 
 ---
@@ -127,7 +146,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@gem-auto-rentals/ui';
 <Avatar>
   <AvatarImage src="/avatar.jpg" alt="User" />
   <AvatarFallback>JD</AvatarFallback>
-</Avatar>
+</Avatar>;
 ```
 
 ---
@@ -162,7 +181,7 @@ import {
       <Button>Confirm</Button>
     </DialogFooter>
   </DialogContent>
-</Dialog>
+</Dialog>;
 ```
 
 ---
@@ -189,7 +208,7 @@ import {
     <SelectItem value="option2">Option 2</SelectItem>
     <SelectItem value="option3">Option 3</SelectItem>
   </SelectContent>
-</Select>
+</Select>;
 ```
 
 ---
@@ -199,12 +218,7 @@ import {
 Collapsible content sections.
 
 ```tsx
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@gem-auto-rentals/ui';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@gem-auto-rentals/ui';
 
 <Accordion type="single" collapsible>
   <AccordionItem value="item-1">
@@ -215,7 +229,7 @@ import {
     <AccordionTrigger>Section 2</AccordionTrigger>
     <AccordionContent>Content for section 2</AccordionContent>
   </AccordionItem>
-</Accordion>
+</Accordion>;
 ```
 
 ---
@@ -246,10 +260,12 @@ import {
     <TableRow>
       <TableCell>John Doe</TableCell>
       <TableCell>john@example.com</TableCell>
-      <TableCell><Badge>Active</Badge></TableCell>
+      <TableCell>
+        <Badge>Active</Badge>
+      </TableCell>
     </TableRow>
   </TableBody>
-</Table>
+</Table>;
 ```
 
 ---
@@ -299,25 +315,25 @@ const columns: ColumnDef<User>[] = [
   emptyMessage="No users found."
   onRowClick={(row) => console.log(row.original)}
   isLoading={false}
-/>
+/>;
 ```
 
 #### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `columns` | `ColumnDef<TData, TValue>[]` | required | Column definitions |
-| `data` | `TData[]` | required | Data array |
-| `searchKey` | `string` | - | Column key for search filtering |
-| `searchPlaceholder` | `string` | `'Search...'` | Search input placeholder |
-| `pageSize` | `number` | `10` | Default items per page |
-| `pageSizeOptions` | `number[]` | `[10, 20, 30, 50]` | Available page sizes |
-| `showPagination` | `boolean` | `true` | Show pagination controls |
-| `showSearch` | `boolean` | `true` | Show search input |
-| `showRowCount` | `boolean` | `true` | Show row count |
-| `emptyMessage` | `string` | `'No results found.'` | Message when no data |
-| `onRowClick` | `(row: Row<TData>) => void` | - | Row click handler |
-| `isLoading` | `boolean` | `false` | Show loading skeleton |
+| Prop                | Type                         | Default               | Description                     |
+| ------------------- | ---------------------------- | --------------------- | ------------------------------- |
+| `columns`           | `ColumnDef<TData, TValue>[]` | required              | Column definitions              |
+| `data`              | `TData[]`                    | required              | Data array                      |
+| `searchKey`         | `string`                     | -                     | Column key for search filtering |
+| `searchPlaceholder` | `string`                     | `'Search...'`         | Search input placeholder        |
+| `pageSize`          | `number`                     | `10`                  | Default items per page          |
+| `pageSizeOptions`   | `number[]`                   | `[10, 20, 30, 50]`    | Available page sizes            |
+| `showPagination`    | `boolean`                    | `true`                | Show pagination controls        |
+| `showSearch`        | `boolean`                    | `true`                | Show search input               |
+| `showRowCount`      | `boolean`                    | `true`                | Show row count                  |
+| `emptyMessage`      | `string`                     | `'No results found.'` | Message when no data            |
+| `onRowClick`        | `(row: Row<TData>) => void`  | -                     | Row click handler               |
+| `isLoading`         | `boolean`                    | `false`               | Show loading skeleton           |
 
 ---
 
@@ -405,7 +421,9 @@ import {
       <PaginationLink href="#">1</PaginationLink>
     </PaginationItem>
     <PaginationItem>
-      <PaginationLink href="#" isActive>2</PaginationLink>
+      <PaginationLink href="#" isActive>
+        2
+      </PaginationLink>
     </PaginationItem>
     <PaginationItem>
       <PaginationLink href="#">3</PaginationLink>
@@ -417,7 +435,7 @@ import {
       <PaginationNext href="#" />
     </PaginationItem>
   </PaginationContent>
-</Pagination>
+</Pagination>;
 ```
 
 ---
@@ -432,17 +450,17 @@ Class name utility for merging Tailwind classes with conditional logic.
 import { cn } from '@gem-auto-rentals/ui';
 
 // Basic usage
-cn('text-red-500', 'font-bold')
+cn('text-red-500', 'font-bold');
 // => 'text-red-500 font-bold'
 
 // Conditional classes
-cn('base-class', isActive && 'active-class', isDisabled && 'disabled-class')
+cn('base-class', isActive && 'active-class', isDisabled && 'disabled-class');
 
 // Object syntax
 cn({
   'text-red-500': hasError,
   'text-green-500': isSuccess,
-})
+});
 ```
 
 ---

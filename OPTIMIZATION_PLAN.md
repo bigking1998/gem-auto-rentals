@@ -1,3 +1,17 @@
+---
+title: 'Gem Auto Rentals - Performance & SEO Optimization Plan'
+aliases: [optimization-plan]
+type: meta
+status: active
+tags: [type/meta, project/gem-auto-rentals, topic/performance, topic/seo]
+updated: 2026-01-29
+summary: >
+  Performance and SEO optimization strategy for the main site and admin dashboard, with
+  sitemap planning, implementation order and a testing checklist.
+related:
+  - '[[CLOUDFLARE_SETUP]]'
+---
+
 # Gem Auto Rentals - Performance & SEO Optimization Plan
 
 ## Overview
@@ -11,10 +25,12 @@ This document outlines a comprehensive optimization strategy for the Gem Auto Re
 ### Phase 1: Vite Build Optimization (Both Apps)
 
 **Files to modify:**
+
 - `apps/web/vite.config.ts`
 - `apps/admin/vite.config.ts`
 
 **Changes:**
+
 1. Add manual chunk splitting for large vendor libraries
 2. Disable source maps in production
 3. Add compression plugin (gzip + brotli)
@@ -22,6 +38,7 @@ This document outlines a comprehensive optimization strategy for the Gem Auto Re
 5. Add terser minification options
 
 **Expected Impact:**
+
 - 30-50% reduction in initial bundle size
 - Faster page loads from compressed assets
 - Better caching through chunked vendor files
@@ -31,14 +48,17 @@ This document outlines a comprehensive optimization strategy for the Gem Auto Re
 ### Phase 2: Admin Dashboard Code Splitting
 
 **File to modify:**
+
 - `apps/admin/src/App.tsx`
 
 **Changes:**
+
 1. Convert all page imports to lazy imports with `React.lazy()`
 2. Add `Suspense` wrapper with loading fallback
 3. Heavy components (Recharts pages) loaded only when needed
 
 **Expected Impact:**
+
 - 40-60% reduction in initial JS bundle for admin
 - Analytics page (with Recharts) only loads when accessed
 - Faster admin dashboard initial load
@@ -48,15 +68,18 @@ This document outlines a comprehensive optimization strategy for the Gem Auto Re
 ### Phase 3: Server Compression & Caching Headers
 
 **File to modify:**
+
 - `server/src/index.ts`
 
 **Changes:**
+
 1. Add `compression` middleware for gzip responses
 2. Add cache-control headers for static resources
 3. Add ETag support for API responses
 4. Increase rate limit for vehicle browsing (200 req/15min)
 
 **Expected Impact:**
+
 - 60-80% reduction in response sizes
 - Browser caching reduces repeat requests
 - Better user experience during browsing
@@ -66,16 +89,19 @@ This document outlines a comprehensive optimization strategy for the Gem Auto Re
 ### Phase 4: Component Memoization
 
 **Files to modify:**
+
 - `apps/web/src/components/vehicles/VehicleCard.tsx`
 - `apps/web/src/components/home/FeaturedVehicles.tsx`
 - `apps/admin/src/components/fleet/VehicleTable.tsx` (if exists)
 
 **Changes:**
+
 1. Wrap list item components with `React.memo()`
 2. Add proper dependency arrays to `useMemo`/`useCallback` where beneficial
 3. Optimize re-renders during filtering/pagination
 
 **Expected Impact:**
+
 - Reduced CPU usage during list interactions
 - Smoother filtering/sorting experience
 - Better INP (Interaction to Next Paint) scores
@@ -85,14 +111,17 @@ This document outlines a comprehensive optimization strategy for the Gem Auto Re
 ### Phase 5: Fix FeaturedVehicles Image Loading
 
 **File to modify:**
+
 - `apps/web/src/components/home/FeaturedVehicles.tsx`
 
 **Changes:**
+
 1. Replace raw `<img>` tags with `LazyImage` component
 2. Use `EagerImage` for first 2 vehicles (above fold)
 3. Add proper `loading` and `fetchpriority` attributes
 
 **Expected Impact:**
+
 - Consistent lazy loading behavior
 - Better LCP (Largest Contentful Paint) scores
 - Reduced initial page weight
@@ -104,12 +133,14 @@ This document outlines a comprehensive optimization strategy for the Gem Auto Re
 ### Phase 6: Meta Tag Management with react-helmet-async
 
 **Files to create/modify:**
+
 - `apps/web/package.json` (add dependency)
 - `apps/web/src/main.tsx` (add HelmetProvider)
 - `apps/web/src/components/SEO.tsx` (new component)
 - All page components (add SEO component)
 
 **SEO Component Features:**
+
 ```typescript
 interface SEOProps {
   title: string;
@@ -135,6 +166,7 @@ interface SEOProps {
 ### Phase 7: Structured Data (JSON-LD)
 
 **Files to create:**
+
 - `apps/web/src/components/StructuredData.tsx`
 
 **Schema Types to Implement:**
@@ -166,6 +198,7 @@ interface SEOProps {
 ```
 
 2. **Car Schema** - On vehicle detail pages
+
 ```json
 {
   "@context": "https://schema.org",
@@ -190,9 +223,11 @@ interface SEOProps {
 ### Phase 8: robots.txt
 
 **File to create:**
+
 - `apps/web/public/robots.txt`
 
 **Content:**
+
 ```
 User-agent: *
 Allow: /
@@ -207,7 +242,9 @@ Sitemap: https://gemrentalcars.com/sitemap.xml
 ```
 
 **Admin Dashboard:**
+
 - `apps/admin/public/robots.txt`
+
 ```
 User-agent: *
 Disallow: /
@@ -220,16 +257,19 @@ Disallow: /
 **Implementation Options:**
 
 **Option A: Build-time Generation (Recommended)**
+
 - Create `scripts/generate-sitemap.ts`
 - Run during build process
 - Outputs to `apps/web/public/sitemap.xml`
 
 **Option B: Server-side Dynamic**
+
 - Add `/api/sitemap.xml` endpoint
 - Fetches vehicles from database
 - Returns XML dynamically
 
 **Sitemap Structure:**
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -282,10 +322,12 @@ interface SEOProps {
 ```
 
 **Default OG Image:**
+
 - Create branded sharing image (1200x630px)
 - Store at `/og-image.png`
 
 **Vehicle-specific OG Images:**
+
 - Use vehicle's primary image
 - Fallback to default if missing
 
@@ -334,24 +376,25 @@ interface SEOProps {
 
 ## Implementation Order & Timeline
 
-| Phase | Description | Risk Level | Dependencies |
-|-------|-------------|------------|--------------|
-| 1 | Vite Build Optimization | Low | None |
-| 2 | Admin Code Splitting | Low | None |
-| 3 | Server Compression | Low | None |
-| 4 | Component Memoization | Low | None |
-| 5 | FeaturedVehicles Fix | Low | None |
-| 6 | SEO Meta Tags | Low | react-helmet-async |
-| 7 | Structured Data | Low | Phase 6 |
-| 8 | robots.txt | Low | None |
-| 9 | Sitemap Generation | Medium | API access |
-| 10 | Open Graph Tags | Low | Phase 6 |
+| Phase | Description             | Risk Level | Dependencies       |
+| ----- | ----------------------- | ---------- | ------------------ |
+| 1     | Vite Build Optimization | Low        | None               |
+| 2     | Admin Code Splitting    | Low        | None               |
+| 3     | Server Compression      | Low        | None               |
+| 4     | Component Memoization   | Low        | None               |
+| 5     | FeaturedVehicles Fix    | Low        | None               |
+| 6     | SEO Meta Tags           | Low        | react-helmet-async |
+| 7     | Structured Data         | Low        | Phase 6            |
+| 8     | robots.txt              | Low        | None               |
+| 9     | Sitemap Generation      | Medium     | API access         |
+| 10    | Open Graph Tags         | Low        | Phase 6            |
 
 ---
 
 ## Testing Checklist
 
 ### Performance Testing
+
 - [ ] Run Lighthouse audit before/after
 - [ ] Check bundle size with `vite-bundle-visualizer`
 - [ ] Verify lazy loading works (Network tab)
@@ -359,6 +402,7 @@ interface SEOProps {
 - [ ] Verify no visual changes
 
 ### SEO Testing
+
 - [ ] Validate structured data with Google Rich Results Test
 - [ ] Test OG tags with Facebook Sharing Debugger
 - [ ] Test Twitter Cards with Card Validator
@@ -367,6 +411,7 @@ interface SEOProps {
 - [ ] Check mobile-friendliness
 
 ### Functional Testing
+
 - [ ] All pages load correctly
 - [ ] Navigation works
 - [ ] Forms submit properly

@@ -1,3 +1,18 @@
+---
+title: 'Gem Auto Rentals - Deployment Guide'
+aliases: [deployment-guide]
+type: leaf
+status: active
+tags: [type/leaf, project/gem-auto-rentals, topic/infra, topic/deployment]
+updated: 2026-07-27
+summary: >
+  Production deployment guide — architecture overview, prerequisites, environment setup,
+  database setup, and backend deployment.
+related:
+  - '[[CLOUDFLARE_SETUP]]'
+  - '[[INFRASTRUCTURE]]'
+---
+
 # Gem Auto Rentals - Deployment Guide
 
 > # ⚠️ SUPERSEDED — 2026-07-27

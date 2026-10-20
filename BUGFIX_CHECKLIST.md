@@ -1,3 +1,17 @@
+---
+title: 'Gem Auto Rentals — Bug Fix Checklist'
+aliases: [bugfix-checklist]
+type: meta
+status: active
+tags: [type/meta, project/gem-auto-rentals, topic/bugs, topic/qa]
+updated: 2026-07-27
+summary: >
+  Bugs derived from WEBSITE_AUDIT.md section 15, sorted Critical/High/Medium/Low, with a
+  suggested grouping for parallel agents and the items blocked on a decision or credential.
+related:
+  - '[[WEBSITE_AUDIT]]'
+---
+
 # Gem Auto Rentals — Bug Fix Checklist
 
 Derived from [WEBSITE_AUDIT.md](WEBSITE_AUDIT.md) §15.

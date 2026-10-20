@@ -1,4 +1,17 @@
+---
+title: 'Mobile Responsive Testing Report (375px)'
+aliases: [mobile-responsive-report]
+type: meta
+status: active
+tags: [type/meta, project/gem-auto-rentals, topic/qa, topic/testing]
+updated: 2026-01-26
+summary: >
+  Test report for admin dashboard pages at a 375px viewport. Self-reported result: all pages
+  display correctly with proper responsive patterns; minor observations noted.
+---
+
 # Mobile Responsive Testing Report (375px)
+
 **Date:** 2026-01-26
 **Viewport:** 375px × 667px (iPhone SE / iPhone 6/7/8)
 **Pages Tested:** 10
@@ -59,18 +72,21 @@
 ## Minor Observations
 
 ### 1. Tables on Data-Heavy Pages
+
 **Pages Affected:** Bookings, Customers, Fleet Management
 **Behavior:** Wide tables scroll horizontally
 **Status:** ✅ This is expected and correct behavior
 **Reason:** Standard industry pattern for displaying complex tables on mobile
 
 ### 2. Settings Tabs
+
 **Page:** Settings
 **Behavior:** Tabs scroll horizontally
 **Status:** ✅ This is a good mobile pattern
 **All tabs accessible:** Yes
 
 ### 3. Export Button on Analytics
+
 **Page:** Analytics
 **Behavior:** Export button with dropdown visible but slightly close to edge
 **Status:** ✅ Functional and accessible
@@ -78,6 +94,7 @@
 ## Screenshots Captured
 
 All screenshots saved in `.playwright-mcp/` directory:
+
 - `admin-login-mobile-375px.png` - Login page
 - `1-dashboard-mobile-375px.png` - Dashboard home
 - `2-bookings-mobile-375px.png` - Bookings page

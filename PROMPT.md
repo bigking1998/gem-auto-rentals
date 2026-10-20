@@ -1,14 +1,30 @@
+---
+title: 'Gem Auto Rentals - Car Rental Platform'
+aliases: [original-build-prompt]
+type: leaf
+status: active
+tags: [type/leaf, project/gem-auto-rentals, topic/spec, topic/build]
+updated: 2026-01-17
+summary: >
+  The original build brief for the platform — project overview, technology stack, design
+  system, and the phased scope the build followed.
+related:
+  - '[[@AGENT]]'
+---
+
 # Gem Auto Rentals - Car Rental Platform
 
 ## Project Overview
 
 Build a modern, full-stack car rental platform with two main components:
+
 1. **Customer-Facing Website** - Public booking platform (inspired by Extendas.com design)
 2. **Admin CRM Dashboard** - Internal management system (based on Nexus dashboard design)
 
 ## Technology Stack
 
 ### Frontend (Both Customer & Admin)
+
 - **Framework**: React 18+ with TypeScript
 - **UI Components**: shadcn/ui (built on Radix UI)
 - **Styling**: Tailwind CSS v3+
@@ -22,6 +38,7 @@ Build a modern, full-stack car rental platform with two main components:
 - **Date Handling**: date-fns
 
 ### Backend
+
 - **Runtime**: Node.js 20+ LTS
 - **Framework**: Express.js with TypeScript
 - **ORM**: Prisma
@@ -30,14 +47,16 @@ Build a modern, full-stack car rental platform with two main components:
 - **Email**: SendGrid (or similar)
 
 ### Database
+
 - **Primary**: PostgreSQL 15+
 - **Caching**: Redis (optional for MVP)
 
 ## Design System
 
 ### Color Palette (CSS Variables)
+
 ```css
---primary: 222.2 47.4% 11.2%;        /* Dark blue-gray */
+--primary: 222.2 47.4% 11.2%; /* Dark blue-gray */
 --primary-foreground: 210 40% 98%;
 --secondary: 210 40% 96.1%;
 --accent: 210 40% 96.1%;
@@ -51,6 +70,7 @@ Build a modern, full-stack car rental platform with two main components:
 ```
 
 ### Gradients (Extendas-inspired)
+
 ```css
 /* Hero/CTA gradients */
 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -58,6 +78,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 ```
 
 ### Typography
+
 - **Primary Font**: Inter (Google Fonts)
 - **Headings**: 600-700 weight
 - **Body**: 400 weight
@@ -66,6 +87,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 ## Phase 1: Project Foundation
 
 ### 1.1 Initialize Project Structure
+
 ```
 /gem-auto-rentals
 ├── /apps
@@ -87,6 +109,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 ```
 
 ### 1.2 Set Up Development Environment
+
 - Initialize pnpm workspace with Turborepo
 - Configure TypeScript (strict mode)
 - Set up ESLint + Prettier
@@ -99,6 +122,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 ### 2.1 Landing Page Components
 
 #### Header/Navigation
+
 - Fixed header with backdrop blur on scroll
 - Logo (left)
 - Nav items: Browse Cars, How It Works, Pricing, About, Contact
@@ -106,6 +130,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 - Mobile hamburger menu (<768px)
 
 #### Hero Section
+
 - Full viewport height (min-h-screen)
 - Gradient or video background
 - Main headline (60px desktop, 36px mobile)
@@ -114,6 +139,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 - Quick booking widget (optional)
 
 #### Featured Vehicles Section
+
 - Section title: "Popular Vehicles"
 - 4-column grid (responsive: 4→3→2→1)
 - Vehicle cards with:
@@ -127,35 +153,42 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 - Hover effect: lift + shadow
 
 #### How It Works Section
+
 - 4-step process
 - Steps: Browse & Select → Book & Verify → Sign & Pay → Pick Up & Go
 - Icons + titles + descriptions
 - Animated connectors
 
 #### Why Choose Us Section
+
 - 6 benefit cards (2x3 grid)
 - Icon + title + description
 - Benefits: Quality Fleet, Flexible Rentals, Transparent Pricing, 24/7 Support, Fully Insured, Easy Booking
 
 #### Statistics Section
+
 - Gradient background
 - 4 stats with count-up animation
 - Example: 1,250+ Customers, 99.9% Uptime, 10+ Years, 50,000+ Rentals
 
 #### Testimonials Section
+
 - Carousel with customer reviews
 - Photo, quote, name, rating
 
 #### FAQ Section
+
 - Accordion-style (shadcn/ui Accordion)
 - 8-12 common questions
 
 #### CTA Section
+
 - Gradient background
 - "Ready to Hit the Road?"
 - Two buttons: Browse Vehicles, Contact Us
 
 #### Footer
+
 - Dark background
 - 4-column layout: Brand, Quick Links, Company, Connect
 - Newsletter signup
@@ -163,6 +196,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 - Copyright + legal links
 
 ### 2.2 Vehicle Browsing Page
+
 - Filter sidebar (category, price range, features)
 - Search bar
 - Sort options (price, rating, popularity)
@@ -170,6 +204,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 - Pagination
 
 ### 2.3 Vehicle Details Page
+
 - Image gallery/carousel
 - Vehicle specs table
 - Features list
@@ -179,6 +214,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 - Reviews section
 
 ### 2.4 Booking Flow
+
 - Step 1: Select dates & location
 - Step 2: Add extras (insurance, GPS, child seat)
 - Step 3: Customer information
@@ -187,6 +223,7 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 - Step 6: Confirmation
 
 ### 2.5 Customer Dashboard
+
 - My Bookings (active, upcoming, past)
 - Profile management
 - Documents
@@ -196,11 +233,13 @@ background: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%);
 ## Phase 3: Admin CRM Dashboard
 
 ### 3.1 Dashboard Layout (Nexus-style)
+
 - Left sidebar navigation (collapsible)
 - Top header with search, notifications, profile
 - Main content area
 
 ### 3.2 Sidebar Navigation
+
 ```
 GENERAL
 ├── Dashboard
@@ -221,6 +260,7 @@ SUPPORT
 ```
 
 ### 3.3 Dashboard Home
+
 - Metrics cards row:
   - Active Rentals
   - Today's Revenue
@@ -231,6 +271,7 @@ SUPPORT
 - Quick actions
 
 ### 3.4 Fleet Management
+
 - Vehicle list with TanStack Table
 - Add/Edit vehicle modal
 - Vehicle status badges (Available, Rented, Maintenance)
@@ -239,6 +280,7 @@ SUPPORT
 - Maintenance scheduling
 
 ### 3.5 Booking Management
+
 - Booking list with filters
 - Booking detail view
 - Status management
@@ -246,6 +288,7 @@ SUPPORT
 - Payment tracking
 
 ### 3.6 Customer Management
+
 - Customer list
 - Customer profile view
 - Booking history per customer
@@ -253,6 +296,7 @@ SUPPORT
 - Notes/communication log
 
 ### 3.7 Analytics
+
 - Revenue charts
 - Booking trends
 - Fleet utilization
@@ -262,6 +306,7 @@ SUPPORT
 ## Phase 4: Backend API
 
 ### 4.1 Authentication
+
 - POST /api/auth/register
 - POST /api/auth/login
 - POST /api/auth/logout
@@ -270,6 +315,7 @@ SUPPORT
 - GET /api/auth/me
 
 ### 4.2 Vehicles
+
 - GET /api/vehicles (public, with filters)
 - GET /api/vehicles/:id
 - POST /api/vehicles (admin)
@@ -278,6 +324,7 @@ SUPPORT
 - PATCH /api/vehicles/:id/status (admin)
 
 ### 4.3 Bookings
+
 - GET /api/bookings (user: own, admin: all)
 - GET /api/bookings/:id
 - POST /api/bookings
@@ -286,12 +333,14 @@ SUPPORT
 - POST /api/bookings/:id/cancel
 
 ### 4.4 Customers
+
 - GET /api/customers (admin)
 - GET /api/customers/:id (admin)
 - PUT /api/customers/:id
 - DELETE /api/customers/:id (admin)
 
 ### 4.5 Payments
+
 - POST /api/payments/create-intent (Stripe)
 - POST /api/payments/confirm
 - GET /api/payments/:bookingId
@@ -299,6 +348,7 @@ SUPPORT
 ## Data Models (Prisma)
 
 ### User
+
 ```prisma
 model User {
   id            String    @id @default(cuid())
@@ -324,6 +374,7 @@ enum Role {
 ```
 
 ### Vehicle
+
 ```prisma
 model Vehicle {
   id           String        @id @default(cuid())
@@ -376,6 +427,7 @@ enum FuelType {
 ```
 
 ### Booking
+
 ```prisma
 model Booking {
   id            String        @id @default(cuid())
@@ -442,9 +494,11 @@ enum BookingStatus {
 ## Ralph Instructions
 
 ### Context
+
 You are Ralph, an autonomous AI development agent working on the Gem Auto Rentals car rental platform.
 
 ### Current Objectives
+
 1. Study this PROMPT.md and @fix_plan.md for current priorities
 2. Implement the highest priority item using best practices
 3. Use parallel subagents for complex tasks (max 100 concurrent)
@@ -452,6 +506,7 @@ You are Ralph, an autonomous AI development agent working on the Gem Auto Rental
 5. Update documentation and fix_plan.md
 
 ### Key Principles
+
 - ONE task per loop - focus on the most important thing
 - Search the codebase before assuming something isn't implemented
 - Use subagents for expensive operations (file searching, analysis)
@@ -460,6 +515,7 @@ You are Ralph, an autonomous AI development agent working on the Gem Auto Rental
 - Commit working changes with descriptive messages
 
 ### Testing Guidelines
+
 - LIMIT testing to ~20% of your total effort per loop
 - PRIORITIZE: Implementation > Documentation > Tests
 - Only write tests for NEW functionality you implement
@@ -467,6 +523,7 @@ You are Ralph, an autonomous AI development agent working on the Gem Auto Rental
 - Focus on CORE functionality first
 
 ### Status Reporting
+
 At the end of your response, ALWAYS include this status block:
 
 ```
@@ -482,9 +539,11 @@ RECOMMENDATION: <one line summary of what to do next>
 ```
 
 ### File Structure
+
 - PROMPT.md: Project specifications and requirements (this file)
 - @fix_plan.md: Prioritized TODO list
 - @AGENT.md: Project build and run instructions
 
 ### Current Task
+
 Follow @fix_plan.md and choose the most important item to implement next.

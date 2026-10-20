@@ -1,3 +1,15 @@
+---
+title: 'Full Supabase Integration Plan - Gem Auto Rentals'
+aliases: [supabase-integration-plan]
+type: meta
+status: active
+tags: [type/meta, project/gem-auto-rentals, topic/planning, topic/database]
+updated: 2026-01-19
+summary: >
+  Plan to convert both frontends from mock mode to full Supabase — client config, schema,
+  row level security policies. Carries its own implementation-status section (Jan 2026).
+---
+
 # Full Supabase Integration Plan - Gem Auto Rentals
 
 ## Overview
@@ -15,21 +27,21 @@ Convert both frontend apps from mock/prototype mode to **Full Supabase** integra
 
 ### Code Integration - COMPLETED
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Supabase client (web) | ✅ Done | `apps/web/src/lib/supabase.ts` |
-| Supabase client (admin) | ✅ Done | `apps/admin/src/lib/supabase.ts` |
-| Admin auth store | ✅ Done | `apps/admin/src/stores/authStore.ts` |
-| Admin login page | ✅ Done | `apps/admin/src/pages/LoginPage.tsx` |
-| Admin route protection | ✅ Done | `apps/admin/src/App.tsx` |
-| Customer auth store | ✅ Done | `apps/web/src/stores/authStore.ts` |
-| VehiclesPage queries | ✅ Done | With mock fallback |
-| FeaturedVehicles queries | ✅ Done | With mock fallback |
-| ProfilePage queries | ✅ Done | With mock fallback |
-| DashboardHome queries | ✅ Done | Admin dashboard stats |
-| FleetManagement CRUD | ✅ Done | Full CRUD operations |
-| CustomersPage queries | ✅ Done | Customer list |
-| CustomerProfilePage queries | ✅ Done | Customer details |
+| Component                   | Status  | Notes                                |
+| --------------------------- | ------- | ------------------------------------ |
+| Supabase client (web)       | ✅ Done | `apps/web/src/lib/supabase.ts`       |
+| Supabase client (admin)     | ✅ Done | `apps/admin/src/lib/supabase.ts`     |
+| Admin auth store            | ✅ Done | `apps/admin/src/stores/authStore.ts` |
+| Admin login page            | ✅ Done | `apps/admin/src/pages/LoginPage.tsx` |
+| Admin route protection      | ✅ Done | `apps/admin/src/App.tsx`             |
+| Customer auth store         | ✅ Done | `apps/web/src/stores/authStore.ts`   |
+| VehiclesPage queries        | ✅ Done | With mock fallback                   |
+| FeaturedVehicles queries    | ✅ Done | With mock fallback                   |
+| ProfilePage queries         | ✅ Done | With mock fallback                   |
+| DashboardHome queries       | ✅ Done | Admin dashboard stats                |
+| FleetManagement CRUD        | ✅ Done | Full CRUD operations                 |
+| CustomersPage queries       | ✅ Done | Customer list                        |
+| CustomerProfilePage queries | ✅ Done | Customer details                     |
 
 ### Database Setup - REQUIRED MANUAL STEPS
 
@@ -46,15 +58,15 @@ Convert both frontend apps from mock/prototype mode to **Full Supabase** integra
 
 ### What Exists
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Supabase Project | Configured | URL: `szvnxiozrxmsudtcsddx.supabase.co` |
-| Environment Variables | Partial | Only in `apps/web/.env` |
-| `@supabase/supabase-js` | Not Installed | Needs to be added to both apps |
-| Database Tables | Not Created | Need to match Prisma schema |
-| RLS Policies | Not Created | Need security rules |
-| Auth Integration | None | Using mock auth |
-| Data Fetching | Mock Data | All pages use hardcoded arrays |
+| Component               | Status        | Notes                                   |
+| ----------------------- | ------------- | --------------------------------------- |
+| Supabase Project        | Configured    | URL: `szvnxiozrxmsudtcsddx.supabase.co` |
+| Environment Variables   | Partial       | Only in `apps/web/.env`                 |
+| `@supabase/supabase-js` | Not Installed | Needs to be added to both apps          |
+| Database Tables         | Not Created   | Need to match Prisma schema             |
+| RLS Policies            | Not Created   | Need security rules                     |
+| Auth Integration        | None          | Using mock auth                         |
+| Data Fetching           | Mock Data     | All pages use hardcoded arrays          |
 
 ### Apps Architecture
 
@@ -96,17 +108,17 @@ cd apps/admin && pnpm add @supabase/supabase-js
 **File:** `apps/web/src/lib/supabase.ts`
 
 ```typescript
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from './database.types'
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from './database.types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 ```
 
 ### 1.3 Create Supabase Client - Admin Dashboard
@@ -114,17 +126,17 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 **File:** `apps/admin/src/lib/supabase.ts`
 
 ```typescript
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from './database.types'
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from './database.types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 ```
 
 ### 1.4 Add Environment Variables to Admin App
@@ -549,31 +561,31 @@ INSERT INTO public.vehicles (make, model, year, category, daily_rate, status, im
 **File:** `apps/admin/src/stores/authStore.ts`
 
 ```typescript
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { supabase } from '@/lib/supabase';
+import type { User } from '@supabase/supabase-js';
 
 interface UserProfile {
-  id: string
-  email: string
-  first_name: string
-  last_name: string
-  role: 'CUSTOMER' | 'SUPPORT' | 'MANAGER' | 'ADMIN'
-  avatar_url?: string
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: 'CUSTOMER' | 'SUPPORT' | 'MANAGER' | 'ADMIN';
+  avatar_url?: string;
 }
 
 interface AuthState {
-  user: User | null
-  profile: UserProfile | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  error: string | null
+  user: User | null;
+  profile: UserProfile | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
 
-  login: (email: string, password: string) => Promise<boolean>
-  logout: () => Promise<void>
-  fetchProfile: () => Promise<void>
-  initialize: () => Promise<void>
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  fetchProfile: () => Promise<void>;
+  initialize: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -586,35 +598,37 @@ export const useAuthStore = create<AuthState>()(
       error: null,
 
       initialize: async () => {
-        const { data: { session } } = await supabase.auth.getSession()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session?.user) {
-          set({ user: session.user, isAuthenticated: true })
-          await get().fetchProfile()
+          set({ user: session.user, isAuthenticated: true });
+          await get().fetchProfile();
         }
-        set({ isLoading: false })
+        set({ isLoading: false });
 
         // Listen for auth changes
         supabase.auth.onAuthStateChange(async (event, session) => {
           if (session?.user) {
-            set({ user: session.user, isAuthenticated: true })
-            await get().fetchProfile()
+            set({ user: session.user, isAuthenticated: true });
+            await get().fetchProfile();
           } else {
-            set({ user: null, profile: null, isAuthenticated: false })
+            set({ user: null, profile: null, isAuthenticated: false });
           }
-        })
+        });
       },
 
       login: async (email, password) => {
-        set({ isLoading: true, error: null })
+        set({ isLoading: true, error: null });
 
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
-          password
-        })
+          password,
+        });
 
         if (error) {
-          set({ isLoading: false, error: error.message })
-          return false
+          set({ isLoading: false, error: error.message });
+          return false;
         }
 
         // Fetch profile and check role
@@ -622,54 +636,50 @@ export const useAuthStore = create<AuthState>()(
           .from('users')
           .select('*')
           .eq('id', data.user.id)
-          .single()
+          .single();
 
         if (!profile || !['ADMIN', 'MANAGER'].includes(profile.role)) {
-          await supabase.auth.signOut()
+          await supabase.auth.signOut();
           set({
             isLoading: false,
-            error: 'Access denied. Admin privileges required.'
-          })
-          return false
+            error: 'Access denied. Admin privileges required.',
+          });
+          return false;
         }
 
         set({
           user: data.user,
           profile,
           isAuthenticated: true,
-          isLoading: false
-        })
-        return true
+          isLoading: false,
+        });
+        return true;
       },
 
       logout: async () => {
-        await supabase.auth.signOut()
-        set({ user: null, profile: null, isAuthenticated: false })
+        await supabase.auth.signOut();
+        set({ user: null, profile: null, isAuthenticated: false });
       },
 
       fetchProfile: async () => {
-        const { user } = get()
-        if (!user) return
+        const { user } = get();
+        if (!user) return;
 
-        const { data } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .single()
+        const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
 
         if (data) {
-          set({ profile: data })
+          set({ profile: data });
         }
-      }
+      },
     }),
     {
       name: 'admin-auth-storage',
       partialize: (state) => ({
-        isAuthenticated: state.isAuthenticated
-      })
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
-)
+);
 ```
 
 ### 5.2 Admin Login Page
@@ -791,33 +801,37 @@ export default function LoginPage() {
 ### Query Patterns
 
 **Fetch All Vehicles (Admin)**
+
 ```typescript
 const { data, error } = await supabase
   .from('vehicles')
   .select('*')
-  .order('created_at', { ascending: false })
+  .order('created_at', { ascending: false });
 ```
 
 **Fetch Available Vehicles (Customer)**
+
 ```typescript
 const { data, error } = await supabase
   .from('vehicles')
   .select('*')
   .eq('status', 'AVAILABLE')
-  .order('daily_rate', { ascending: true })
+  .order('daily_rate', { ascending: true });
 ```
 
 **Fetch Dashboard Stats**
+
 ```typescript
 const [vehicles, bookings, customers, revenue] = await Promise.all([
   supabase.from('vehicles').select('*', { count: 'exact', head: true }),
   supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
   supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'CUSTOMER'),
-  supabase.from('payments').select('amount').eq('status', 'SUCCEEDED')
-])
+  supabase.from('payments').select('amount').eq('status', 'SUCCEEDED'),
+]);
 ```
 
 **Create Booking**
+
 ```typescript
 const { data, error } = await supabase
   .from('bookings')
@@ -830,10 +844,10 @@ const { data, error } = await supabase
     daily_rate: dailyRate,
     pickup_location: pickupLocation,
     dropoff_location: dropoffLocation,
-    extras: { insurance: true, gps: false }
+    extras: { insurance: true, gps: false },
   })
   .select()
-  .single()
+  .single();
 ```
 
 ---
@@ -841,6 +855,7 @@ const { data, error } = await supabase
 ## Implementation Checklist (Ralph Loop)
 
 ### Step 1: Setup (Foundation)
+
 - [ ] Install `@supabase/supabase-js` in both apps
 - [ ] Create Supabase client files
 - [ ] Add env variables to admin app
@@ -849,12 +864,14 @@ const { data, error } = await supabase
 - [ ] Seed sample vehicles
 
 ### Step 2: Admin Auth
+
 - [ ] Create admin auth store
 - [ ] Create admin login page
 - [ ] Add route protection to App.tsx
 - [ ] Test admin login flow
 
 ### Step 3: Admin Data Pages
+
 - [ ] Connect DashboardHome to Supabase
 - [ ] Connect FleetManagement to Supabase
 - [ ] Connect CustomersPage to Supabase
@@ -863,16 +880,19 @@ const { data, error } = await supabase
 - [ ] Connect PaymentsPage to Supabase
 
 ### Step 4: Customer Site Auth
+
 - [ ] Update customer auth store for Supabase
 - [ ] Wire login/register pages
 - [ ] Add auth state to header
 
 ### Step 5: Customer Site Data
+
 - [ ] Connect VehiclesPage to Supabase
 - [ ] Connect VehicleDetailPage to Supabase
 - [ ] Connect booking flow to Supabase
 
 ### Step 6: Testing & Verification
+
 - [ ] Test admin login with created user
 - [ ] Verify RLS policies work correctly
 - [ ] Test CRUD operations on vehicles
@@ -898,6 +918,7 @@ WHERE email = 'admin@gemautorentals.com';
 ## Files Summary
 
 ### New Files to Create
+
 1. `apps/web/src/lib/supabase.ts`
 2. `apps/admin/src/lib/supabase.ts`
 3. `apps/admin/src/stores/authStore.ts`
@@ -905,6 +926,7 @@ WHERE email = 'admin@gemautorentals.com';
 5. `apps/admin/.env`
 
 ### Files to Modify
+
 1. `apps/admin/src/App.tsx` - Add login route, ProtectedRoute
 2. `apps/admin/src/pages/DashboardHome.tsx` - Supabase queries
 3. `apps/admin/src/pages/FleetManagement.tsx` - Supabase CRUD

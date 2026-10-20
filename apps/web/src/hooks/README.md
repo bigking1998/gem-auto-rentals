@@ -1,3 +1,15 @@
+---
+title: 'Gem Car Rentals - Custom React Hooks'
+aliases: [web-hooks-readme]
+type: leaf
+status: active
+tags: [type/leaf, project/gem-auto-rentals, topic/frontend, topic/api-docs]
+updated: 2026-08-02
+summary: >
+  Reference for the customer web app's custom React hooks — core and domain-specific hooks,
+  caching behaviour, best practices and examples.
+---
+
 # Gem Car Rentals - Custom React Hooks
 
 This directory contains custom React hooks for data fetching, caching, and state management.

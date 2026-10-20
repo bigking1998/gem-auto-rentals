@@ -1,6 +1,19 @@
+---
+title: 'Soft Delete / Recycle Bin Feature'
+aliases: [soft-delete, recycle-bin]
+type: meta
+status: active
+tags: [type/meta, project/gem-auto-rentals, topic/planning, topic/database]
+updated: 2026-01-25
+summary: >
+  Plan for soft-delete / recycle bin across the CRM — schema, Prisma middleware, trash API
+  routes, DELETE endpoint changes, admin UI. Records flagged rather than removed.
+---
+
 # Soft Delete / Recycle Bin Feature
 
 ## Overview
+
 Add soft delete (recycle bin) functionality to the Gem Auto Rentals CRM. Records will be flagged as deleted rather than permanently removed, allowing recovery within a configurable retention period (default 30 days).
 
 ---
@@ -90,19 +103,19 @@ Add soft delete (recycle bin) functionality to the Gem Auto Rentals CRM. Records
 
 ## Models Reference
 
-| Model | Soft Delete | Reason |
-|-------|-------------|--------|
-| User | Yes | Core entity with history |
-| Vehicle | Yes | Fleet asset with records |
-| Booking | Yes | Financial audit trail |
-| Document | Yes | Compliance records |
-| Conversation | Yes | Communication history |
-| Invoice | Yes | Legal/tax records |
-| Review | Yes | Customer feedback |
-| MaintenanceRecord | Yes | Service history |
-| Session | No | Security - hard revoke |
-| Notification | No | Ephemeral |
-| Payment | No | Keep with booking |
+| Model             | Soft Delete | Reason                   |
+| ----------------- | ----------- | ------------------------ |
+| User              | Yes         | Core entity with history |
+| Vehicle           | Yes         | Fleet asset with records |
+| Booking           | Yes         | Financial audit trail    |
+| Document          | Yes         | Compliance records       |
+| Conversation      | Yes         | Communication history    |
+| Invoice           | Yes         | Legal/tax records        |
+| Review            | Yes         | Customer feedback        |
+| MaintenanceRecord | Yes         | Service history          |
+| Session           | No          | Security - hard revoke   |
+| Notification      | No          | Ephemeral                |
+| Payment           | No          | Keep with booking        |
 
 ## Key Files
 
@@ -118,6 +131,7 @@ Add soft delete (recycle bin) functionality to the Gem Auto Rentals CRM. Records
 ## Usage
 
 ### Manual Cleanup
+
 ```bash
 # Dry run (preview without deleting)
 npm run cleanup:deleted:dry
@@ -127,13 +141,16 @@ npm run cleanup:deleted
 ```
 
 ### Environment Variables
+
 ```
 SOFT_DELETE_RETENTION_DAYS=30  # Days before permanent deletion (default: 30)
 DRY_RUN=true                   # Preview mode without actual deletion
 ```
 
 ### Cron Setup (Production)
+
 Add to crontab for daily cleanup at 3 AM:
+
 ```
 0 3 * * * cd /path/to/server && npm run cleanup:deleted >> /var/log/cleanup.log 2>&1
 ```
