@@ -34,7 +34,7 @@ interface Vehicle {
   category: 'ECONOMY' | 'STANDARD' | 'PREMIUM' | 'LUXURY' | 'SUV' | 'VAN';
   status: 'AVAILABLE' | 'RENTED' | 'MAINTENANCE' | 'RETIRED';
   dailyRate: number;
-  licensePlate: string;
+  licensePlate: string | null;
   mileage: number;
   seats: number;
   transmission: 'AUTOMATIC' | 'MANUAL';
@@ -85,7 +85,7 @@ const apiToVehicle = (v: ApiVehicle & { bookingCount?: number }): Vehicle => ({
   seats: v.seats,
   transmission: v.transmission,
   fuelType: v.fuelType,
-  vin: v.vin,
+  vin: v.vin ?? undefined,
   features: v.features || [],
   images: v.images || [],
   bookingCount: v.bookingCount || 0,
@@ -148,7 +148,9 @@ export default function FleetManagement() {
     const matchesSearch =
       vehicle.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase());
+      // licensePlate is nullable — a car can be on the fleet before its plate
+      // is known, and calling .toLowerCase() on null crashes the whole page.
+      (vehicle.licensePlate ?? '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -781,9 +783,13 @@ export default function FleetManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-mono text-sm text-gray-600">
-                        {vehicle.licensePlate}
-                      </span>
+                      {vehicle.licensePlate ? (
+                        <span className="font-mono text-sm text-gray-600">
+                          {vehicle.licensePlate}
+                        </span>
+                      ) : (
+                        <span className="text-sm italic text-gray-400">Not yet known</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

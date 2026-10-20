@@ -2,11 +2,51 @@ import { Router } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
 import prisma from '../lib/prisma.js';
-import { authenticate, staffOnly } from '../middleware/auth.js';
+import { authenticate, staffOnly, optionalAuth } from '../middleware/auth.js';
 import { NotFoundError, BadRequestError } from '../middleware/errorHandler.js';
-import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getPublicUrl } from '../lib/storage.js';
+import {
+  BUCKETS,
+  isStorageConfigured,
+  uploadFile,
+  deleteFile,
+  getPublicUrl,
+} from '../lib/storage.js';
 
 const router = Router();
+
+const STAFF_ROLES = ['SUPPORT', 'MANAGER', 'ADMIN'];
+
+/**
+ * Strip fields a customer must never see.
+ *
+ * These endpoints are public AND used by the admin dashboard, so they cannot
+ * simply select fewer columns: the admin's edit form needs the plate and VIN.
+ * Instead they run behind `optionalAuth` and this removes the sensitive fields
+ * for anyone who is not signed-in staff.
+ *
+ * Why it matters: before this, an unauthenticated GET /api/vehicles returned
+ * every car's LICENCE PLATE and VIN to anyone on the internet. A VIN is enough
+ * to pull a vehicle's history and is used in plate-cloning and registration
+ * fraud; the plate identifies a specific car on a specific driveway. Neither is
+ * needed to rent a car. `deletedAt`/`deletedBy` are internal audit fields and
+ * leak staff ids, so they go too.
+ */
+function redactForPublic<T extends Record<string, unknown>>(
+  vehicle: T,
+  isStaff: boolean
+): T | Omit<T, 'licensePlate' | 'vin' | 'deletedAt' | 'deletedBy'> {
+  if (isStaff) return vehicle;
+  const { licensePlate, vin, deletedAt, deletedBy, ...safe } = vehicle as Record<string, unknown>;
+  void licensePlate;
+  void vin;
+  void deletedAt;
+  void deletedBy;
+  return safe as Omit<T, 'licensePlate' | 'vin' | 'deletedAt' | 'deletedBy'>;
+}
+
+function isStaffRequest(req: { user?: { role?: string } }): boolean {
+  return !!req.user?.role && STAFF_ROLES.includes(req.user.role);
+}
 
 // Configure multer for vehicle image uploads
 const upload = multer({
@@ -28,7 +68,11 @@ const upload = multer({
 const vehicleSchema = z.object({
   make: z.string().min(1, 'Make is required'),
   model: z.string().min(1, 'Model is required'),
-  year: z.number().int().min(1990).max(new Date().getFullYear() + 1),
+  year: z
+    .number()
+    .int()
+    .min(1990)
+    .max(new Date().getFullYear() + 1),
   category: z.enum(['ECONOMY', 'STANDARD', 'PREMIUM', 'LUXURY', 'SUV', 'VAN']),
   dailyRate: z.number().positive('Daily rate must be positive'),
   status: z.enum(['AVAILABLE', 'RENTED', 'MAINTENANCE', 'RETIRED']).optional(),
@@ -41,8 +85,24 @@ const vehicleSchema = z.object({
   fuelType: z.enum(['GASOLINE', 'DIESEL', 'ELECTRIC', 'HYBRID']),
   mileage: z.number().int().min(0),
   color: z.string().optional(),
-  licensePlate: z.string().min(1, 'License plate is required'),
-  vin: z.string().length(17, 'VIN must be 17 characters'),
+  // Optional: a car can be on the fleet before its plate or VIN is in hand.
+  // An empty string is normalised to null so the UNIQUE index does not treat
+  // several "unknown" vehicles as duplicates of each other.
+  licensePlate: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : null))
+    .nullable(),
+  vin: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : null))
+    .nullable()
+    .refine((v) => v === null || v.length === 17, {
+      message: 'VIN must be exactly 17 characters, or left blank if not yet known',
+    }),
   location: z.string().optional(),
 });
 
@@ -125,8 +185,12 @@ router.get('/preview-pricing', async (req, res, next) => {
         maxDailyRate: priceStats._max.dailyRate ? Number(priceStats._max.dailyRate) : null,
         avgDailyRate: priceStats._avg.dailyRate ? Number(priceStats._avg.dailyRate) : null,
         days,
-        estimatedMinTotal: priceStats._min.dailyRate ? Number(priceStats._min.dailyRate) * days : null,
-        estimatedMaxTotal: priceStats._max.dailyRate ? Number(priceStats._max.dailyRate) * days : null,
+        estimatedMinTotal: priceStats._min.dailyRate
+          ? Number(priceStats._min.dailyRate) * days
+          : null,
+        estimatedMaxTotal: priceStats._max.dailyRate
+          ? Number(priceStats._max.dailyRate) * days
+          : null,
         featuredVehicles,
       },
     });
@@ -136,7 +200,7 @@ router.get('/preview-pricing', async (req, res, next) => {
 });
 
 // GET /api/vehicles - Public endpoint
-router.get('/', async (req, res, next) => {
+router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const filters = vehicleFilterSchema.parse(req.query);
     const { page, pageSize, sortBy, sortOrder, ...filterParams } = filters;
@@ -204,15 +268,17 @@ router.get('/', async (req, res, next) => {
     });
 
     // Calculate average rating and include booking count
+    const staff = isStaffRequest(req);
     const vehiclesWithRating = vehicles.map((vehicle) => {
       const avgRating =
         vehicle.reviews.length > 0
           ? vehicle.reviews.reduce((sum, r) => sum + r.rating, 0) / vehicle.reviews.length
           : null;
 
-      const { reviews, ...rest } = vehicle;
+      // `reviews` is pulled out only to drop it from the response.
+      const { reviews: _reviews, ...rest } = vehicle;
       return {
-        ...rest,
+        ...redactForPublic(rest, staff),
         averageRating: avgRating,
         reviewCount: vehicle._count.reviews,
         bookingCount: vehicle._count.bookings,
@@ -235,7 +301,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // GET /api/vehicles/:id - Public endpoint
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', optionalAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -270,7 +336,7 @@ router.get('/:id', async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        ...vehicle,
+        ...redactForPublic(vehicle, isStaffRequest(req)),
         averageRating: avgRating,
         reviewCount: vehicle._count.reviews,
       },
@@ -415,8 +481,7 @@ router.get('/:id/availability', async (req, res, next) => {
       throw NotFoundError('Vehicle not found');
     }
 
-    const isAvailable =
-      conflictingBookings === 0 && vehicle.status === 'AVAILABLE';
+    const isAvailable = conflictingBookings === 0 && vehicle.status === 'AVAILABLE';
 
     res.json({
       success: true,
@@ -473,12 +538,13 @@ router.post('/availability-bulk', async (req, res, next) => {
     });
 
     // Create a map of vehicle ID to conflict count
-    const conflictMap = new Map(
-      conflictingBookings.map((b) => [b.vehicleId, b._count.id])
-    );
+    const conflictMap = new Map(conflictingBookings.map((b) => [b.vehicleId, b._count.id]));
 
     // Build availability result
-    const availability: Record<string, { available: boolean; status: 'available' | 'limited' | 'unavailable' }> = {};
+    const availability: Record<
+      string,
+      { available: boolean; status: 'available' | 'limited' | 'unavailable' }
+    > = {};
 
     for (const vehicle of vehicles) {
       const conflicts = conflictMap.get(vehicle.id) || 0;
@@ -509,71 +575,77 @@ router.post('/availability-bulk', async (req, res, next) => {
 });
 
 // POST /api/vehicles/:id/images - Upload vehicle image (Admin only)
-router.post('/:id/images', authenticate, staffOnly, upload.single('image'), async (req, res, next) => {
-  try {
-    if (!isStorageConfigured()) {
-      throw BadRequestError('Storage is not configured. Please contact support.');
+router.post(
+  '/:id/images',
+  authenticate,
+  staffOnly,
+  upload.single('image'),
+  async (req, res, next) => {
+    try {
+      if (!isStorageConfigured()) {
+        throw BadRequestError('Storage is not configured. Please contact support.');
+      }
+
+      const { id } = req.params;
+
+      // Verify vehicle exists
+      const vehicle = await prisma.vehicle.findUnique({
+        where: { id },
+        select: { id: true, images: true },
+      });
+
+      if (!vehicle) {
+        throw NotFoundError('Vehicle not found');
+      }
+
+      if (!req.file) {
+        throw BadRequestError('No image file provided');
+      }
+
+      // Generate unique file path
+      const timestamp = Date.now();
+      const extension = req.file.originalname.split('.').pop() || 'jpg';
+      const filePath = `${id}/${timestamp}.${extension}`;
+
+      // Upload to Supabase
+      const result = await uploadFile(
+        BUCKETS.VEHICLES,
+        filePath,
+        req.file.buffer,
+        req.file.mimetype
+      );
+
+      if ('error' in result) {
+        throw BadRequestError(result.error);
+      }
+
+      // Get public URL
+      const imageUrl = getPublicUrl(BUCKETS.VEHICLES, filePath);
+
+      if (!imageUrl) {
+        throw BadRequestError('Failed to generate image URL');
+      }
+
+      // Update vehicle with new image
+      const updatedVehicle = await prisma.vehicle.update({
+        where: { id },
+        data: {
+          images: [...vehicle.images, imageUrl],
+        },
+      });
+
+      res.status(201).json({
+        success: true,
+        data: {
+          imageUrl,
+          vehicle: updatedVehicle,
+        },
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const { id } = req.params;
-
-    // Verify vehicle exists
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id },
-      select: { id: true, images: true },
-    });
-
-    if (!vehicle) {
-      throw NotFoundError('Vehicle not found');
-    }
-
-    if (!req.file) {
-      throw BadRequestError('No image file provided');
-    }
-
-    // Generate unique file path
-    const timestamp = Date.now();
-    const extension = req.file.originalname.split('.').pop() || 'jpg';
-    const filePath = `${id}/${timestamp}.${extension}`;
-
-    // Upload to Supabase
-    const result = await uploadFile(
-      BUCKETS.VEHICLES,
-      filePath,
-      req.file.buffer,
-      req.file.mimetype
-    );
-
-    if ('error' in result) {
-      throw BadRequestError(result.error);
-    }
-
-    // Get public URL
-    const imageUrl = getPublicUrl(BUCKETS.VEHICLES, filePath);
-
-    if (!imageUrl) {
-      throw BadRequestError('Failed to generate image URL');
-    }
-
-    // Update vehicle with new image
-    const updatedVehicle = await prisma.vehicle.update({
-      where: { id },
-      data: {
-        images: [...vehicle.images, imageUrl],
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-      data: {
-        imageUrl,
-        vehicle: updatedVehicle,
-      },
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // DELETE /api/vehicles/:id/images - Delete vehicle image (Admin only)
 router.delete('/:id/images', authenticate, staffOnly, async (req, res, next) => {
@@ -583,9 +655,11 @@ router.delete('/:id/images', authenticate, staffOnly, async (req, res, next) => 
     }
 
     const { id } = req.params;
-    const { imageUrl } = z.object({
-      imageUrl: z.string().url(),
-    }).parse(req.body);
+    const { imageUrl } = z
+      .object({
+        imageUrl: z.string().url(),
+      })
+      .parse(req.body);
 
     // Verify vehicle exists
     const vehicle = await prisma.vehicle.findUnique({
@@ -810,65 +884,70 @@ router.delete('/:id/reviews', authenticate, async (req, res, next) => {
 });
 
 // POST /api/vehicles/:id/reviews/images - Upload images for a review
-router.post('/:id/reviews/images', authenticate, upload.array('images', 5), async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user!.id;
-    const files = req.files as Express.Multer.File[];
+router.post(
+  '/:id/reviews/images',
+  authenticate,
+  upload.array('images', 5),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.id;
+      const files = req.files as Express.Multer.File[];
 
-    if (!files || files.length === 0) {
-      throw BadRequestError('No images provided');
-    }
-
-    if (!isStorageConfigured()) {
-      throw BadRequestError('Storage is not configured');
-    }
-
-    // Find user's review for this vehicle
-    const review = await prisma.review.findUnique({
-      where: {
-        userId_vehicleId: { userId, vehicleId: id },
-      },
-    });
-
-    if (!review) {
-      throw NotFoundError('Review not found. Please submit a review first.');
-    }
-
-    // Upload images
-    const uploadedUrls: string[] = [];
-    for (const file of files) {
-      const fileName = `reviews/${review.id}/${Date.now()}-${file.originalname}`;
-      await uploadFile(BUCKETS.DOCUMENTS, fileName, file.buffer, file.mimetype);
-      const url = getPublicUrl(BUCKETS.DOCUMENTS, fileName);
-      if (url) {
-        uploadedUrls.push(url);
+      if (!files || files.length === 0) {
+        throw BadRequestError('No images provided');
       }
-    }
 
-    // Update review with new images (append to existing)
-    const existingImages = review.images || [];
-    const updatedReview = await prisma.review.update({
-      where: { id: review.id },
-      data: {
-        images: [...existingImages, ...uploadedUrls],
-      },
-      include: {
-        user: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+      if (!isStorageConfigured()) {
+        throw BadRequestError('Storage is not configured');
+      }
+
+      // Find user's review for this vehicle
+      const review = await prisma.review.findUnique({
+        where: {
+          userId_vehicleId: { userId, vehicleId: id },
         },
-      },
-    });
+      });
 
-    res.json({
-      success: true,
-      data: updatedReview,
-      message: `${uploadedUrls.length} image(s) uploaded successfully`,
-    });
-  } catch (error) {
-    next(error);
+      if (!review) {
+        throw NotFoundError('Review not found. Please submit a review first.');
+      }
+
+      // Upload images
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        const fileName = `reviews/${review.id}/${Date.now()}-${file.originalname}`;
+        await uploadFile(BUCKETS.DOCUMENTS, fileName, file.buffer, file.mimetype);
+        const url = getPublicUrl(BUCKETS.DOCUMENTS, fileName);
+        if (url) {
+          uploadedUrls.push(url);
+        }
+      }
+
+      // Update review with new images (append to existing)
+      const existingImages = review.images || [];
+      const updatedReview = await prisma.review.update({
+        where: { id: review.id },
+        data: {
+          images: [...existingImages, ...uploadedUrls],
+        },
+        include: {
+          user: {
+            select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        data: updatedReview,
+        message: `${uploadedUrls.length} image(s) uploaded successfully`,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // DELETE /api/vehicles/:id/reviews/images - Remove an image from a review
 router.delete('/:id/reviews/images', authenticate, async (req, res, next) => {

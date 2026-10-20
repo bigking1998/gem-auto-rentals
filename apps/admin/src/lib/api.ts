@@ -368,8 +368,8 @@ export interface Vehicle {
   color?: string;
   description?: string;
   location?: string;
-  licensePlate: string;
-  vin: string;
+  licensePlate: string | null;
+  vin: string | null;
   averageRating?: number | null;
   reviewCount?: number;
   bookingCount?: number;

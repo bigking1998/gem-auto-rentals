@@ -183,8 +183,10 @@ export interface Vehicle {
   color?: string;
   description?: string;
   location?: string;
-  licensePlate: string;
-  vin: string;
+  // Staff-only: the API strips these for unauthenticated callers, so the
+  // customer app never receives them. Typed optional to match reality.
+  licensePlate?: string;
+  vin?: string;
   averageRating?: number | null;
   reviewCount?: number;
   createdAt: string;

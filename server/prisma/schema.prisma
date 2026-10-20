@@ -83,8 +83,11 @@ model Vehicle {
   fuelType     FuelType
   mileage      Int
   color        String?
-  licensePlate String          @unique
-  vin          String          @unique
+  // Nullable on purpose: a car can be on the fleet before its plate or VIN is
+  // in hand. Postgres allows many NULLs under a UNIQUE index, so any number of
+  // vehicles can sit as "not yet known" at once while real values stay unique.
+  licensePlate String?         @unique
+  vin          String?         @unique
   location     String?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt

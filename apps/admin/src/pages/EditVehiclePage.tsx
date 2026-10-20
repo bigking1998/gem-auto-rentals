@@ -96,7 +96,13 @@ export default function EditVehiclePage() {
       </div>
 
       <VehicleForm
-        initialData={vehicle}
+        // plate/VIN are nullable in the database but the form wants
+        // `undefined` for "empty" — normalise at the boundary.
+        initialData={{
+          ...vehicle,
+          licensePlate: vehicle.licensePlate ?? undefined,
+          vin: vehicle.vin ?? undefined,
+        }}
         onSubmit={handleSubmit}
         onCancel={() => navigate('/fleet')}
         isLoading={isLoading}

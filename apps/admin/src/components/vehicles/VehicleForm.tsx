@@ -22,8 +22,14 @@ const vehicleSchema = z.object({
   transmission: z.enum(['AUTOMATIC', 'MANUAL']),
   fuelType: z.enum(['GASOLINE', 'DIESEL', 'ELECTRIC', 'HYBRID']),
   mileage: z.number().min(0, 'Mileage cannot be negative'),
-  licensePlate: z.string().min(1, 'License plate is required'),
-  vin: z.string().length(17, 'VIN must be exactly 17 characters').optional().or(z.literal('')),
+  // Both optional: leave blank when the plate or VIN is not yet known. The
+  // field shows "Not yet known" rather than silently accepting nothing.
+  licensePlate: z.string().optional().or(z.literal('')),
+  vin: z
+    .string()
+    .length(17, 'VIN must be exactly 17 characters, or left blank')
+    .optional()
+    .or(z.literal('')),
   features: z.array(z.string()).default([]),
 });
 
@@ -510,11 +516,12 @@ export function VehicleForm({
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                License Plate *
+                License Plate{' '}
+                <span className="font-normal text-gray-400">— leave blank if not yet known</span>
               </label>
               <input
                 {...register('licensePlate')}
-                placeholder="e.g. ABC-1234"
+                placeholder="e.g. ABC-1234 — or leave blank"
                 className={cn(
                   'focus:ring-primary w-full rounded-lg border px-3 py-2 font-mono uppercase focus:outline-none focus:ring-2',
                   errors.licensePlate ? 'border-red-500' : 'border-gray-200'
@@ -526,10 +533,13 @@ export function VehicleForm({
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">VIN</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                VIN{' '}
+                <span className="font-normal text-gray-400">— leave blank if not yet known</span>
+              </label>
               <input
                 {...register('vin')}
-                placeholder="17-character VIN"
+                placeholder="17-character VIN — or leave blank"
                 maxLength={17}
                 className={cn(
                   'focus:ring-primary w-full rounded-lg border px-3 py-2 font-mono uppercase focus:outline-none focus:ring-2',
