@@ -475,3 +475,47 @@ Things only a human with real credentials can confirm:
 - [ ] Send a test email and confirm a bounce is recorded (will fail until §12.3 is fixed).
 - [ ] Check every page on a phone, not just a narrow desktop window.
 - [ ] Confirm the GitHub repository's visibility (public or private).
+
+---
+
+## CORRECTIONS after reading the production environment directly — 2026-10-20
+
+Three findings in this report were based on the **local** `server/.env`. Reading the real
+production env file on the droplet (`/var/www/gem/server/.env`, names only, no values)
+changed all three. Recording them properly rather than quietly editing the originals.
+
+### 12.3 Email bounce handling — **was wrong, it is already working**
+
+`RESEND_WEBHOOK_SECRET` **is set in production.** Confirmed behaviourally too: an unsigned
+POST to `https://api.gemrentalcars.com/api/webhooks/resend` returns
+**`401 Invalid signature`**, not the `503 Webhook not configured` it would return if the
+secret were missing. The server side is configured and verifying correctly.
+
+**Still unverified from here:** whether a webhook is actually registered in the Resend
+dashboard pointing at that URL. The server is ready to receive; nothing proves Resend is
+sending. That needs a look at Resend → Webhooks.
+
+### 12.2 Image hosting — already corrected above, and now confirmed at the source
+
+Production sets all three of `R2_AVATARS_PUBLIC_URL`, `R2_VEHICLES_PUBLIC_URL`,
+`R2_LOGOS_PUBLIC_URL`. The mismatch was local-only.
+
+### 12.1 Stripe — **the real problem is simpler and worse than a short key**
+
+Production has **zero** `STRIPE_*` variables. Not a placeholder, not a wrong mode —
+**none at all.** `NODE_ENV="production"` and `ALLOW_DEMO_PAYMENTS` is unset (correct).
+
+So payments cannot work in production today: there is no secret key to charge with, no
+publishable key, and no webhook secret. A customer reaching the payment step cannot
+complete it. The short key and live publishable keys I flagged exist only in the local
+and committed-example files, which never reach the server.
+
+**Priority stays Critical, but the fix is "configure Stripe on the droplet", not
+"work out which key is which".**
+
+### The lesson worth keeping
+
+**A local `.env` is not evidence about production.** Three findings, one wrong diagnosis
+each, all from reading the wrong file. For anything environment-dependent, read the
+deployed environment or probe the running service — the droplet env file and a single
+unauthenticated HTTP request settled all three in under a minute.
