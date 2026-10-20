@@ -327,7 +327,17 @@ credential leak.** Worth confirming the GitHub repo's visibility regardless.
   Stripe's dashboard before changing anything.
 - **What else could be affected:** Every booking that reaches payment; the webhook handler.
 
-### 12.2 Image hosting is switched off by a variable-name mismatch — **Open**
+### 12.2 Image hosting — **RESOLVED 2026-10-20 after deploy: production was fine**
+
+> **Correction.** This was reported as High on the basis of the LOCAL `server/.env`.
+> After deploying a health check that reports image servability, the live API returns
+> `"images": "servable"` with `"imageBucketsMissingPublicUrl": []` — so **production has
+> all three per-bucket URLs set correctly**. The mismatch was local-only. No customer was
+> ever affected. The code now also falls back to `R2_PUBLIC_URL` if the three are absent.
+>
+> Original finding, kept for the record:
+
+#### (original)
 
 - **What:** The code reads three per-bucket URLs; the env file provides one generic one.
 - **Where:** `server/src/lib/storage.ts:16-18` reads `R2_AVATARS_PUBLIC_URL`,
