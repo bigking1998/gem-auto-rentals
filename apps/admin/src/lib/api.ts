@@ -1285,18 +1285,61 @@ export const api = {
 };
 
 // ============ Token Management ============
-export const tokenManager = {
-  getToken: (): string | null => localStorage.getItem('admin_auth_token'),
+const ADMIN_TOKEN_KEY = 'admin_auth_token';
 
-  setToken: (token: string): void => {
-    localStorage.setItem('admin_auth_token', token);
+/**
+ * "Remember me" decides WHERE the token lives:
+ *   remember = true  -> localStorage   survives closing the browser (default)
+ *   remember = false -> sessionStorage gone when the tab/browser closes
+ *
+ * Storage access is wrapped because it throws (rather than returning null) in
+ * private mode or with site data blocked, and an unhandled throw on boot takes
+ * the whole dashboard down at the login screen.
+ */
+function safeGet(store: Storage, key: string): string | null {
+  try {
+    return store.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSet(store: Storage, key: string, value: string): void {
+  try {
+    store.setItem(key, value);
+  } catch {
+    /* storage unavailable — the session just will not persist */
+  }
+}
+
+function safeRemove(store: Storage, key: string): void {
+  try {
+    store.removeItem(key);
+  } catch {
+    /* nothing useful to do here */
+  }
+}
+
+export const tokenManager = {
+  /** Session storage wins — it only holds a token when the admin opted OUT of being remembered. */
+  getToken: (): string | null =>
+    safeGet(sessionStorage, ADMIN_TOKEN_KEY) ?? safeGet(localStorage, ADMIN_TOKEN_KEY),
+
+  setToken: (token: string, remember: boolean = true): void => {
+    // Clear the other store too, or a stale token there can win on the next load.
+    if (remember) {
+      safeRemove(sessionStorage, ADMIN_TOKEN_KEY);
+      safeSet(localStorage, ADMIN_TOKEN_KEY, token);
+    } else {
+      safeRemove(localStorage, ADMIN_TOKEN_KEY);
+      safeSet(sessionStorage, ADMIN_TOKEN_KEY, token);
+    }
   },
 
   removeToken: (): void => {
-    localStorage.removeItem('admin_auth_token');
+    safeRemove(localStorage, ADMIN_TOKEN_KEY);
+    safeRemove(sessionStorage, ADMIN_TOKEN_KEY);
   },
 
-  isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('admin_auth_token');
-  },
+  isAuthenticated: (): boolean => tokenManager.getToken() !== null,
 };

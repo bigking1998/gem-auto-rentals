@@ -53,7 +53,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false,
+    rememberMe: true, // default on — the owner wants returning users kept signed in
   });
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
@@ -125,7 +125,9 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      await login(formData.email, formData.password);
+      // formData.rememberMe was collected by the checkbox below and then
+      // thrown away — the control has been on this page doing nothing.
+      await login(formData.email, formData.password, formData.rememberMe);
 
       // Get the user from the store after login
       const user = useAuthStore.getState().user;
@@ -285,7 +287,7 @@ export default function LoginPage() {
                 className="text-primary-ink focus:ring-primary h-4 w-4 rounded border-gray-300"
               />
               <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-600">
-                Remember me for 30 days
+                Keep me signed in on this device
               </label>
             </div>
 

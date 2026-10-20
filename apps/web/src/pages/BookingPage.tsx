@@ -21,6 +21,7 @@ import CustomerInfoStep from '@/components/booking/CustomerInfoStep';
 import DocumentUploadStep from '@/components/booking/DocumentUploadStep';
 import PaymentStep from '@/components/booking/PaymentStep';
 import { cn } from '@/lib/utils';
+import { EXTRAS, SECURITY_DEPOSIT, calculateExtrasTotal, type ExtraId } from '@/lib/extras';
 import { api, Vehicle } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { useBookingDates } from '@/stores/bookingStore';
@@ -206,17 +207,18 @@ export default function BookingPage() {
     return diff > 0 ? diff : 0;
   };
 
+  /**
+   * Rental + selected extras. Prices come from `@/lib/extras`.
+   * ⚠️ `server/src/routes/bookings.ts` recalculates this independently and ITS
+   * figure is what gets charged — keep the two in sync.
+   */
   const calculateTotal = () => {
     const days = calculateDays();
     if (!vehicle) return 0;
-    let total = Number(vehicle.dailyRate) * days;
-
-    if (bookingData.extras.insurance) total += 25 * days;
-    if (bookingData.extras.gps) total += 10 * days;
-    if (bookingData.extras.childSeat) total += 8 * days;
-    if (bookingData.extras.additionalDriver) total += 15 * days;
-
-    return total;
+    return (
+      Number(vehicle.dailyRate) * days +
+      calculateExtrasTotal(bookingData.extras as Partial<Record<ExtraId, boolean>>, days)
+    );
   };
 
   const canProceed = () => {
@@ -565,44 +567,35 @@ export default function BookingPage() {
                     </span>
                   </div>
 
-                  {bookingData.extras.insurance && (
-                    <div className="flex justify-between text-sm text-green-600">
+                  {EXTRAS.filter(
+                    (e) =>
+                      e.available && bookingData.extras[e.id as keyof typeof bookingData.extras]
+                  ).map((e) => (
+                    <div key={e.id} className="flex justify-between text-sm text-green-600">
                       <span className="flex items-center gap-1.5 font-medium">
-                        <Check className="h-3.5 w-3.5" /> Insurance
+                        <Check className="h-3.5 w-3.5" /> {e.name}
                       </span>
-                      <span className="font-semibold">+${25 * days}</span>
+                      <span className="font-semibold">+${e.pricePerDay * days}</span>
                     </div>
-                  )}
-                  {bookingData.extras.gps && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Check className="h-3.5 w-3.5" /> GPS
-                      </span>
-                      <span className="font-semibold">+${10 * days}</span>
-                    </div>
-                  )}
-                  {bookingData.extras.childSeat && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Check className="h-3.5 w-3.5" /> Child Seat
-                      </span>
-                      <span className="font-semibold">+${8 * days}</span>
-                    </div>
-                  )}
-                  {bookingData.extras.additionalDriver && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Check className="h-3.5 w-3.5" /> Add. Driver
-                      </span>
-                      <span className="font-semibold">+${15 * days}</span>
-                    </div>
-                  )}
+                  ))}
+
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span className="font-medium">Refundable deposit</span>
+                    <span className="font-semibold">+${SECURITY_DEPOSIT}</span>
+                  </div>
                 </div>
 
                 {/* Total */}
                 <div className="flex items-end justify-between border-t-2 border-dashed border-gray-100 pt-6">
-                  <span className="mb-1 text-sm font-semibold text-gray-500">Total Amount</span>
-                  <span className="text-3xl font-bold text-gray-900">${total}</span>
+                  <div className="mb-1 flex flex-col">
+                    <span className="text-sm font-semibold text-gray-500">Total Due</span>
+                    <span className="text-xs text-gray-400">
+                      includes ${SECURITY_DEPOSIT} refundable deposit
+                    </span>
+                  </div>
+                  <span className="text-3xl font-bold text-gray-900">
+                    ${total + SECURITY_DEPOSIT}
+                  </span>
                 </div>
 
                 {/* Progress Indicator */}

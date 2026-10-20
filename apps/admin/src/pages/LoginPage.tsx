@@ -11,6 +11,10 @@ const ADMIN_ROLES = ['ADMIN', 'MANAGER', 'SUPPORT'];
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Default ON: the owner's complaint was that the dashboard keeps
+  // forgetting the login. Unchecking puts the token in sessionStorage
+  // instead, for a shared or public machine.
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
   const [ssoError, setSsoError] = useState<string | null>(null);
@@ -100,7 +104,7 @@ export default function LoginPage() {
     e.preventDefault();
     clearError();
     setSsoError(null);
-    const success = await login(email, password);
+    const success = await login(email, password, rememberMe);
     if (success) {
       navigate('/');
     }
@@ -193,6 +197,20 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Remember me */}
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="text-primary-ink focus:ring-primary h-4 w-4 rounded border-gray-300"
+              />
+              <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-600">
+                Keep me signed in on this device
+              </label>
             </div>
 
             <button

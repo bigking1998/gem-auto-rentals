@@ -192,8 +192,8 @@ export const GEM_AUTO_RENTALS_ORG: OrganizationData = {
   logo: 'https://gemrentalcars.com/logo.png',
   description:
     'Premium car rental service offering a wide range of vehicles from economy to luxury. Affordable rates, flexible booking, and exceptional service in Mulberry, Florida.',
-  telephone: '863-277-7879',
-  email: 'gemautosalesinc@gmail.com',
+  telephone: '863-277-6712',
+  email: 'Bookings@Gemrentalcars.com',
   address: {
     streetAddress: '1311 E CANAL ST',
     addressLocality: 'MULBERRY',

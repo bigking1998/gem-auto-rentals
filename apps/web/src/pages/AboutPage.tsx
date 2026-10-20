@@ -148,7 +148,7 @@ export default function AboutPage() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Call Us</p>
-                        <p className="text-gray-600">863-277-7879 / 863-279-2907</p>
+                        <p className="text-gray-600">863-277-6712</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -157,7 +157,7 @@ export default function AboutPage() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Email Us</p>
-                        <p className="text-gray-600">gemautosalesinc@gmail.com</p>
+                        <p className="text-gray-600">Bookings@Gemrentalcars.com</p>
                       </div>
                     </div>
                   </div>

@@ -24,7 +24,7 @@ interface AuthState {
 
 interface AuthActions {
   setUser: (user: User | null) => void;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -80,10 +80,20 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               const user = toStoreUser(apiUser);
               set({ user, isAuthenticated: true });
             } catch (error) {
-              // Token is invalid, clear it
-              console.error('Token validation failed:', error);
-              tokenManager.removeToken();
-              set({ user: null, isAuthenticated: false });
+              // ONLY a real auth rejection should sign the user out.
+              // This used to discard the token on ANY thrown error — a flaky
+              // network, a 500, a timeout — so one bad request on boot logged
+              // you out permanently and looked like "the site forgot me".
+              const status = error instanceof ApiError ? error.status : undefined;
+              if (status === 401 || status === 403) {
+                tokenManager.removeToken();
+                set({ user: null, isAuthenticated: false });
+              } else {
+                // Keep the token. The user stays signed in optimistically and
+                // the next successful request repairs the profile.
+                console.warn('Could not verify session (keeping token):', error);
+                set({ isAuthenticated: true });
+              }
             }
           } else {
             // No token - clear any stale persisted auth state
@@ -97,13 +107,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         }
       },
 
-      login: async (email, password) => {
+      login: async (email, password, remember = true) => {
         set({ isLoading: true, error: null });
         try {
           const response = await api.auth.login({ email, password });
 
-          // Store the token
-          tokenManager.setToken(response.token);
+          // Store the token. `remember` picks localStorage vs sessionStorage.
+          tokenManager.setToken(response.token, remember);
 
           // Convert to store user format
           const user = toStoreUser(response.user);
@@ -115,11 +125,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             isInitialized: true,
           });
         } catch (error) {
-          const message = error instanceof ApiError
-            ? error.message
-            : error instanceof Error
+          const message =
+            error instanceof ApiError
               ? error.message
-              : 'Login failed';
+              : error instanceof Error
+                ? error.message
+                : 'Login failed';
 
           set({
             error: message,
@@ -153,11 +164,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             isInitialized: true,
           });
         } catch (error) {
-          const message = error instanceof ApiError
-            ? error.message
-            : error instanceof Error
+          const message =
+            error instanceof ApiError
               ? error.message
-              : 'Registration failed';
+              : error instanceof Error
+                ? error.message
+                : 'Registration failed';
 
           set({
             error: message,

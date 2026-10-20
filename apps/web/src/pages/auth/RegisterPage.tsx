@@ -277,7 +277,7 @@ export default function RegisterPage() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => updateField('phone', e.target.value)}
-                  placeholder="+1 (555) 123-4567"
+                  placeholder="(863) 555-0100"
                   className={cn(
                     'focus:ring-primary/20 focus:border-primary w-full rounded-xl border py-3 pl-10 pr-4 transition-all focus:ring-2',
                     errors.phone ? 'border-red-300' : 'border-gray-200'

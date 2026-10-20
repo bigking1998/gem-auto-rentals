@@ -11,11 +11,18 @@ const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
 
-// Per-bucket public URLs (each R2 bucket has its own public URL)
+// Per-bucket public URLs (each R2 bucket has its own public URL, e.g.
+// https://pub-xxxx.r2.dev — the bucket name does NOT appear in the path).
+//
+// R2_PUBLIC_URL is a last-resort fallback for a single-bucket setup. It cannot be
+// correct for more than one bucket, so if it is doing the work for all three the
+// deployment is still misconfigured — /health reports exactly that.
+const GENERIC_PUBLIC_URL = process.env.R2_PUBLIC_URL || undefined;
+
 const BUCKET_PUBLIC_URLS: Record<string, string | undefined> = {
-  'gem-avatars': process.env.R2_AVATARS_PUBLIC_URL,
-  'gem-vehicles': process.env.R2_VEHICLES_PUBLIC_URL,
-  'gem-logos': process.env.R2_LOGOS_PUBLIC_URL,
+  'gem-avatars': process.env.R2_AVATARS_PUBLIC_URL || GENERIC_PUBLIC_URL,
+  'gem-vehicles': process.env.R2_VEHICLES_PUBLIC_URL || GENERIC_PUBLIC_URL,
+  'gem-logos': process.env.R2_LOGOS_PUBLIC_URL || GENERIC_PUBLIC_URL,
   // Note: gem-documents and gem-contracts are PRIVATE - no public URLs
 };
 
@@ -62,6 +69,22 @@ export function isStorageConfigured(): boolean {
 const PUBLIC_BUCKETS = [BUCKETS.AVATARS, BUCKETS.VEHICLES, BUCKETS.LOGOS] as const;
 
 // Get public URL for a file in a public bucket
+/**
+ * Which PUBLIC buckets can actually produce a URL.
+ *
+ * `isStorageConfigured()` only checks the account id and keys, so it returns true
+ * while every image URL resolves to null — /health reported "storage: configured"
+ * on a deployment that could not serve a single vehicle photo. This reports the
+ * part that was invisible.
+ */
+export function getPublicUrlStatus(): { configured: string[]; missing: string[] } {
+  const publicBuckets = ['gem-vehicles', 'gem-avatars', 'gem-logos'];
+  return {
+    configured: publicBuckets.filter((b) => !!BUCKET_PUBLIC_URLS[b]),
+    missing: publicBuckets.filter((b) => !BUCKET_PUBLIC_URLS[b]),
+  };
+}
+
 export function getPublicUrl(bucket: BucketName, filePath: string): string | null {
   // Only allow public URLs for designated public buckets
   if (!PUBLIC_BUCKETS.includes(bucket as (typeof PUBLIC_BUCKETS)[number])) {

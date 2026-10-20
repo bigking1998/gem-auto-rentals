@@ -21,7 +21,7 @@ interface AuthState {
   isInitialized: boolean;
   error: string | null;
 
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, remember?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
   fetchProfile: () => Promise<void>;
   initialize: () => Promise<void>;
@@ -73,10 +73,19 @@ export const useAuthStore = create<AuthState>()(
                 set({ user: profile, isAuthenticated: true });
               }
             } catch (error) {
-              // Token is invalid
-              console.error('Token validation failed:', error);
-              tokenManager.removeToken();
-              set({ user: null, isAuthenticated: false });
+              // ONLY a real auth rejection should sign the admin out.
+              // This used to bin the token on ANY thrown error — a flaky
+              // network, a 500, a timeout — which is why the dashboard kept
+              // "forgetting" the login and sending you back to the sign-in
+              // screen for no visible reason.
+              const status = error instanceof ApiError ? error.status : undefined;
+              if (status === 401 || status === 403) {
+                tokenManager.removeToken();
+                set({ user: null, isAuthenticated: false });
+              } else {
+                console.warn('Could not verify admin session (keeping token):', error);
+                set({ isAuthenticated: true });
+              }
             }
           } else {
             // No token. `isAuthenticated` is persisted to localStorage but the
@@ -93,7 +102,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      login: async (email, password) => {
+      login: async (email, password, remember = true) => {
         set({ isLoading: true, error: null });
 
         try {
@@ -109,7 +118,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // Store token
-          tokenManager.setToken(response.token);
+          tokenManager.setToken(response.token, remember);
 
           const profile: UserProfile = {
             id: response.user.id,

@@ -111,7 +111,7 @@ async function request<T>(
   };
 
   // Add auth token if available
-  const token = localStorage.getItem('auth_token');
+  const token = tokenManager.getToken();
   if (token) {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
@@ -435,7 +435,7 @@ export const api = {
       });
       formData.append('reviewId', reviewId);
 
-      const token = localStorage.getItem('auth_token');
+      const token = tokenManager.getToken();
       const response = await fetch(`${API_BASE_URL}/vehicles/${vehicleId}/reviews/images`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -638,7 +638,7 @@ export const api = {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const token = localStorage.getItem('auth_token');
+      const token = tokenManager.getToken();
       // Get current user ID from token
       const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
       const userId = payload?.userId;
@@ -665,7 +665,7 @@ export const api = {
     },
 
     deleteAvatar: async (): Promise<User> => {
-      const token = localStorage.getItem('auth_token');
+      const token = tokenManager.getToken();
       const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
       const userId = payload?.userId;
 
@@ -683,7 +683,7 @@ export const api = {
       const formData = new FormData();
       formData.append('contract', file);
 
-      const token = localStorage.getItem('auth_token');
+      const token = tokenManager.getToken();
       const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}/contract`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -715,7 +715,7 @@ export const api = {
         formData.append('bookingId', bookingId);
       }
 
-      const token = localStorage.getItem('auth_token');
+      const token = tokenManager.getToken();
       const response = await fetch(`${API_BASE_URL}/documents/upload`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -773,12 +773,12 @@ export const api = {
 
     download: (id: string): string => {
       // Return the URL for downloading/viewing the invoice
-      const token = localStorage.getItem('auth_token');
+      const token = tokenManager.getToken();
       return `${API_BASE_URL}/invoices/${id}/download${token ? `?token=${token}` : ''}`;
     },
 
     openInNewTab: async (id: string): Promise<void> => {
-      const token = localStorage.getItem('auth_token');
+      const token = tokenManager.getToken();
       const response = await fetch(`${API_BASE_URL}/invoices/${id}/download`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -1122,20 +1122,65 @@ export const api = {
 };
 
 // ============ Token Management ============
-export const tokenManager = {
-  getToken: (): string | null => localStorage.getItem('auth_token'),
+const TOKEN_KEY = 'auth_token';
 
-  setToken: (token: string): void => {
-    localStorage.setItem('auth_token', token);
+/**
+ * "Remember me" decides WHERE the token lives, which is what actually controls
+ * whether a returning visitor is still signed in:
+ *
+ *   remember = true  -> localStorage   survives closing the browser (default)
+ *   remember = false -> sessionStorage cleared when the tab/browser closes
+ *
+ * Every storage call is wrapped: in private mode, or with site data blocked,
+ * these throw rather than return null, and an unhandled throw here takes the
+ * whole app down on boot.
+ */
+function safeGet(store: Storage, key: string): string | null {
+  try {
+    return store.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSet(store: Storage, key: string, value: string): void {
+  try {
+    store.setItem(key, value);
+  } catch {
+    /* storage unavailable — the session simply will not persist */
+  }
+}
+
+function safeRemove(store: Storage, key: string): void {
+  try {
+    store.removeItem(key);
+  } catch {
+    /* nothing we can do, and nothing worth crashing over */
+  }
+}
+
+export const tokenManager = {
+  /** Session storage wins: it only holds a token when the user opted OUT of being remembered. */
+  getToken: (): string | null =>
+    safeGet(sessionStorage, TOKEN_KEY) ?? safeGet(localStorage, TOKEN_KEY),
+
+  setToken: (token: string, remember: boolean = true): void => {
+    // Always clear the other store, or a stale token in it can win on next load.
+    if (remember) {
+      safeRemove(sessionStorage, TOKEN_KEY);
+      safeSet(localStorage, TOKEN_KEY, token);
+    } else {
+      safeRemove(localStorage, TOKEN_KEY);
+      safeSet(sessionStorage, TOKEN_KEY, token);
+    }
   },
 
   removeToken: (): void => {
-    localStorage.removeItem('auth_token');
+    safeRemove(localStorage, TOKEN_KEY);
+    safeRemove(sessionStorage, TOKEN_KEY);
   },
 
-  isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('auth_token');
-  },
+  isAuthenticated: (): boolean => tokenManager.getToken() !== null,
 };
 
 export { ApiError };

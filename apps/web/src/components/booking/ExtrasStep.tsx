@@ -1,6 +1,7 @@
-import { Shield, Navigation, Baby, UserPlus, Check, Info } from 'lucide-react';
+import { Shield, Baby, UserPlus, Check, Info } from 'lucide-react';
 import type { BookingData } from '@/pages/BookingPage';
 import { cn } from '@/lib/utils';
+import { EXTRAS, SECURITY_DEPOSIT, calculateExtrasTotal, type ExtraId } from '@/lib/extras';
 
 interface ExtrasStepProps {
   data: BookingData;
@@ -9,63 +10,17 @@ interface ExtrasStepProps {
   days: number;
 }
 
-const extras = [
-  {
-    id: 'insurance',
-    name: 'Full Coverage Insurance',
-    description:
-      'Comprehensive protection covering collision damage, theft, and third-party liability. Zero deductible.',
-    pricePerDay: 25,
-    icon: Shield,
-    popular: true,
-    benefits: [
-      'Zero deductible',
-      'Collision damage waiver',
-      'Theft protection',
-      'Third-party liability',
-    ],
-  },
-  {
-    id: 'gps',
-    name: 'GPS Navigation',
-    description: 'Built-in GPS navigation system with live traffic updates and points of interest.',
-    pricePerDay: 10,
-    icon: Navigation,
-    popular: false,
-    benefits: [
-      'Turn-by-turn directions',
-      'Live traffic updates',
-      'Points of interest',
-      'Offline maps',
-    ],
-  },
-  {
-    id: 'childSeat',
-    name: 'Child Seat',
-    description: 'Safety-certified child seat suitable for children aged 1-4 years (9-18 kg).',
-    pricePerDay: 8,
-    icon: Baby,
-    popular: false,
-    benefits: ['Age 1-4 years', 'Safety certified', 'Easy installation', 'ISOFIX compatible'],
-  },
-  {
-    id: 'additionalDriver',
-    name: 'Additional Driver',
-    description: 'Add another driver to your rental. Additional driver must present valid license.',
-    pricePerDay: 15,
-    icon: UserPlus,
-    popular: false,
-    benefits: [
-      'Share driving duties',
-      'Fully insured',
-      'No age restrictions',
-      'Same coverage applies',
-    ],
-  },
-];
+/** Icons live here, not in the catalogue, so the catalogue stays importable by non-React code. */
+const ICONS: Record<ExtraId, typeof Shield> = {
+  insurance: Shield,
+  childSeat: Baby,
+  additionalDriver: UserPlus,
+};
 
 export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
-  const toggleExtra = (extraId: string) => {
+  const toggleExtra = (extraId: ExtraId) => {
+    const option = EXTRAS.find((e) => e.id === extraId);
+    if (!option?.available) return; // unavailable options are not selectable
     onChange({
       extras: {
         ...data.extras,
@@ -74,14 +29,7 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
     });
   };
 
-  const calculateExtrasTotal = () => {
-    let total = 0;
-    if (data.extras.insurance) total += 25 * days;
-    if (data.extras.gps) total += 10 * days;
-    if (data.extras.childSeat) total += 8 * days;
-    if (data.extras.additionalDriver) total += 15 * days;
-    return total;
-  };
+  const extrasTotal = calculateExtrasTotal(data.extras as Partial<Record<ExtraId, boolean>>, days);
 
   return (
     <div className="p-6">
@@ -91,19 +39,23 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
       </p>
 
       <div className="space-y-4">
-        {extras.map((extra) => {
-          const isSelected = data.extras[extra.id as keyof typeof data.extras];
+        {EXTRAS.map((extra) => {
+          const Icon = ICONS[extra.id];
+          const isSelected = extra.available && data.extras[extra.id as keyof typeof data.extras];
           const totalPrice = extra.pricePerDay * days;
 
           return (
             <div
               key={extra.id}
               onClick={() => toggleExtra(extra.id)}
+              aria-disabled={!extra.available}
               className={cn(
-                'relative cursor-pointer rounded-xl border p-5 transition-all',
-                isSelected
-                  ? 'border-primary bg-accent ring-primary ring-1'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                'relative rounded-xl border p-5 transition-all',
+                !extra.available
+                  ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+                  : isSelected
+                    ? 'border-primary bg-accent ring-primary cursor-pointer ring-1'
+                    : 'cursor-pointer border-gray-200 bg-white hover:border-gray-300'
               )}
             >
               {extra.popular && (
@@ -130,7 +82,7 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
                     isSelected ? 'bg-primary text-primary-foreground' : 'bg-gray-100 text-gray-500'
                   )}
                 >
-                  <extra.icon className="h-6 w-6" />
+                  <Icon className="h-6 w-6" />
                 </div>
 
                 {/* Content */}
@@ -141,8 +93,14 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
                       <p className="mt-1 text-sm text-gray-500">{extra.description}</p>
                     </div>
                     <div className="flex-shrink-0 text-right">
-                      <p className="font-bold text-gray-900">${totalPrice}</p>
-                      <p className="text-xs text-gray-500">${extra.pricePerDay}/day</p>
+                      {extra.available ? (
+                        <>
+                          <p className="font-bold text-gray-900">${totalPrice}</p>
+                          <p className="text-xs text-gray-500">${extra.pricePerDay}/day</p>
+                        </>
+                      ) : (
+                        <p className="text-xs font-medium text-gray-500">{extra.unavailableNote}</p>
+                      )}
                     </div>
                   </div>
 
@@ -169,24 +127,35 @@ export default function ExtrasStep({ data, onChange, days }: ExtrasStepProps) {
       </div>
 
       {/* Extras Summary */}
-      {calculateExtrasTotal() > 0 && (
+      {extrasTotal > 0 && (
         <div className="bg-accent border-primary mt-6 rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <span className="text-navy font-medium">Selected Extras Total</span>
-            <span className="text-primary-ink text-xl font-bold">${calculateExtrasTotal()}</span>
+            <span className="text-primary-ink text-xl font-bold">${extrasTotal}</span>
           </div>
           <p className="text-primary-ink mt-1 text-sm">for {days} days</p>
         </div>
       )}
 
+      {/* Security deposit — stated here so it is never a surprise at checkout */}
+      <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="flex items-center justify-between">
+          <span className="font-medium text-gray-900">Refundable security deposit</span>
+          <span className="text-xl font-bold text-gray-900">${SECURITY_DEPOSIT}</span>
+        </div>
+        <p className="mt-1 text-sm text-gray-500">
+          Added to your booking total and returned to you after the vehicle comes back undamaged.
+        </p>
+      </div>
+
       {/* Info Box */}
       <div className="bg-accent border-primary mt-6 flex gap-3 rounded-lg border p-4">
         <Info className="text-primary-ink mt-0.5 h-5 w-5 flex-shrink-0" />
         <div>
-          <h4 className="text-navy font-medium">Insurance Coverage</h4>
+          <h4 className="text-navy font-medium">Damage protection</h4>
           <p className="text-primary-ink mt-1 text-sm">
-            All rentals include basic liability insurance. Full coverage insurance provides
-            additional protection with zero deductible.
+            Coverage terms are confirmed with you by a team member before your rental is booked. Ask
+            us what applies to your dates and vehicle.
           </p>
         </div>
       </div>

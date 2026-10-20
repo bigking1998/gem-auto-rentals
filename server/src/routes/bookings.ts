@@ -4,7 +4,13 @@ import multer from 'multer';
 import prisma from '../lib/prisma.js';
 import { authenticate, staffOnly } from '../middleware/auth.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../middleware/errorHandler.js';
-import { BUCKETS, isStorageConfigured, uploadFile, deleteFile, getSignedUrl } from '../lib/storage.js';
+import {
+  BUCKETS,
+  isStorageConfigured,
+  uploadFile,
+  deleteFile,
+  getSignedUrl,
+} from '../lib/storage.js';
 
 const router = Router();
 
@@ -43,8 +49,14 @@ const createBookingSchema = z.object({
 });
 
 const updateBookingSchema = z.object({
-  startDate: z.string().transform((s) => new Date(s)).optional(),
-  endDate: z.string().transform((s) => new Date(s)).optional(),
+  startDate: z
+    .string()
+    .transform((s) => new Date(s))
+    .optional(),
+  endDate: z
+    .string()
+    .transform((s) => new Date(s))
+    .optional(),
   pickupLocation: z.string().optional(),
   dropoffLocation: z.string().optional(),
   extras: z
@@ -63,31 +75,55 @@ const bookingFilterSchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'CANCELLED']).optional(),
   userId: z.string().optional(),
   vehicleId: z.string().optional(),
-  startDate: z.string().transform((s) => new Date(s)).optional(),
-  endDate: z.string().transform((s) => new Date(s)).optional(),
+  startDate: z
+    .string()
+    .transform((s) => new Date(s))
+    .optional(),
+  endDate: z
+    .string()
+    .transform((s) => new Date(s))
+    .optional(),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
-// Calculate rental total
-function calculateTotal(
+/**
+ * Rental + extras + the refundable security deposit.
+ *
+ * ⚠️  THIS FUNCTION DECIDES WHAT THE CUSTOMER IS CHARGED. The browser has its own
+ * copy of these prices in `apps/web/src/lib/extras.ts`. **The two must agree** —
+ * if they drift, the customer is shown one figure and billed another. Updated
+ * together on 2026-10-20.
+ *
+ * Changes on 2026-10-20, per the owner:
+ *  - insurance  — NOT offered. Deliberately not charged even if the flag arrives
+ *                 set, so a crafted request cannot buy something we do not sell.
+ *  - gps        — removed from the product entirely.
+ *  - childSeat / additionalDriver — $5/day each (were $8 and $15).
+ *  - deposit    — flat $100, refundable, added to the amount charged.
+ */
+export const EXTRA_PRICES_PER_DAY = {
+  childSeat: 5,
+  additionalDriver: 5,
+} as const;
+
+export const SECURITY_DEPOSIT = 100;
+
+export function calculateTotal(
   dailyRate: number,
   startDate: Date,
   endDate: Date,
   extras?: { insurance?: boolean; gps?: boolean; childSeat?: boolean; additionalDriver?: boolean }
 ): number {
-  const days = Math.ceil(
-    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
   let total = dailyRate * days;
 
-  if (extras?.insurance) total += 25 * days;
-  if (extras?.gps) total += 10 * days;
-  if (extras?.childSeat) total += 8 * days;
-  if (extras?.additionalDriver) total += 15 * days;
+  // insurance and gps intentionally contribute nothing — see the note above.
+  if (extras?.childSeat) total += EXTRA_PRICES_PER_DAY.childSeat * days;
+  if (extras?.additionalDriver) total += EXTRA_PRICES_PER_DAY.additionalDriver * days;
 
-  return total;
+  return total + SECURITY_DEPOSIT;
 }
 
 // GET /api/bookings
@@ -347,12 +383,7 @@ router.patch('/:id', authenticate, async (req, res, next) => {
       const endDate = data.endDate || existing.endDate;
       const extras = data.extras || (existing.extras as Record<string, boolean>);
 
-      totalAmount = calculateTotal(
-        Number(existing.dailyRate),
-        startDate,
-        endDate,
-        extras
-      );
+      totalAmount = calculateTotal(Number(existing.dailyRate), startDate, endDate, extras);
     }
 
     const booking = await prisma.booking.update({

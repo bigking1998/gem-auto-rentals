@@ -90,7 +90,7 @@ export default function CustomerInfoStep({ data, onChange }: CustomerInfoStepPro
                 type="tel"
                 value={data.customer.phone}
                 onChange={(e) => updateCustomer('phone', e.target.value)}
-                placeholder="+1 (555) 123-4567"
+                placeholder="(863) 555-0100"
                 className="focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:ring-2"
               />
             </div>

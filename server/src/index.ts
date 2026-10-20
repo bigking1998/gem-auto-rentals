@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
 import { isDatabaseConnected, waitForDatabase } from './lib/prisma.js';
-import { isStorageConfigured } from './lib/storage.js';
+import { isStorageConfigured, getPublicUrlStatus } from './lib/storage.js';
 
 // Route imports
 import authRoutes from './routes/auth.js';
@@ -157,6 +157,11 @@ const cacheControl = (maxAge: number) => {
 // Health check - checks database connection status
 app.get('/health', async (_req, res) => {
   const storageConfigured = isStorageConfigured();
+  // Credentials being present is NOT the same as images being servable: the
+  // per-bucket public URLs are separate variables, and without them every
+  // getPublicUrl() returns null while this endpoint still said "configured".
+  const publicUrls = getPublicUrlStatus();
+  const imagesServable = publicUrls.missing.length === 0;
 
   // Check if database is already connected (from startup initialization)
   if (isDatabaseConnected()) {
@@ -164,6 +169,8 @@ app.get('/health', async (_req, res) => {
       status: 'ok',
       database: 'connected',
       storage: storageConfigured ? 'configured' : 'not_configured',
+      images: imagesServable ? 'servable' : 'NO_PUBLIC_URL',
+      imageBucketsMissingPublicUrl: publicUrls.missing,
       timestamp: new Date().toISOString(),
     });
     return;
