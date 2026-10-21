@@ -171,6 +171,9 @@ app.get('/health', async (_req, res) => {
       database: 'connected',
       storage: storageConfigured ? 'configured' : 'not_configured',
       images: imagesServable ? 'servable' : 'NO_PUBLIC_URL',
+      // Build identity, so "is the deployed API current?" is one request
+      // rather than an ssh session. GIT_COMMIT is set by gem-deploy.
+      commit: process.env.GIT_COMMIT || 'unknown',
       imageBucketsMissingPublicUrl: publicUrls.missing,
       timestamp: new Date().toISOString(),
     });

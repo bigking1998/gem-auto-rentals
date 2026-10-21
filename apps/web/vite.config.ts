@@ -3,23 +3,43 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import viteCompression from 'vite-plugin-compression';
 
+/**
+ * Build stamp.
+ *
+ * Answers "is the live site actually current?" in one request instead of
+ * fetching the hashed JS bundle and grepping it for a string you hope changed.
+ * Three wrong conclusions were drawn about deploy state before this existed —
+ * twice "it is stale" when it was mid-deploy, once "it is live" when it was not.
+ *
+ * VERCEL_GIT_COMMIT_SHA is injected by Vercel; falls back to "dev" locally.
+ */
+const BUILD_COMMIT =
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || process.env.GIT_COMMIT?.slice(0, 7) || 'dev';
+const BUILT_AT = new Date().toISOString();
+
 export default defineConfig(({ mode }) => ({
+  define: {
+    __BUILD_COMMIT__: JSON.stringify(BUILD_COMMIT),
+    __BUILT_AT__: JSON.stringify(BUILT_AT),
+  },
   plugins: [
     react(),
     // Gzip compression for production builds only
-    ...(mode === 'production' ? [
-      viteCompression({
-        algorithm: 'gzip',
-        ext: '.gz',
-        threshold: 1024, // Only compress files > 1KB
-      }),
-      // Brotli compression (better compression ratio)
-      viteCompression({
-        algorithm: 'brotliCompress',
-        ext: '.br',
-        threshold: 1024,
-      }),
-    ] : []),
+    ...(mode === 'production'
+      ? [
+          viteCompression({
+            algorithm: 'gzip',
+            ext: '.gz',
+            threshold: 1024, // Only compress files > 1KB
+          }),
+          // Brotli compression (better compression ratio)
+          viteCompression({
+            algorithm: 'brotliCompress',
+            ext: '.br',
+            threshold: 1024,
+          }),
+        ]
+      : []),
   ],
   resolve: {
     alias: {

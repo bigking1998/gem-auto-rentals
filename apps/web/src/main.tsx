@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App';
 import './index.css';
 import { wakeUpServer } from './lib/api';
+import '@/lib/buildInfo'; // exposes window.__GEM_BUILD__
 
 // Diagnostic only, and dev-only. This used to be a blocking wake-up for
 // Render's free tier; the API no longer sleeps, so in production it was just a
