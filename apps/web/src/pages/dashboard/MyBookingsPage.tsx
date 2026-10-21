@@ -318,6 +318,17 @@ export default function MyBookingsPage() {
                         </span>
                       </div>
                       <div className="flex gap-2">
+                        {booking.status === 'PENDING' && (
+                          // A pending booking used to offer only "Cancel", so a
+                          // customer whose payment did not go through had to
+                          // cancel and rebuild the whole booking.
+                          <Link
+                            to={`/booking/pay/${booking.id}`}
+                            className="bg-primary text-primary-foreground hover:bg-primary-dark rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                          >
+                            Complete Payment
+                          </Link>
+                        )}
                         {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
                           <button
                             onClick={() => handleCancelBooking(booking.id)}

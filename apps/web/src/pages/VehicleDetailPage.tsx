@@ -11,9 +11,6 @@ import {
   Calendar,
   MapPin,
   Shield,
-  Navigation,
-  Baby,
-  UserPlus,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -22,6 +19,7 @@ import {
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { cn } from '@/lib/utils';
+import { EXTRAS, SECURITY_DEPOSIT, type ExtraId } from '@/lib/extras';
 import { Popover, PopoverContent, PopoverTrigger } from '@gem/ui';
 import AvailabilityCalendar from '@/components/vehicles/AvailabilityCalendar';
 import ReviewList from '@/components/vehicles/ReviewList';
@@ -32,36 +30,11 @@ import { BOOKING_VEHICLE_KEY } from './BookingPage';
 import { useAuthStore } from '@/stores/authStore';
 import { useBookingDates, useBookingStore } from '@/stores/bookingStore';
 
-const extras = [
-  {
-    id: 'insurance',
-    name: 'Full Insurance',
-    price: 25,
-    icon: Shield,
-    description: 'Complete coverage for peace of mind',
-  },
-  {
-    id: 'gps',
-    name: 'GPS Navigation',
-    price: 10,
-    icon: Navigation,
-    description: 'Never get lost on your journey',
-  },
-  {
-    id: 'childSeat',
-    name: 'Child Seat',
-    price: 8,
-    icon: Baby,
-    description: 'Safety-certified child seat',
-  },
-  {
-    id: 'additionalDriver',
-    name: 'Additional Driver',
-    price: 15,
-    icon: UserPlus,
-    description: 'Add another driver to your rental',
-  },
-];
+// Extras come from the shared catalogue so this widget cannot drift from the
+// booking flow or the server. It used to hold its OWN copy — which is how it
+// kept showing GPS at $10 and "Full Insurance" at $25 for a day after both had
+// been withdrawn everywhere else.
+const extras = EXTRAS;
 
 export default function VehicleDetailPage() {
   const { id } = useParams();
@@ -140,6 +113,8 @@ export default function VehicleDetailPage() {
   };
 
   const toggleExtra = (extraId: string) => {
+    // Withdrawn extras are shown greyed out but must not be selectable.
+    if (!EXTRAS.find((e) => e.id === (extraId as ExtraId))?.available) return;
     setSelectedExtras((prev) =>
       prev.includes(extraId) ? prev.filter((e) => e !== extraId) : [...prev, extraId]
     );
@@ -158,7 +133,7 @@ export default function VehicleDetailPage() {
   const basePrice = dailyRate * days;
   const extrasPrice = selectedExtras.reduce((sum, extraId) => {
     const extra = extras.find((e) => e.id === extraId);
-    return sum + (extra ? extra.price * days : 0);
+    return sum + (extra && extra.available ? extra.pricePerDay * days : 0);
   }, 0);
   const totalPrice = basePrice + extrasPrice;
 
@@ -519,7 +494,10 @@ export default function VehicleDetailPage() {
                           <label
                             key={extra.id}
                             className={cn(
-                              'flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all hover:shadow-md',
+                              'flex items-center gap-3 rounded-xl border p-3 transition-all',
+                              !extra.available
+                                ? 'cursor-not-allowed bg-gray-50 opacity-60'
+                                : 'cursor-pointer hover:shadow-md',
                               selectedExtras.includes(extra.id)
                                 ? 'border-primary bg-primary/5'
                                 : 'hover:border-primary/50 border-gray-200'
@@ -550,7 +528,7 @@ export default function VehicleDetailPage() {
                               <p className="truncate text-xs text-gray-500">{extra.description}</p>
                             </div>
                             <span className="text-primary-ink text-sm font-bold">
-                              +${extra.price}
+                              {extra.available ? `+$${extra.pricePerDay}` : extra.unavailableNote}
                             </span>
                           </label>
                         ))}
@@ -572,9 +550,18 @@ export default function VehicleDetailPage() {
                             <span className="font-bold text-gray-900">${extrasPrice}</span>
                           </div>
                         )}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Refundable deposit</span>
+                          <span className="font-bold text-gray-900">${SECURITY_DEPOSIT}</span>
+                        </div>
                         <div className="flex justify-between border-t border-gray-200 pt-3 text-lg font-bold text-gray-900">
-                          <span>Total</span>
-                          <span>${totalPrice}</span>
+                          <span>
+                            Total
+                            <span className="block text-xs font-normal text-gray-400">
+                              includes ${SECURITY_DEPOSIT} refundable deposit
+                            </span>
+                          </span>
+                          <span>${totalPrice + SECURITY_DEPOSIT}</span>
                         </div>
                       </div>
                     )}

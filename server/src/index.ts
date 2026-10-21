@@ -40,6 +40,7 @@ import extensionRoutes from './routes/extensions.js';
 import walletRoutes from './routes/wallet.js';
 import waitlistRoutes from './routes/waitlist.js';
 import webhookRoutes from './routes/webhooks.js';
+import contactRoutes from './routes/contact.js';
 
 // Load environment variables
 dotenv.config();
@@ -129,6 +130,7 @@ app.use('/api', limiter);
 // Webhooks mount BEFORE the JSON body parser: Svix signatures are computed
 // over the raw bytes, and re-serialising parsed JSON will not match.
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

@@ -354,6 +354,17 @@ export interface AuthResponse {
 // ============ API Methods ============
 
 export const api = {
+  // Contact — public "send us a message" form
+  contact: {
+    send: (body: {
+      name: string;
+      email: string;
+      subject?: string;
+      message: string;
+    }): Promise<{ received: boolean }> =>
+      request('/contact', { method: 'POST', body: JSON.stringify(body) }),
+  },
+
   // Vehicles
   vehicles: {
     list: (params?: VehicleFiltersParams): Promise<PaginatedResponse<Vehicle>> =>

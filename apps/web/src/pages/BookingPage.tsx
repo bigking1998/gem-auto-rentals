@@ -29,6 +29,46 @@ import { useBookingDates } from '@/stores/bookingStore';
 // Session storage key for booking data
 export const BOOKING_VEHICLE_KEY = 'gem_booking_vehicle';
 
+/**
+ * Draft of the in-progress booking form.
+ *
+ * Only the dates, locations and extras were ever persisted (in bookingStore).
+ * Everything the customer types on the details step — name, date of birth,
+ * address, licence number — lived in component state and was LOST the moment
+ * they navigated back a page, so they had to type it all again. That is the
+ * single most expensive place to lose someone in the whole funnel.
+ *
+ * sessionStorage, NOT localStorage, on purpose: this holds a date of birth,
+ * a home address and a driving licence number. It should survive going back a
+ * page, not survive closing the browser on a shared computer.
+ */
+const BOOKING_DRAFT_KEY = 'gem_booking_draft';
+
+function loadDraft(): Partial<BookingData> | null {
+  try {
+    const raw = sessionStorage.getItem(BOOKING_DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as Partial<BookingData>) : null;
+  } catch {
+    return null; // private mode, or corrupt JSON — just start fresh
+  }
+}
+
+function saveDraft(data: BookingData): void {
+  try {
+    sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(data));
+  } catch {
+    /* storage unavailable — the form still works, it just will not persist */
+  }
+}
+
+export function clearBookingDraft(): void {
+  try {
+    sessionStorage.removeItem(BOOKING_DRAFT_KEY);
+  } catch {
+    /* nothing worth crashing over */
+  }
+}
+
 const steps = [
   { id: 1, title: 'Dates & Location', icon: Calendar },
   { id: 2, title: 'Extras', icon: Package },
@@ -113,17 +153,28 @@ export default function BookingPage() {
   const { startDate: storeStartDate, endDate: storeEndDate } = useBookingDates();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [bookingData, setBookingData] = useState<BookingData>({
-    ...initialBookingData,
-    // Use URL params first, then store as fallback
-    startDate: searchParams.get('start') || storeStartDate || '',
-    endDate: searchParams.get('end') || storeEndDate || '',
+  const [bookingData, setBookingData] = useState<BookingData>(() => {
+    const draft = loadDraft();
+    return {
+      ...initialBookingData,
+      // A saved draft restores everything the customer already typed...
+      ...(draft ?? {}),
+      // ...but an explicit date in the URL still wins, so arriving from a
+      // vehicle page with new dates does not silently reuse the old ones.
+      startDate: searchParams.get('start') || draft?.startDate || storeStartDate || '',
+      endDate: searchParams.get('end') || draft?.endDate || storeEndDate || '',
+    };
   });
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
+
+  // Persist the draft on every change so going back a page never loses typing.
+  useEffect(() => {
+    saveDraft(bookingData);
+  }, [bookingData]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -281,6 +332,8 @@ export default function BookingPage() {
       });
 
       setBookingId(booking.id);
+      // Booking is created — the draft has served its purpose.
+      clearBookingDraft();
       setCurrentStep(5);
     } catch (err) {
       console.error('Error creating booking:', err);

@@ -4,6 +4,7 @@ import { Clock, MapPin, Phone, Mail, Send } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import SEO from '@/components/SEO';
+import { api, ApiError } from '@/lib/api';
 
 import {
   CONTACT_EMAIL,
@@ -31,32 +32,45 @@ export default function ContactPage() {
   const [message, setMessage] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
-  // NOTE: There is no public (unauthenticated) message-submission endpoint on the
-  // API, so this form intentionally hands off to the visitor's own email client
-  // instead of pretending to submit. See the mailto: link built below.
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [isSending, setIsSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  // Submits to the API, which stores the message, emails the team with
+  // reply-to set to the sender, and sends the sender an acknowledgement.
+  // This used to open a `mailto:` link instead — so nothing was stored, nothing
+  // arrived unless the visitor pressed send in their own mail app, and anyone
+  // without a mail client clicked the button and saw nothing happen.
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Don't open an empty mail draft. The browser's own `required` handling
-    // covers most of this, but the guard also catches whitespace-only input.
     if (!name.trim() || !email.trim() || !message.trim()) {
       setFormError('Please add your name, your email, and a message before sending.');
       return;
     }
     setFormError(null);
+    setIsSending(true);
 
-    const mailSubject = subject.trim() || 'Website enquiry';
-    const bodyLines = [
-      message.trim(),
-      '',
-      '—',
-      name.trim() ? `Name: ${name.trim()}` : '',
-      email.trim() ? `Email: ${email.trim()}` : '',
-    ].filter(Boolean);
-    const href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
-      mailSubject
-    )}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
-    window.location.href = href;
+    try {
+      await api.contact.send({
+        name: name.trim(),
+        email: email.trim(),
+        subject: subject.trim() || undefined,
+        message: message.trim(),
+      });
+      setSent(true);
+      setName('');
+      setEmail('');
+      setSubject('');
+      setMessage('');
+    } catch (err) {
+      setFormError(
+        err instanceof ApiError && err.message
+          ? err.message
+          : 'We could not send that just now. Please call or text us instead.'
+      );
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -204,15 +218,8 @@ export default function ContactPage() {
                 <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
                   <h3 className="mb-2 text-xl font-bold text-gray-900">Send Us a Message</h3>
                   <p className="mb-6 text-sm text-gray-500">
-                    Fill this in and we will open a pre-filled email in your own mail app addressed
-                    to{' '}
-                    <a
-                      href={`mailto:${CONTACT_EMAIL}`}
-                      className="text-primary-ink break-all font-medium hover:underline"
-                    >
-                      {CONTACT_EMAIL}
-                    </a>
-                    . Nothing is sent until you press send in your mail app.
+                    Send us a message and we will reply during business hours. You will get an email
+                    confirming we have it.
                   </p>
 
                   <form onSubmit={handleSubmit} className="space-y-5">
@@ -293,12 +300,23 @@ export default function ContactPage() {
                       </p>
                     )}
 
+                    {sent && (
+                      <p
+                        role="status"
+                        className="rounded-lg bg-green-50 p-4 text-sm font-medium text-green-700"
+                      >
+                        Thanks — we have your message and a team member will reply during business
+                        hours. Check your inbox for a confirmation.
+                      </p>
+                    )}
+
                     <button
                       type="submit"
-                      className="bg-primary text-primary-foreground hover:bg-primary-dark group inline-flex w-full items-center justify-center rounded-lg px-8 py-4 text-lg font-semibold shadow-lg transition-all hover:shadow-xl"
+                      disabled={isSending}
+                      className="bg-primary text-primary-foreground hover:bg-primary-dark group inline-flex w-full items-center justify-center rounded-lg px-8 py-4 text-lg font-semibold shadow-lg transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Send className="mr-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                      Open in My Email App
+                      {isSending ? 'Sending…' : 'Send Message'}
                     </button>
                   </form>
 

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { CreditCard, Plus, Trash2, Star, AlertCircle, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { getStripe, stripeAppearance } from '@/lib/stripe';
 import { toast } from 'sonner';
 
@@ -299,7 +299,15 @@ export default function PaymentMethodsPage() {
       setPaymentMethods(methods);
     } catch (err) {
       console.error('Error fetching payment methods:', err);
-      setError('Failed to load payment methods');
+      // Show the server's actual reason. It distinguishes "payment processing
+      // is not configured" (an operator problem — nothing the customer can do,
+      // and retrying forever will not help) from a genuine transient failure,
+      // and the generic message hid that difference completely.
+      const message =
+        err instanceof ApiError && err.message
+          ? err.message
+          : 'Failed to load payment methods. Please try again.';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

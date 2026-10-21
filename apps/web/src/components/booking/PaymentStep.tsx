@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { BookingData } from '@/pages/BookingPage';
 import { cn } from '@/lib/utils';
+import { EXTRAS, SECURITY_DEPOSIT } from '@/lib/extras';
 import { getStripe, stripeAppearance } from '@/lib/stripe';
 import { api } from '@/lib/api';
 
@@ -234,27 +235,17 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
             <div className="pt-4">
               <h4 className="mb-2 text-sm font-medium text-gray-700">Selected Extras</h4>
               <div className="flex flex-wrap gap-2">
-                {data.extras.insurance && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+                {EXTRAS.filter(
+                  (e) => e.available && data.extras[e.id as keyof typeof data.extras]
+                ).map((e) => (
+                  <span
+                    key={e.id}
+                    className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700"
+                  >
                     <Shield className="h-3 w-3" />
-                    Full Insurance
+                    {e.name}
                   </span>
-                )}
-                {data.extras.gps && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
-                    GPS Navigation
-                  </span>
-                )}
-                {data.extras.childSeat && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-pink-100 px-2.5 py-1 text-xs font-medium text-pink-700">
-                    Child Seat
-                  </span>
-                )}
-                {data.extras.additionalDriver && (
-                  <span className="bg-accent text-accent-foreground inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
-                    Additional Driver
-                  </span>
-                )}
+                ))}
               </div>
             </div>
           )}
@@ -351,33 +342,28 @@ function PaymentForm({ data, vehicle, total, days, bookingId, onSubmit }: Paymen
               </span>
               <span className="text-navy">${vehicle.dailyRate * days}</span>
             </div>
-            {data.extras.insurance && (
-              <div className="flex justify-between text-sm">
-                <span className="text-primary-ink">Full Insurance</span>
-                <span className="text-navy">${25 * days}</span>
-              </div>
+            {EXTRAS.filter((e) => e.available && data.extras[e.id as keyof typeof data.extras]).map(
+              (e) => (
+                <div key={e.id} className="flex justify-between text-sm">
+                  <span className="text-primary-ink">{e.name}</span>
+                  <span className="text-navy">${e.pricePerDay * days}</span>
+                </div>
+              )
             )}
-            {data.extras.gps && (
-              <div className="flex justify-between text-sm">
-                <span className="text-primary-ink">GPS Navigation</span>
-                <span className="text-navy">${10 * days}</span>
-              </div>
-            )}
-            {data.extras.childSeat && (
-              <div className="flex justify-between text-sm">
-                <span className="text-primary-ink">Child Seat</span>
-                <span className="text-navy">${8 * days}</span>
-              </div>
-            )}
-            {data.extras.additionalDriver && (
-              <div className="flex justify-between text-sm">
-                <span className="text-primary-ink">Additional Driver</span>
-                <span className="text-navy">${15 * days}</span>
-              </div>
-            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-primary-ink">Refundable deposit</span>
+              <span className="text-navy">${SECURITY_DEPOSIT}</span>
+            </div>
             <div className="border-primary flex justify-between border-t pt-3">
-              <span className="text-navy font-semibold">Total</span>
-              <span className="text-primary-ink text-xl font-bold">${total}</span>
+              <span className="text-navy font-semibold">
+                Total Due
+                <span className="block text-xs font-normal text-gray-400">
+                  includes ${SECURITY_DEPOSIT} refundable deposit
+                </span>
+              </span>
+              <span className="text-primary-ink text-xl font-bold">
+                ${total + SECURITY_DEPOSIT}
+              </span>
             </div>
           </div>
         </div>

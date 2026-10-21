@@ -1208,3 +1208,33 @@ model WaitlistCampaignRecipient {
   @@index([subscriberId])
   @@index([providerId])
 }
+
+
+/// A message sent from the public "Contact us" form.
+///
+/// Deliberately NOT a Conversation: that model requires a real `customerId`,
+/// and a website visitor has no account. Before this existed the contact form
+/// opened the visitor's own mail client via `mailto:` — so nothing was stored,
+/// nothing was emailed unless they pressed send themselves, and anyone without
+/// a configured mail client clicked the button and saw nothing happen at all.
+model ContactMessage {
+  id        String   @id @default(cuid())
+
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+
+  /// Captured for abuse triage only.
+  ipAddress String?
+  userAgent String?
+
+  handled   Boolean  @default(false)
+  handledAt DateTime?
+  notes     String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([handled])
+  @@index([createdAt])
+}

@@ -679,3 +679,86 @@ export async function sendWaitlistCampaignEmail(
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
+
+/**
+ * Tell the team a contact-form message arrived, and acknowledge it to the sender.
+ *
+ * Two separate sends on purpose: the team notification has `replyTo` set to the
+ * visitor so staff can just hit reply, while the visitor gets a plain
+ * acknowledgement. Before this, the contact form used a `mailto:` link, so
+ * neither of these ever happened.
+ */
+export async function sendContactMessageEmails(params: {
+  name: string;
+  email: string;
+  subject?: string | null;
+  message: string;
+  teamInbox: string;
+}): Promise<EmailResult> {
+  if (!isEmailConfigured()) {
+    console.warn('Email not configured. Contact message not emailed from:', params.email);
+    return { success: true, messageId: 'dev-mode-no-email' };
+  }
+
+  const subject = params.subject?.trim() || 'Website enquiry';
+  const escape = (v: string) =>
+    v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const firstName = (params.name || '').split(' ')[0] || 'there';
+
+  try {
+    // 1. To the team.
+    const { error: teamError } = await resend!.emails.send({
+      from: FROM_EMAIL,
+      to: params.teamInbox,
+      replyTo: params.email,
+      subject: `Website enquiry: ${subject}`,
+      html: `
+        <h2 style="font-family:Arial,sans-serif;">New message from the website</h2>
+        <p style="font-family:Arial,sans-serif;">
+          <strong>Name:</strong> ${escape(params.name)}<br>
+          <strong>Email:</strong> ${escape(params.email)}<br>
+          <strong>Subject:</strong> ${escape(subject)}
+        </p>
+        <p style="font-family:Arial,sans-serif;white-space:pre-wrap;border-left:3px solid #ddd;padding-left:12px;">${escape(
+          params.message
+        )}</p>
+        <p style="font-family:Arial,sans-serif;color:#666;font-size:13px;">
+          Reply to this email to answer ${escape(firstName)} directly.
+        </p>`,
+    });
+    if (teamError) {
+      return { success: false, error: teamError.message };
+    }
+
+    // 2. Acknowledgement to the visitor. A failure here must not fail the
+    //    submission — the message is already stored and the team already knows.
+    try {
+      await resend!.emails.send({
+        from: FROM_EMAIL,
+        to: params.email,
+        subject: `We got your message — ${APP_NAME}`,
+        html: `
+          <p style="font-family:Arial,sans-serif;">Hi ${escape(firstName)},</p>
+          <p style="font-family:Arial,sans-serif;">
+            Thanks for getting in touch with ${APP_NAME}. We have your message and
+            a team member will reply during business hours.
+          </p>
+          <p style="font-family:Arial,sans-serif;white-space:pre-wrap;border-left:3px solid #ddd;padding-left:12px;color:#555;">${escape(
+            params.message
+          )}</p>
+          <p style="font-family:Arial,sans-serif;">
+            Need us sooner? Call or text <strong>(863) 277-6712</strong>.
+          </p>`,
+      });
+    } catch (ackError) {
+      console.warn('Contact acknowledgement failed (message still saved):', ackError);
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown email error',
+    };
+  }
+}

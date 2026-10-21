@@ -12,6 +12,7 @@ const VehiclesPage = lazy(() => import('./pages/VehiclesPage'));
 const VehicleDetailPage = lazy(() => import('./pages/VehicleDetailPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
+const ResumePaymentPage = lazy(() => import('@/pages/ResumePaymentPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const WaitingListPage = lazy(() => import('./pages/WaitingListPage'));
 const WaitingListThankYouPage = lazy(() => import('./pages/WaitingListThankYouPage'));
@@ -57,6 +58,8 @@ function App() {
           <Route path="/vehicles/:id" element={<VehicleDetailPage />} />
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
+          {/* Resume payment on a booking that is already created but unpaid. */}
+          <Route path="/booking/pay/:bookingId" element={<ResumePaymentPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/waitinglist" element={<WaitingListPage />} />
           <Route path="/waitinglist/thank-you" element={<WaitingListThankYouPage />} />
