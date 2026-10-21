@@ -130,7 +130,6 @@ app.use('/api', limiter);
 // Webhooks mount BEFORE the JSON body parser: Svix signatures are computed
 // over the raw bytes, and re-serialising parsed JSON will not match.
 app.use('/api/webhooks', webhookRoutes);
-app.use('/api/contact', contactRoutes);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
@@ -193,6 +192,11 @@ app.get('/health', async (_req, res) => {
 app.use('/api/vehicles', cacheControl(60), vehicleRoutes);
 
 // Auth - no caching (sensitive)
+// Mounted AFTER express.json(). It sat next to the webhook route, which is
+// deliberately before the body parser because it needs the RAW body for
+// signature verification — so req.body arrived undefined and every submission
+// failed validation with an empty field name.
+app.use('/api/contact', contactRoutes);
 app.use('/api/auth', authRoutes);
 
 // Bookings - no caching (contains mutations and user-specific data)
