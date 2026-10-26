@@ -131,6 +131,16 @@ app.use('/api', limiter);
 // over the raw bytes, and re-serialising parsed JSON will not match.
 app.use('/api/webhooks', webhookRoutes);
 
+// Stripe's webhook signature is computed over the RAW bytes, so this one path
+// must be parsed as a Buffer BEFORE express.json() gets it. body-parser marks
+// the request as parsed, so the json() below skips it.
+//
+// Without this, stripe.webhooks.constructEvent() receives an already-parsed
+// object, signature verification fails on every call, and the symptom is
+// vicious: the customer is charged, Stripe says success, and the booking sits
+// PENDING forever because nothing ever tells the app the payment landed.
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
