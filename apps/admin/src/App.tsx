@@ -65,6 +65,7 @@ const CustomerProfilePage = lazy(() => import('./pages/CustomerProfilePage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const MessagesPage = lazy(() => import('./pages/MessagesPage'));
+const EnquiriesPage = lazy(() => import('@/pages/EnquiriesPage'));
 const SecurityPage = lazy(() => import('./pages/SecurityPage'));
 const HelpPage = lazy(() => import('./pages/HelpPage'));
 const TrashPage = lazy(() => import('./pages/TrashPage'));
@@ -250,6 +251,16 @@ function App() {
               <LazyLoadErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
                   <SettingsPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            }
+          />
+          <Route
+            path="enquiries"
+            element={
+              <LazyLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <EnquiriesPage />
                 </Suspense>
               </LazyLoadErrorBoundary>
             }

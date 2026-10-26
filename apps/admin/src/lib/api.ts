@@ -733,6 +733,15 @@ export interface Notification {
 
 // ============ API Methods ============
 export const api = {
+  // Website contact-form enquiries. NOTE: live chat and texts do NOT come here —
+  // those live in GoHighLevel Conversations.
+  contact: {
+    list: (handled?: boolean): Promise<{ items: ContactMessage[]; total: number }> =>
+      request('/contact' + (handled === undefined ? '' : `?handled=${handled ? 'true' : 'false'}`)),
+    update: (id: string, body: { handled?: boolean; notes?: string }): Promise<ContactMessage> =>
+      request(`/contact/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  },
+
   // Waiting list
   waitlist: {
     list: (params?: {
@@ -1318,6 +1327,19 @@ function safeRemove(store: Storage, key: string): void {
   } catch {
     /* nothing useful to do here */
   }
+}
+
+/** A message sent from the website's "Contact us" form. */
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string | null;
+  message: string;
+  handled: boolean;
+  handledAt: string | null;
+  notes: string | null;
+  createdAt: string;
 }
 
 export const tokenManager = {

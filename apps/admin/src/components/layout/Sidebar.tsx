@@ -13,6 +13,7 @@ import {
   X,
   MessageSquare,
   Trash2,
+  Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
@@ -39,6 +40,7 @@ const getMainNavItems = (badges?: BadgeCounts) => [
     badge: badges?.pendingBookings || undefined,
   },
   { label: 'Customers', icon: Users, href: '/customers' },
+  { label: 'Website Enquiries', icon: Inbox, href: '/enquiries' },
   { label: 'Waiting List', icon: MailPlus, href: '/waiting-list' },
   {
     label: 'Messages',
