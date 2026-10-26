@@ -116,8 +116,27 @@ def section(title):
 def check_deployment():
     section("DEPLOYMENT — is what I wrote actually live?")
 
+    def last_commit_touching(path):
+        """The newest commit that changed `path`.
+
+        Comparing a deployed app against git HEAD is wrong: a commit that only
+        touches the server legitimately leaves the customer site's bundle on an
+        older commit, because the build is skipped. Comparing against HEAD turns
+        that correct behaviour into a FAIL on every backend-only change — which
+        is precisely the misreading this whole script exists to prevent.
+        """
+        return subprocess.run(
+            ["git", "-C", REPO, "log", "-1", "--format=%h", "--", path],
+            capture_output=True, text=True).stdout.strip()
+
     head = subprocess.run(["git", "-C", REPO, "rev-parse", "--short", "HEAD"],
                           capture_output=True, text=True).stdout.strip()
+    # The two pipelines behave differently, so they need different rules:
+    #   API    — gem-deploy runs on EVERY push, so it should always equal HEAD.
+    #   Vercel — skips the build when apps/web did not change, so its bundle
+    #            legitimately sits on the last commit that touched apps/web.
+    web_expected = last_commit_touching("apps/web") or head
+    api_expected = head
 
     code, body = get(f"{API}/health")
     api_commit = ""
@@ -126,8 +145,8 @@ def check_deployment():
             api_commit = json.loads(body).get("commit", "")
         except Exception:  # noqa: BLE001
             pass
-    record("deploy", "API is running the latest commit", api_commit == head,
-           f"api={api_commit or '?'} local={head}")
+    record("deploy", "API is running the latest server code", api_commit == api_expected,
+           f"api={api_commit or '?'} expected={api_expected}")
 
     code, idx = get(f"{WEB}/?cb={int(time.time())}")
     m = re.search(r"/assets/js/index-[A-Za-z0-9_-]+\.js", idx or "")
@@ -138,11 +157,12 @@ def check_deployment():
         web_commit = cm.group(1) if cm else ""
         globals()["_BUNDLE"] = bundle or ""
         globals()["_CHUNKS"] = sorted(set(re.findall(r'"(assets/js/[A-Za-z0-9_-]+\.js)"', bundle or "")))
-    record("deploy", "Customer site is running the latest commit", web_commit == head,
-           f"web={web_commit or '?'} local={head}")
+    record("deploy", "Customer site is running the latest web code", web_commit == web_expected,
+           f"web={web_commit or '?'} expected={web_expected}"
+           + ("  (behind — Vercel builds take ~10-13 min)" if web_commit != web_expected else ""))
 
-    if web_commit and api_commit and web_commit != api_commit:
-        record("deploy", "Both halves agree", False, "web and API are on different commits")
+    # The two halves are SUPPOSED to sit on different commits whenever the most
+    # recent change touched only one of them. Only flag a genuine mismatch.
 
 
 def chunk(name):
